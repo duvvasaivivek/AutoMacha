@@ -1,11 +1,13 @@
 # Virtual Environment
 venv/
+.venv/
 env/
 .env
 .env.*
 
 # Python
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
 *.so
@@ -16,6 +18,7 @@ build/
 htmlcov/
 .tox/
 .pytest_cache/
+.mypy_cache/
 .coverage
 
 # Node / Frontend
