@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.settings import api_settings
 from rest_framework.test import APITestCase
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 User = get_user_model()
 
@@ -108,3 +110,68 @@ class UserRegistrationAPITests(APITestCase):
             response = self.client.post(self.register_url, payload, format='json')
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, f"Expected 400 when {field} is missing")
             self.assertIn(field, response.data)
+
+
+class JWTAuthenticationAPITests(APITestCase):
+    def setUp(self):
+        self.token_url = reverse('accounts:token_obtain_pair')
+        self.refresh_url = reverse('accounts:token_refresh')
+        self.username = 'jwtstudent'
+        self.password = 'SecurePassword123!'
+        self.user = User.objects.create_user(
+            username=self.username,
+            password=self.password,
+            institute_email='jwt@institute.edu',
+            roll_number='CS2026777',
+        )
+
+    def test_obtain_token_pair_success(self):
+        """Test that a registered user can obtain an access token and refresh token."""
+        payload = {
+            'username': self.username,
+            'password': self.password,
+        }
+        response = self.client.post(self.token_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+
+    def test_refresh_token_generates_new_access_token(self):
+        """Test that refresh tokens generate new access tokens."""
+        # Obtain tokens first
+        payload = {
+            'username': self.username,
+            'password': self.password,
+        }
+        obtain_response = self.client.post(self.token_url, payload, format='json')
+        self.assertEqual(obtain_response.status_code, status.HTTP_200_OK)
+        refresh_token = obtain_response.data['refresh']
+
+        # Use refresh token to get a new access token
+        refresh_payload = {
+            'refresh': refresh_token,
+        }
+        refresh_response = self.client.post(self.refresh_url, refresh_payload, format='json')
+        self.assertEqual(refresh_response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', refresh_response.data)
+
+    def test_invalid_credentials_return_401(self):
+        """Test that invalid credentials return HTTP 401."""
+        payload = {
+            'username': self.username,
+            'password': 'WrongPassword999!',
+        }
+        response = self.client.post(self.token_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_invalid_refresh_token_returns_401(self):
+        """Test that invalid refresh tokens return HTTP 401."""
+        payload = {
+            'refresh': 'invalid.token.string',
+        }
+        response = self.client.post(self.refresh_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_default_authentication_class_is_jwt(self):
+        """Verify that DRF uses JWTAuthentication as the default authentication class."""
+        self.assertIn(JWTAuthentication, api_settings.DEFAULT_AUTHENTICATION_CLASSES)
