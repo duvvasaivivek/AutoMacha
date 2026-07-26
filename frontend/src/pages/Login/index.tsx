@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { login } from '@/services/auth.service';
-import { setTokens } from '@/lib/auth';
+import { useAuth } from '@/hooks';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Username or Roll Number is required'),
@@ -21,6 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -42,8 +43,8 @@ export const Login: React.FC = () => {
 
     try {
       const response = await login(data);
-      // Securely store access and refresh tokens in localStorage
-      setTokens(response.access, response.refresh);
+      // Securely store access and refresh tokens and update AuthContext state
+      authLogin(response.access, response.refresh);
       // Redirect user to / as per requirements
       navigate('/');
     } catch (error) {

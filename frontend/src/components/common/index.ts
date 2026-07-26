@@ -1,2 +1,2 @@
-// Reusable common components across the application
-export {};
+export * from './ProtectedRoute';
+export * from './PublicRoute';

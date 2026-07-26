@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Car, Menu, X, Home as HomeIcon, LogIn, UserPlus } from 'lucide-react';
+import { Car, Menu, X, Home as HomeIcon, LogIn, UserPlus, LogOut, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
 
-  const navItems = [
-    { name: 'Home', path: '/', icon: HomeIcon },
+  const publicNavItems = [
     { name: 'Login', path: '/login', icon: LogIn },
     { name: 'Register', path: '/register', icon: UserPlus },
+  ];
+
+  const authNavItems = [
+    { name: 'Home', path: '/', icon: HomeIcon },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   ];
 
   return (
@@ -27,25 +33,58 @@ export const Navbar: React.FC = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-black text-white font-semibold shadow-sm'
-                      : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
-                  }`
-                }
+          {isAuthenticated ? (
+            <>
+              {authNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                        isActive
+                          ? 'bg-black text-white font-semibold shadow-sm'
+                          : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                      }`
+                    }
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.name}
+                  </NavLink>
+                );
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={logout}
+                className="ml-2 gap-2 font-semibold border-neutral-300 hover:bg-neutral-100 text-black"
               >
-                <Icon className="h-4 w-4" />
-                {item.name}
-              </NavLink>
-            );
-          })}
+                <LogOut className="h-4 w-4" />
+                <span>Logout (Temp)</span>
+              </Button>
+            </>
+          ) : (
+            publicNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      isActive
+                        ? 'bg-black text-white font-semibold shadow-sm'
+                        : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                    }`
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.name}
+                </NavLink>
+              );
+            })
+          )}
         </nav>
 
         {/* Mobile menu button */}
@@ -65,26 +104,61 @@ export const Navbar: React.FC = () => {
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-neutral-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg animate-in slide-in-from-top-2 duration-200">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
-                    isActive
-                      ? 'bg-black text-white font-semibold shadow-md'
-                      : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
-                  }`
-                }
+          {isAuthenticated ? (
+            <>
+              {authNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                        isActive
+                          ? 'bg-black text-white font-semibold shadow-md'
+                          : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                      }`
+                    }
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.name}
+                  </NavLink>
+                );
+              })}
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-red-600 hover:bg-red-50 transition-all text-left"
               >
-                <Icon className="h-5 w-5" />
-                {item.name}
-              </NavLink>
-            );
-          })}
+                <LogOut className="h-5 w-5" />
+                <span>Logout (Temp)</span>
+              </button>
+            </>
+          ) : (
+            publicNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                      isActive
+                        ? 'bg-black text-white font-semibold shadow-md'
+                        : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                    }`
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.name}
+                </NavLink>
+              );
+            })
+          )}
         </div>
       )}
     </header>
