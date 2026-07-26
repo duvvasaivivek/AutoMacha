@@ -1,0 +1,92 @@
+import React, { useState } from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import { Car, Menu, X, Home as HomeIcon, LogIn, UserPlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+export const Navbar: React.FC = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navItems = [
+    { name: 'Home', path: '/', icon: HomeIcon },
+    { name: 'Login', path: '/login', icon: LogIn },
+    { name: 'Register', path: '/register', icon: UserPlus },
+  ];
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white/90 backdrop-blur-xl transition-all shadow-sm">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white transition-all duration-300 group-hover:bg-neutral-800 group-hover:shadow-md group-hover:scale-105">
+            <Car className="h-5 w-5" />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-black group-hover:text-neutral-600 transition-all">
+            AutoMacha
+          </span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'bg-black text-white font-semibold shadow-sm'
+                      : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                  }`
+                }
+              >
+                <Icon className="h-4 w-4" />
+                {item.name}
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Mobile menu button */}
+        <div className="flex md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle Menu"
+            className="text-neutral-700 hover:bg-neutral-100"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-neutral-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg animate-in slide-in-from-top-2 duration-200">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                    isActive
+                      ? 'bg-black text-white font-semibold shadow-md'
+                      : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                  }`
+                }
+              >
+                <Icon className="h-5 w-5" />
+                {item.name}
+              </NavLink>
+            );
+          })}
+        </div>
+      )}
+    </header>
+  );
+};
