@@ -8,7 +8,7 @@ import { LogIn, ArrowRight, Lock, User, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { login } from '@/services/auth.service';
 import { useAuth } from '@/hooks';
 
@@ -43,21 +43,19 @@ export const Login: React.FC = () => {
 
     try {
       const response = await login(data);
-      // Securely store access and refresh tokens and update AuthContext state
       authLogin(response.access, response.refresh);
-      // Redirect user to / as per requirements
       navigate('/');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {
-          setErrorMessage('Invalid username or password. Please check your credentials and try again.');
+          setErrorMessage('Invalid credentials.');
         } else if (error.response?.data?.detail) {
           setErrorMessage(error.response.data.detail);
         } else {
-          setErrorMessage('Unable to connect to server. Please try again later.');
+          setErrorMessage('Unable to connect to server.');
         }
       } else {
-        setErrorMessage('An unexpected error occurred. Please try again.');
+        setErrorMessage('An unexpected error occurred.');
       }
     } finally {
       setIsLoading(false);
@@ -72,21 +70,15 @@ export const Login: React.FC = () => {
             <LogIn className="h-6 w-6" />
           </div>
           <h2 className="text-3xl font-extrabold tracking-tight text-black">Welcome Back</h2>
-          <p className="text-sm text-neutral-600">
-            Enter your credentials to access your AutoMacha portal
-          </p>
         </div>
 
         <Card className="border-neutral-200 shadow-xl bg-white">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl font-bold text-black">Account Login</CardTitle>
-            <CardDescription className="text-neutral-600">
-              Please enter your username, roll number, or institute email below.
-            </CardDescription>
+            <CardTitle className="text-xl font-bold text-black">Login</CardTitle>
           </CardHeader>
           <CardContent>
             {errorMessage && (
-              <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 animate-in fade-in-50 duration-200">
+              <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                 <AlertCircle className="h-5 w-5 shrink-0 text-red-600 mt-0.5" />
                 <div className="flex-1 font-medium">{errorMessage}</div>
               </div>
@@ -100,7 +92,7 @@ export const Login: React.FC = () => {
                   <Input
                     id="username"
                     type="text"
-                    placeholder="e.g. 124AD0048@iiitk.ac.in or 124AD0048"
+                    placeholder="e.g. 124AD0048@iiitk.ac.in"
                     className={`pl-9 ${errors.username ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     disabled={isLoading}
                     {...register('username')}
@@ -114,9 +106,6 @@ export const Login: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-neutral-800 font-medium">Password</Label>
-                  <span className="text-xs text-black hover:underline cursor-pointer font-medium">
-                    Forgot password?
-                  </span>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />

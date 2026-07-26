@@ -4,27 +4,44 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
-import { UserPlus, ArrowRight, User, Mail, Hash, Lock, AlertCircle } from 'lucide-react';
+import { UserPlus, ArrowRight, Lock, User, Mail, Hash, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { register as registerUser, login } from '@/services/auth.service';
 import { useAuth } from '@/hooks';
 
-const registerSchema = z.object({
-  username: z.string().min(2, 'Username / Full Name must be at least 2 characters'),
-  institute_email: z
-    .string()
-    .min(1, 'Institute Email is required')
-    .email('Please enter a valid email address')
-    .regex(/@iiitk\.ac\.in$/i, 'Must be an @iiitk.ac.in institute email'),
-  roll_number: z.string().min(1, 'Roll Number is required'),
-  branch: z.string().min(1, 'Please select a course'),
-  hostel: z.string().min(1, 'Please select a hostel'),
-  gender: z.string().min(1, 'Please select your gender'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
+const registerSchema = z
+  .object({
+    username: z.string().min(3, 'Username must be at least 3 characters').max(150),
+    institute_email: z
+      .string()
+      .min(1, 'Institute Email is required')
+      .email('Must be a valid email address')
+      .refine(
+        (val) => val.toLowerCase().endsWith('@iiitk.ac.in'),
+        'Must be an official IIITDM Kurnool email ending with @iiitk.ac.in'
+      ),
+    roll_number: z
+      .string()
+      .min(1, 'Roll Number is required')
+      .regex(
+        /^[0-9]{2,3}[A-Za-z]{2}[0-9]{4}$/,
+        'Invalid Roll Number format (e.g. 124AD0048, 122CS0011, 23EC010)'
+      ),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirm_password: z.string().min(1, 'Please confirm your password'),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    phone_number: z.string().optional(),
+    branch: z.string().optional(),
+    hostel: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords don't match",
+    path: ['confirm_password'],
+  });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -44,10 +61,13 @@ export const Register: React.FC = () => {
       username: '',
       institute_email: '',
       roll_number: '',
+      password: '',
+      confirm_password: '',
+      first_name: '',
+      last_name: '',
+      phone_number: '',
       branch: '',
       hostel: '',
-      gender: '',
-      password: '',
     },
   });
 
@@ -56,25 +76,17 @@ export const Register: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      // 1. Register the new account in the backend
       await registerUser(data);
-
-      // 2. Automatically log the user in after registration per requirement #7
       const tokenResponse = await login({
         username: data.username,
         password: data.password,
       });
-
-      // 3. Store tokens and update global auth state
       await authLogin(tokenResponse.access, tokenResponse.refresh);
-
-      // 4. Redirect to home / dashboard
       navigate('/');
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.data) {
           const errData = error.response.data;
-          // Format Django DRF validation errors
           if (typeof errData === 'object' && errData !== null) {
             const firstKey = Object.keys(errData)[0];
             const val = (errData as Record<string, unknown>)[firstKey];
@@ -106,22 +118,16 @@ export const Register: React.FC = () => {
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 text-black ring-1 ring-neutral-200 mb-2 shadow-sm">
             <UserPlus className="h-6 w-6" />
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-black">Create Your Account</h2>
-          <p className="text-sm text-neutral-600">
-            Join AutoMacha to automate your campus workflows
-          </p>
+          <h2 className="text-3xl font-extrabold tracking-tight text-black">Create Account</h2>
         </div>
 
         <Card className="border-neutral-200 shadow-xl bg-white">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl font-bold text-black">Student Registration</CardTitle>
-            <CardDescription className="text-neutral-600">
-              Enter your official institute details below to register.
-            </CardDescription>
+            <CardTitle className="text-xl font-bold text-black">Registration</CardTitle>
           </CardHeader>
           <CardContent>
             {errorMessage && (
-              <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-800 animate-in fade-in-50 duration-200">
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-800">
                 <AlertCircle className="h-5 w-5 shrink-0 text-red-600 mt-0.5" />
                 <div className="flex-1 font-medium">{errorMessage}</div>
               </div>
@@ -129,7 +135,6 @@ export const Register: React.FC = () => {
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Full Name / Username */}
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-neutral-800 font-medium">Username / Full Name</Label>
                   <div className="relative">
@@ -148,26 +153,6 @@ export const Register: React.FC = () => {
                   )}
                 </div>
 
-                {/* Institute Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="institute_email" className="text-neutral-800 font-medium">Institute Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
-                    <Input
-                      id="institute_email"
-                      type="email"
-                      placeholder="e.g. 124AD0048@iiitk.ac.in"
-                      className={`pl-9 ${errors.institute_email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                      disabled={isLoading}
-                      {...register('institute_email')}
-                    />
-                  </div>
-                  {errors.institute_email && (
-                    <p className="text-xs text-red-600 font-medium mt-1">{errors.institute_email.message}</p>
-                  )}
-                </div>
-
-                {/* Roll Number */}
                 <div className="space-y-2">
                   <Label htmlFor="roll_number" className="text-neutral-800 font-medium">Roll Number</Label>
                   <div className="relative">
@@ -176,7 +161,7 @@ export const Register: React.FC = () => {
                       id="roll_number"
                       type="text"
                       placeholder="e.g. 124AD0048"
-                      className={`pl-9 ${errors.roll_number ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      className={`pl-9 uppercase ${errors.roll_number ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                       disabled={isLoading}
                       {...register('roll_number')}
                     />
@@ -185,107 +170,103 @@ export const Register: React.FC = () => {
                     <p className="text-xs text-red-600 font-medium mt-1">{errors.roll_number.message}</p>
                   )}
                 </div>
+              </div>
 
-                {/* Course */}
-                <div className="space-y-2">
-                  <Label htmlFor="course" className="text-neutral-800 font-medium">Course</Label>
-                  <select
-                    id="course"
+              <div className="space-y-2">
+                <Label htmlFor="institute_email" className="text-neutral-800 font-medium">Institute Email (@iiitk.ac.in)</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+                  <Input
+                    id="institute_email"
+                    type="email"
+                    placeholder="e.g. 124AD0048@iiitk.ac.in"
+                    className={`pl-9 lowercase ${errors.institute_email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     disabled={isLoading}
-                    className={`flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-black ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-all duration-200 shadow-sm ${
-                      errors.branch ? 'border-red-500' : ''
-                    }`}
-                    {...register('branch')}
-                  >
-                    <option value="" disabled className="text-neutral-400">Select Course</option>
-                    <option value="B.Tech">B.Tech</option>
-                    <option value="M.Tech">M.Tech</option>
-                    <option value="PhD">PhD</option>
-                    <option value="Post Doc.">Post Doc.</option>
-                    <option value="Project Assistants">Project Assistants</option>
-                    <option value="Interns">Interns</option>
-                  </select>
-                  {errors.branch && (
-                    <p className="text-xs text-red-600 font-medium mt-1">{errors.branch.message}</p>
+                    {...register('institute_email')}
+                  />
+                </div>
+                {errors.institute_email && (
+                  <p className="text-xs text-red-600 font-medium mt-1">{errors.institute_email.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-neutral-800 font-medium">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="At least 8 characters"
+                      className={`pl-9 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      disabled={isLoading}
+                      {...register('password')}
+                    />
+                  </div>
+                  {errors.password && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.password.message}</p>
                   )}
                 </div>
 
-                {/* Hostel */}
                 <div className="space-y-2">
-                  <Label htmlFor="hostel" className="text-neutral-800 font-medium">Hostel</Label>
-                  <select
-                    id="hostel"
-                    disabled={isLoading}
-                    className={`flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-black ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-all duration-200 shadow-sm ${
-                      errors.hostel ? 'border-red-500' : ''
-                    }`}
-                    {...register('hostel')}
-                  >
-                    <option value="" disabled className="text-neutral-400">Select Hall of Residence</option>
-                    <option value="Kalam Hall Of Residence">Kalam Hall Of Residence</option>
-                    <option value="Kalpana Chawla Hall Of Residence">Kalpana Chawla Hall Of Residence</option>
-                    <option value="MVHR">MVHR</option>
-                    <option value="SRKH">SRKH</option>
-                  </select>
-                  {errors.hostel && (
-                    <p className="text-xs text-red-600 font-medium mt-1">{errors.hostel.message}</p>
-                  )}
-                </div>
-
-                {/* Gender */}
-                <div className="space-y-2">
-                  <Label htmlFor="gender" className="text-neutral-800 font-medium">Gender</Label>
-                  <select
-                    id="gender"
-                    disabled={isLoading}
-                    className={`flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-black ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-all duration-200 shadow-sm ${
-                      errors.gender ? 'border-red-500' : ''
-                    }`}
-                    {...register('gender')}
-                  >
-                    <option value="" disabled className="text-neutral-400">Select Gender</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
-                    <option value="O">Other</option>
-                  </select>
-                  {errors.gender && (
-                    <p className="text-xs text-red-600 font-medium mt-1">{errors.gender.message}</p>
+                  <Label htmlFor="confirm_password" className="text-neutral-800 font-medium">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
+                    <Input
+                      id="confirm_password"
+                      type="password"
+                      placeholder="Repeat password"
+                      className={`pl-9 ${errors.confirm_password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      disabled={isLoading}
+                      {...register('confirm_password')}
+                    />
+                  </div>
+                  {errors.confirm_password && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.confirm_password.message}</p>
                   )}
                 </div>
               </div>
 
-              {/* Password */}
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-neutral-800 font-medium">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Create a strong password (min. 8 characters)"
-                    className={`pl-9 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
-                    disabled={isLoading}
-                    {...register('password')}
-                  />
+              <div className="pt-2 border-t border-neutral-100">
+                <p className="text-xs text-neutral-500 mb-4">Optional Student Information</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="branch" className="text-neutral-800 font-medium text-xs">Branch</Label>
+                    <Input
+                      id="branch"
+                      type="text"
+                      placeholder="e.g. AI & DS"
+                      disabled={isLoading}
+                      {...register('branch')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hostel" className="text-neutral-800 font-medium text-xs">Hostel & Room No.</Label>
+                    <Input
+                      id="hostel"
+                      type="text"
+                      placeholder="e.g. KALAM HALL, R-102"
+                      disabled={isLoading}
+                      {...register('hostel')}
+                    />
+                  </div>
                 </div>
-                {errors.password && (
-                  <p className="text-xs text-red-600 font-medium mt-1">{errors.password.message}</p>
-                )}
               </div>
 
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full gap-2 font-semibold text-base mt-2 bg-black text-white hover:bg-neutral-800 shadow-lg shadow-black/10"
+                className="w-full gap-2 font-semibold text-base mt-4 bg-black text-white hover:bg-neutral-800 shadow-lg shadow-black/10"
               >
                 {isLoading ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span>Registering & Logging In...</span>
+                    <span>Creating Account...</span>
                   </>
                 ) : (
                   <>
-                    <span>Register Account</span>
+                    <span>Create Account</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -296,7 +277,7 @@ export const Register: React.FC = () => {
             <p className="text-sm text-neutral-600">
               Already have an account?{' '}
               <Link to="/login" className="font-semibold text-black hover:underline">
-                Login here
+                Sign In
               </Link>
             </p>
           </CardFooter>

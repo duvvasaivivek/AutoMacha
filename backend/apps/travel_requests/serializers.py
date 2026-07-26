@@ -1,7 +1,32 @@
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 from .models import TravelRequest
+from apps.destinations.models import Destination
 from apps.destinations.serializers import DestinationSerializer
+
+User = get_user_model()
+
+
+class UserMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username')
+
+
+class DestinationMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Destination
+        fields = ('id', 'name')
+
+
+class TravelRequestListSerializer(serializers.ModelSerializer):
+    destination = DestinationMinimalSerializer(read_only=True)
+    user = UserMinimalSerializer(read_only=True)
+
+    class Meta:
+        model = TravelRequest
+        fields = ('id', 'destination', 'user', 'direction', 'travel_datetime', 'status', 'created_at')
 
 
 class TravelRequestSerializer(serializers.ModelSerializer):

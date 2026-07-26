@@ -5,6 +5,7 @@ import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { Dashboard } from '@/pages/Dashboard';
 import { CreateTravelRequest } from '@/pages/CreateTravelRequest';
+import { TravelRequestsPage } from '@/pages/TravelRequestsPage';
 import { NotFound } from '@/pages/NotFound';
 import { ProtectedRoute, PublicRoute } from '@/components/common';
 
@@ -17,6 +18,7 @@ export const AppRoutes: React.FC = () => {
       {/* Protected Routes: Only authenticated users should access them */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/travel-requests" element={<TravelRequestsPage />} />
         <Route path="/travel-requests/new" element={<CreateTravelRequest />} />
       </Route>
 
