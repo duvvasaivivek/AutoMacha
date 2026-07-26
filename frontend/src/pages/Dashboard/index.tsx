@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { LayoutDashboard, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks';
 
 export const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8 py-10">
       <div className="w-full max-w-4xl space-y-8">
@@ -19,13 +20,6 @@ export const Dashboard: React.FC = () => {
               <p className="text-sm text-neutral-600">AutoMacha Campus Automation Dashboard</p>
             </div>
           </div>
-
-          <Link to="/">
-            <Button variant="outline" className="gap-2 font-semibold border-neutral-300 hover:bg-neutral-100 text-black">
-              <LogOut className="h-4 w-4" />
-              <span>Sign Out</span>
-            </Button>
-          </Link>
         </div>
 
         {/* Placeholder Content Notice */}
@@ -41,15 +35,29 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent className="text-center py-8 border-t border-neutral-100 bg-neutral-50/50 rounded-b-xl">
             <div className="max-w-lg mx-auto space-y-4">
-              <div className="p-4 rounded-lg border border-neutral-200 bg-white shadow-sm text-left flex items-center gap-4">
-                <div className="h-10 w-10 rounded-full bg-black text-white flex items-center justify-center shrink-0 font-bold">
-                  SV
+              {user ? (
+                <div className="p-4 rounded-lg border border-neutral-200 bg-white shadow-sm text-left flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-black text-white flex items-center justify-center shrink-0 font-bold uppercase">
+                    {user.username.slice(0, 2)}
+                  </div>
+                  <div>
+                    <p className="font-bold text-black">{user.username}</p>
+                    <p className="text-xs text-neutral-500">
+                      {user.institute_email} • {user.branch || 'Student'} • {user.hostel || 'Campus'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-black">Duvva Sai Vivek</p>
-                  <p className="text-xs text-neutral-500">124AD0048@iiitk.ac.in • B.Tech • Kalam Hall Of Residence</p>
+              ) : (
+                <div className="p-4 rounded-lg border border-neutral-200 bg-white shadow-sm text-left flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-full bg-black text-white flex items-center justify-center shrink-0 font-bold">
+                    AM
+                  </div>
+                  <div>
+                    <p className="font-bold text-black">Authenticated Student</p>
+                    <p className="text-xs text-neutral-500">AutoMacha Portal User</p>
+                  </div>
                 </div>
-              </div>
+              )}
               <p className="text-sm text-neutral-500 italic">
                 ⏳ Dashboard modules, automation tools, and custom widgets are ready to be configured as per your upcoming instructions!
               </p>

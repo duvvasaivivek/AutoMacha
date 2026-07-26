@@ -159,6 +159,13 @@ REST_FRAMEWORK = {
     ],
 }
 
+# Custom Authentication Backends (Allows login with Username, Roll Number, or Institute Email)
+AUTHENTICATION_BACKENDS = [
+    'apps.accounts.authentication.MultiFieldModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
 # SimpleJWT Configuration
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),

@@ -2,8 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks';
 
 export const Home: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
       {/* Hero Section */}
@@ -26,18 +29,29 @@ export const Home: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-          <Link to="/login" className="w-full sm:w-auto">
-            <Button size="lg" className="w-full sm:w-auto gap-2 group text-base font-semibold bg-black text-white hover:bg-neutral-800 shadow-xl shadow-black/10">
-              <span>Login to Portal</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/dashboard" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto gap-2 group text-base font-semibold bg-black text-white hover:bg-neutral-800 shadow-xl shadow-black/10">
+                <span>Go to Dashboard</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link to="/login" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto gap-2 group text-base font-semibold bg-black text-white hover:bg-neutral-800 shadow-xl shadow-black/10">
+                  <span>Login to Portal</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
 
-          <Link to="/register" className="w-full sm:w-auto">
-            <Button variant="outline" size="lg" className="w-full sm:w-auto text-base font-semibold bg-white border-neutral-300 text-neutral-800 hover:bg-neutral-100 hover:text-black hover:border-neutral-400 shadow-sm">
-              Create New Account
-            </Button>
-          </Link>
+              <Link to="/register" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto text-base font-semibold bg-white border-neutral-300 text-neutral-800 hover:bg-neutral-100 hover:text-black hover:border-neutral-400 shadow-sm">
+                  Create New Account
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

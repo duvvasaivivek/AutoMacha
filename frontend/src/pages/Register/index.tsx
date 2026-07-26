@@ -1,101 +1,203 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { UserPlus, ArrowRight, User, Mail, Hash, Lock } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import axios from 'axios';
+import { UserPlus, ArrowRight, User, Mail, Hash, Lock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { register as registerUser, login } from '@/services/auth.service';
+import { useAuth } from '@/hooks';
+
+const registerSchema = z.object({
+  username: z.string().min(2, 'Username / Full Name must be at least 2 characters'),
+  institute_email: z
+    .string()
+    .min(1, 'Institute Email is required')
+    .email('Please enter a valid email address')
+    .regex(/@iiitk\.ac\.in$/i, 'Must be an @iiitk.ac.in institute email'),
+  roll_number: z.string().min(1, 'Roll Number is required'),
+  branch: z.string().min(1, 'Please select a course'),
+  hostel: z.string().min(1, 'Please select a hostel'),
+  gender: z.string().min(1, 'Please select your gender'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const Register: React.FC = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // No backend integration or state management in this step as per requirements
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: '',
+      institute_email: '',
+      roll_number: '',
+      branch: '',
+      hostel: '',
+      gender: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (data: RegisterFormValues) => {
+    setIsLoading(true);
+    setErrorMessage(null);
+
+    try {
+      // 1. Register the new account in the backend
+      await registerUser(data);
+
+      // 2. Automatically log the user in after registration per requirement #7
+      const tokenResponse = await login({
+        username: data.username,
+        password: data.password,
+      });
+
+      // 3. Store tokens and update global auth state
+      await authLogin(tokenResponse.access, tokenResponse.refresh);
+
+      // 4. Redirect to home / dashboard
+      navigate('/');
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.data) {
+          const errData = error.response.data;
+          // Format Django DRF validation errors
+          if (typeof errData === 'object' && errData !== null) {
+            const firstKey = Object.keys(errData)[0];
+            const val = (errData as Record<string, unknown>)[firstKey];
+            if (Array.isArray(val) && val.length > 0) {
+              setErrorMessage(`${firstKey.toUpperCase()}: ${val[0]}`);
+              return;
+            } else if (typeof val === 'string') {
+              setErrorMessage(val);
+              return;
+            } else if (errData.detail && typeof errData.detail === 'string') {
+              setErrorMessage(errData.detail);
+              return;
+            }
+          }
+        }
+        setErrorMessage('Registration failed. Please check your details and try again.');
+      } else {
+        setErrorMessage('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 py-10">
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/30 mb-2 shadow-sm">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 text-black ring-1 ring-neutral-200 mb-2 shadow-sm">
             <UserPlus className="h-6 w-6" />
           </div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">Create Your Account</h2>
-          <p className="text-sm text-slate-600">
+          <h2 className="text-3xl font-extrabold tracking-tight text-black">Create Your Account</h2>
+          <p className="text-sm text-neutral-600">
             Join AutoMacha to automate your campus workflows
           </p>
         </div>
 
-        <Card className="border-slate-200/80 shadow-2xl bg-white/95 backdrop-blur-2xl">
+        <Card className="border-neutral-200 shadow-xl bg-white">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl font-bold text-slate-900">Student Registration</CardTitle>
-            <CardDescription className="text-slate-600">
+            <CardTitle className="text-xl font-bold text-black">Student Registration</CardTitle>
+            <CardDescription className="text-neutral-600">
               Enter your official institute details below to register.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {errorMessage && (
+              <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-800 animate-in fade-in-50 duration-200">
+                <AlertCircle className="h-5 w-5 shrink-0 text-red-600 mt-0.5" />
+                <div className="flex-1 font-medium">{errorMessage}</div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Full Name (maps to backend username attribute) */}
+                {/* Full Name / Username */}
                 <div className="space-y-2">
-                  <Label htmlFor="username" className="text-slate-700 font-medium">Full Name</Label>
+                  <Label htmlFor="username" className="text-neutral-800 font-medium">Username / Full Name</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                    <User className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
                     <Input
                       id="username"
-                      name="username"
                       type="text"
                       placeholder="e.g. Duvva Sai Vivek"
-                      className="pl-9"
-                      required
+                      className={`pl-9 ${errors.username ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      disabled={isLoading}
+                      {...register('username')}
                     />
                   </div>
+                  {errors.username && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.username.message}</p>
+                  )}
                 </div>
 
                 {/* Institute Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="institute_email" className="text-slate-700 font-medium">Institute Email</Label>
+                  <Label htmlFor="institute_email" className="text-neutral-800 font-medium">Institute Email</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
                     <Input
                       id="institute_email"
-                      name="institute_email"
                       type="email"
                       placeholder="e.g. 124AD0048@iiitk.ac.in"
-                      pattern=".+@iiitk\.ac\.in"
-                      title="Please enter your valid @iiitk.ac.in institute email address"
-                      className="pl-9"
-                      required
+                      className={`pl-9 ${errors.institute_email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      disabled={isLoading}
+                      {...register('institute_email')}
                     />
                   </div>
+                  {errors.institute_email && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.institute_email.message}</p>
+                  )}
                 </div>
 
                 {/* Roll Number */}
                 <div className="space-y-2">
-                  <Label htmlFor="roll_number" className="text-slate-700 font-medium">Roll Number</Label>
+                  <Label htmlFor="roll_number" className="text-neutral-800 font-medium">Roll Number</Label>
                   <div className="relative">
-                    <Hash className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                    <Hash className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
                     <Input
                       id="roll_number"
-                      name="roll_number"
                       type="text"
                       placeholder="e.g. 124AD0048"
-                      className="pl-9"
-                      required
+                      className={`pl-9 ${errors.roll_number ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                      disabled={isLoading}
+                      {...register('roll_number')}
                     />
                   </div>
+                  {errors.roll_number && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.roll_number.message}</p>
+                  )}
                 </div>
 
-                {/* Course (maps to backend 'branch' attribute) */}
+                {/* Course */}
                 <div className="space-y-2">
-                  <Label htmlFor="course" className="text-slate-700 font-medium">Course</Label>
+                  <Label htmlFor="course" className="text-neutral-800 font-medium">Course</Label>
                   <select
                     id="course"
-                    name="branch"
-                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:border-primary/50 transition-all duration-200 shadow-sm"
-                    required
-                    defaultValue=""
+                    disabled={isLoading}
+                    className={`flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-black ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-all duration-200 shadow-sm ${
+                      errors.branch ? 'border-red-500' : ''
+                    }`}
+                    {...register('branch')}
                   >
-                    <option value="" disabled className="text-slate-400">Select Course</option>
+                    <option value="" disabled className="text-neutral-400">Select Course</option>
                     <option value="B.Tech">B.Tech</option>
                     <option value="M.Tech">M.Tech</option>
                     <option value="PhD">PhD</option>
@@ -103,70 +205,97 @@ export const Register: React.FC = () => {
                     <option value="Project Assistants">Project Assistants</option>
                     <option value="Interns">Interns</option>
                   </select>
+                  {errors.branch && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.branch.message}</p>
+                  )}
                 </div>
 
                 {/* Hostel */}
                 <div className="space-y-2">
-                  <Label htmlFor="hostel" className="text-slate-700 font-medium">Hostel</Label>
+                  <Label htmlFor="hostel" className="text-neutral-800 font-medium">Hostel</Label>
                   <select
                     id="hostel"
-                    name="hostel"
-                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:border-primary/50 transition-all duration-200 shadow-sm"
-                    required
-                    defaultValue=""
+                    disabled={isLoading}
+                    className={`flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-black ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-all duration-200 shadow-sm ${
+                      errors.hostel ? 'border-red-500' : ''
+                    }`}
+                    {...register('hostel')}
                   >
-                    <option value="" disabled className="text-slate-400">Select Hall of Residence</option>
+                    <option value="" disabled className="text-neutral-400">Select Hall of Residence</option>
                     <option value="Kalam Hall Of Residence">Kalam Hall Of Residence</option>
                     <option value="Kalpana Chawla Hall Of Residence">Kalpana Chawla Hall Of Residence</option>
                     <option value="MVHR">MVHR</option>
                     <option value="SRKH">SRKH</option>
                   </select>
+                  {errors.hostel && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.hostel.message}</p>
+                  )}
                 </div>
 
                 {/* Gender */}
                 <div className="space-y-2">
-                  <Label htmlFor="gender" className="text-slate-700 font-medium">Gender</Label>
+                  <Label htmlFor="gender" className="text-neutral-800 font-medium">Gender</Label>
                   <select
                     id="gender"
-                    name="gender"
-                    className="flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-900 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:border-primary/50 transition-all duration-200 shadow-sm"
-                    required
-                    defaultValue=""
+                    disabled={isLoading}
+                    className={`flex h-10 w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-black ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 transition-all duration-200 shadow-sm ${
+                      errors.gender ? 'border-red-500' : ''
+                    }`}
+                    {...register('gender')}
                   >
-                    <option value="" disabled className="text-slate-400">Select Gender</option>
+                    <option value="" disabled className="text-neutral-400">Select Gender</option>
                     <option value="M">Male</option>
                     <option value="F">Female</option>
                     <option value="O">Other</option>
                   </select>
+                  {errors.gender && (
+                    <p className="text-xs text-red-600 font-medium mt-1">{errors.gender.message}</p>
+                  )}
                 </div>
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-700 font-medium">Password</Label>
+                <Label htmlFor="password" className="text-neutral-800 font-medium">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-400" />
                   <Input
                     id="password"
-                    name="password"
                     type="password"
                     placeholder="Create a strong password (min. 8 characters)"
-                    className="pl-9"
-                    required
+                    className={`pl-9 ${errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    disabled={isLoading}
+                    {...register('password')}
                   />
                 </div>
+                {errors.password && (
+                  <p className="text-xs text-red-600 font-medium mt-1">{errors.password.message}</p>
+                )}
               </div>
 
-              <Button type="submit" className="w-full gap-2 font-semibold text-base shadow-lg shadow-primary/20">
-                <span>Register Account</span>
-                <ArrowRight className="h-4 w-4" />
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="w-full gap-2 font-semibold text-base mt-2 bg-black text-white hover:bg-neutral-800 shadow-lg shadow-black/10"
+              >
+                {isLoading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    <span>Registering & Logging In...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Register Account</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
               </Button>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-center border-t border-slate-100 pt-4 pb-6">
-            <p className="text-sm text-slate-600">
+          <CardFooter className="flex justify-center border-t border-neutral-100 pt-4 pb-6">
+            <p className="text-sm text-neutral-600">
               Already have an account?{' '}
-              <Link to="/login" className="font-semibold text-primary hover:underline">
+              <Link to="/login" className="font-semibold text-black hover:underline">
                 Login here
               </Link>
             </p>
