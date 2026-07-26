@@ -43,3 +43,12 @@ export interface TravelRequestFilters {
   destination?: string | number;
   direction?: Direction | '';
 }
+
+export interface TravelRequestMatch {
+  id: number;
+  destination: string | { id: number; name: string };
+  username: string;
+  direction: Direction;
+  travel_datetime: string;
+  time_difference: number;
+}

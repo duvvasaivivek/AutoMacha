@@ -16,10 +16,13 @@ export interface RegisterData {
   username: string;
   institute_email: string;
   roll_number: string;
-  branch: string;
-  hostel: string;
-  gender: string;
+  branch?: string;
+  hostel?: string;
+  gender?: string;
   password?: string;
+  first_name?: string;
+  last_name?: string;
+  phone_number?: string;
 }
 
 export async function login(credentials: LoginCredentials): Promise<TokenResponse> {

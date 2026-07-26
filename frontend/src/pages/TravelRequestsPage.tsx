@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getDestinations } from '@/services/destination.service';
 import { getTravelRequests } from '@/services/travelRequest.service';
+import { useAuth } from '@/hooks';
 import type { Destination, Direction, TravelRequestListItem, TravelRequestFilters } from '@/types';
 
 function formatDate(isoString: string): string {
@@ -45,6 +46,7 @@ function formatTime(isoString: string): string {
 }
 
 export const TravelRequestsPage: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [requests, setRequests] = useState<TravelRequestListItem[]>([]);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -217,6 +219,10 @@ export const TravelRequestsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {requests.map((req) => {
               const isLeaving = req.direction === 'FROM_CAMPUS';
+              const isOwner = Boolean(
+                currentUser && (req.user.id === currentUser.id || req.user.username === currentUser.username)
+              );
+
               return (
                 <Card
                   key={req.id}
@@ -272,8 +278,16 @@ export const TravelRequestsPage: React.FC = () => {
                     </CardContent>
                   </div>
 
-                  <div className="bg-neutral-50/40 px-5 py-2.5 border-t border-neutral-100 text-[11px] text-neutral-400 font-medium flex items-center justify-end">
+                  <div className="bg-neutral-50/40 px-5 py-2.5 border-t border-neutral-100 text-[11px] text-neutral-400 font-medium flex items-center justify-between">
                     <span>Posted {formatDate(req.created_at)}</span>
+                    {isOwner && (
+                      <Link to={`/travel-requests/${req.id}/matches`}>
+                        <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-neutral-300 text-black hover:bg-black hover:text-white hover:border-black transition-all gap-1">
+                          <span>View Matches</span>
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </Card>
               );

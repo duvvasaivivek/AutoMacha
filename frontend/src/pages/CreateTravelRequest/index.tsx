@@ -220,12 +220,12 @@ export const CreateTravelRequest: React.FC = () => {
 
           <CardContent className="p-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {apiError && (
+              {(apiError || destinationsError) && (
                 <div className="p-4 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
                   <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold">Error</p>
-                    <p className="text-red-700 mt-0.5">{apiError}</p>
+                    <p className="text-red-700 mt-0.5">{apiError || destinationsError}</p>
                   </div>
                 </div>
               )}

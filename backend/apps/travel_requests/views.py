@@ -1,7 +1,10 @@
+from datetime import timedelta
+from django.shortcuts import get_object_or_404
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from .models import TravelRequest
-from .serializers import TravelRequestSerializer, TravelRequestListSerializer
+from .serializers import TravelRequestSerializer, TravelRequestListSerializer, TravelRequestMatchSerializer
 
 
 class TravelRequestListCreateView(generics.ListCreateAPIView):
@@ -30,3 +33,40 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class TravelRequestMatchesView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = TravelRequestMatchSerializer
+
+    def get_queryset(self):
+        pk = self.kwargs.get('pk') or self.kwargs.get('id')
+        travel_request = get_object_or_404(TravelRequest, pk=pk)
+
+        # Verify the authenticated user owns the request
+        if travel_request.user != self.request.user:
+            raise PermissionDenied("You do not have permission to view matches for this travel request.")
+
+        # Calculate time window: ±30 minutes
+        time_window_start = travel_request.travel_datetime - timedelta(minutes=30)
+        time_window_end = travel_request.travel_datetime + timedelta(minutes=30)
+
+        # Return only OPEN travel requests with same destination, direction, different user, within time window
+        candidates = TravelRequest.objects.filter(
+            status='OPEN',
+            destination=travel_request.destination,
+            direction=travel_request.direction,
+            travel_datetime__gte=time_window_start,
+            travel_datetime__lte=time_window_end,
+        ).exclude(
+            user=self.request.user
+        ).select_related('destination', 'user')
+
+        # Calculate time difference and sort by smallest time difference
+        candidates_list = list(candidates)
+        for cand in candidates_list:
+            diff_seconds = abs((cand.travel_datetime - travel_request.travel_datetime).total_seconds())
+            cand.time_difference = int(round(diff_seconds / 60.0))
+
+        candidates_list.sort(key=lambda x: (x.time_difference, x.travel_datetime, x.id))
+        return candidates_list

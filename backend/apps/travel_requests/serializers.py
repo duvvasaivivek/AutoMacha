@@ -46,3 +46,13 @@ class TravelRequestSerializer(serializers.ModelSerializer):
         if value < timezone.now():
             raise serializers.ValidationError("Travel date and time cannot be in the past.")
         return value
+
+
+class TravelRequestMatchSerializer(serializers.ModelSerializer):
+    destination = serializers.CharField(source='destination.name', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    time_difference = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = TravelRequest
+        fields = ('id', 'destination', 'username', 'direction', 'travel_datetime', 'time_difference')

@@ -1,5 +1,5 @@
 import { api } from './index';
-import type { TravelRequest, TravelRequestListItem, CreateTravelRequestPayload, TravelRequestFilters } from '@/types';
+import type { TravelRequest, TravelRequestListItem, CreateTravelRequestPayload, TravelRequestFilters, TravelRequestMatch } from '@/types';
 
 export async function createTravelRequest(payload: CreateTravelRequestPayload): Promise<TravelRequest> {
   const response = await api.post<TravelRequest>('/travel-requests/', payload);
@@ -18,9 +18,15 @@ export async function getTravelRequests(filters?: TravelRequestFilters): Promise
   return response.data;
 }
 
+export async function getMatches(requestId: number | string): Promise<TravelRequestMatch[]> {
+  const response = await api.get<TravelRequestMatch[]>(`/travel-requests/${requestId}/matches/`);
+  return response.data;
+}
+
 export const travelRequestService = {
   createTravelRequest,
   getTravelRequests,
+  getMatches,
 };
 
 export default travelRequestService;
