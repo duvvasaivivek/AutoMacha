@@ -175,3 +175,52 @@ class JWTAuthenticationAPITests(APITestCase):
     def test_default_authentication_class_is_jwt(self):
         """Verify that DRF uses JWTAuthentication as the default authentication class."""
         self.assertIn(JWTAuthentication, api_settings.DEFAULT_AUTHENTICATION_CLASSES)
+
+
+class CurrentUserAPITests(APITestCase):
+    def setUp(self):
+        self.me_url = reverse('accounts:me')
+        self.username = 'mestudent'
+        self.password = 'SecurePassword123!'
+        self.user = User.objects.create_user(
+            username=self.username,
+            password=self.password,
+            institute_email='me@institute.edu',
+            roll_number='CS2026888',
+            branch='Computer Science',
+            hostel='Hostel C',
+            gender='F',
+        )
+        # Obtain access token
+        token_url = reverse('accounts:token_obtain_pair')
+        response = self.client.post(token_url, {'username': self.username, 'password': self.password}, format='json')
+        self.access_token = response.data['access']
+
+    def test_get_current_user_success(self):
+        """Test Scenario 1: Call GET /api/accounts/me/ with valid JWT token and receive profile."""
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.access_token}')
+        response = self.client.get(self.me_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify returned fields
+        expected_fields = {'id', 'username', 'institute_email', 'roll_number', 'branch', 'hostel', 'gender'}
+        self.assertEqual(set(response.data.keys()), expected_fields)
+        self.assertEqual(response.data['username'], self.username)
+        self.assertEqual(response.data['institute_email'], 'me@institute.edu')
+        self.assertEqual(response.data['roll_number'], 'CS2026888')
+
+        # Verify forbidden fields are never exposed
+        for forbidden_field in ['password', 'is_staff', 'is_superuser', 'groups', 'user_permissions', 'last_login']:
+            self.assertNotIn(forbidden_field, response.data)
+
+    def test_get_current_user_unauthorized_no_token(self):
+        """Test Scenario 2: Call without Authorization header and receive HTTP 401."""
+        self.client.credentials()  # No auth headers
+        response = self.client.get(self.me_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_current_user_unauthorized_invalid_token(self):
+        """Test Scenario 3: Call with an invalid token and receive HTTP 401."""
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer invalid_jwt_token_string')
+        response = self.client.get(self.me_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
