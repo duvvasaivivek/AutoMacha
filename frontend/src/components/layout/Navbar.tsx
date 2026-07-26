@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
 
   const publicNavItems = [
     { name: 'Login', path: '/login', icon: LogIn },
@@ -54,6 +54,11 @@ export const Navbar: React.FC = () => {
                   </NavLink>
                 );
               })}
+              {user && (
+                <span className="text-sm font-semibold text-neutral-800 ml-2 px-3 py-1.5 rounded-lg bg-neutral-100 border border-neutral-200">
+                  Hello, {user.username}
+                </span>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -61,7 +66,7 @@ export const Navbar: React.FC = () => {
                 className="ml-2 gap-2 font-semibold border-neutral-300 hover:bg-neutral-100 text-black"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Logout (Temp)</span>
+                <span>Logout</span>
               </Button>
             </>
           ) : (
@@ -106,6 +111,11 @@ export const Navbar: React.FC = () => {
         <div className="md:hidden border-t border-neutral-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg animate-in slide-in-from-top-2 duration-200">
           {isAuthenticated ? (
             <>
+              {user && (
+                <div className="px-4 py-2.5 text-sm font-semibold text-neutral-800 bg-neutral-100 rounded-lg border border-neutral-200 mb-2">
+                  Hello, {user.username}
+                </div>
+              )}
               {authNavItems.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -134,7 +144,7 @@ export const Navbar: React.FC = () => {
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-red-600 hover:bg-red-50 transition-all text-left"
               >
                 <LogOut className="h-5 w-5" />
-                <span>Logout (Temp)</span>
+                <span>Logout</span>
               </button>
             </>
           ) : (
