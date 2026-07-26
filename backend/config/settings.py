@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'apps.accounts.apps.AccountsConfig',
+    'apps.destinations.apps.DestinationsConfig',
+    'apps.travel_requests.apps.TravelRequestsConfig',
 ]
 
 MIDDLEWARE = [

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard } from 'lucide-react';
+import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, Home as HomeIcon, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
 
@@ -14,8 +14,11 @@ export const Navbar: React.FC = () => {
   ];
 
   const authNavItems = [
-    { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+    { name: 'Home', path: '/', icon: HomeIcon },
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'New Request', path: '/travel-requests/new', icon: PlusCircle },
   ];
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white/90 backdrop-blur-xl transition-all shadow-sm">
@@ -79,7 +82,7 @@ export const Navbar: React.FC = () => {
                     `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       isActive
                         ? 'bg-black text-white font-semibold shadow-sm'
-                        : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                          : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
                     }`
                   }
                 >
