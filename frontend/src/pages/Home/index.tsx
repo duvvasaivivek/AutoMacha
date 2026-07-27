@@ -19,7 +19,7 @@ export const Home: React.FC = () => {
       try {
         const data = await getDestinations();
         setDestinations(data);
-      } catch (err) {
+      } catch {
         setError('Failed to load travel destinations.');
       } finally {
         setIsLoading(false);

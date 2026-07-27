@@ -37,7 +37,7 @@ export const Dashboard: React.FC = () => {
     try {
       const data = await getDashboardStats();
       setStats(data);
-    } catch (err: any) {
+    } catch {
       setError('Failed to load dashboard statistics. Please try again.');
     } finally {
       setIsLoading(false);
@@ -56,7 +56,7 @@ export const Dashboard: React.FC = () => {
         day: 'numeric',
         year: 'numeric',
       });
-    } catch (e) {
+    } catch {
       return isoString;
     }
   };
@@ -67,7 +67,7 @@ export const Dashboard: React.FC = () => {
         hour: '2-digit',
         minute: '2-digit',
       });
-    } catch (e) {
+    } catch {
       return isoString;
     }
   };

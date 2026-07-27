@@ -77,7 +77,7 @@ export const TravelRequestsPage: React.FC = () => {
       try {
         const data = await getTravelRequests(activeFilters);
         setRequests(data);
-      } catch (err) {
+      } catch {
         setError('Failed to load travel requests.');
       } finally {
         setIsLoading(false);

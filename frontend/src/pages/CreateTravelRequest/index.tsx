@@ -89,7 +89,7 @@ export const CreateTravelRequest: React.FC = () => {
           setToLocation(preSelectedDestinationId);
           setFromLocation('CAMPUS');
         }
-      } catch (err) {
+      } catch {
         setDestinationsError('Failed to load destinations.');
       } finally {
         setDestinationsLoading(false);
@@ -159,8 +159,8 @@ export const CreateTravelRequest: React.FC = () => {
       });
       setIsSuccess(true);
       setTimeout(() => {
-        navigate('/');
-      }, 2000);
+        navigate('/my-travel-requests');
+      }, 1500);
     } catch (err: any) {
       const errorMessage =
         err?.response?.data?.detail ||

@@ -30,7 +30,7 @@ export const MyTravelRequestsPage: React.FC = () => {
     try {
       const data = await getMyTravelRequests();
       setRequests(data);
-    } catch (err) {
+    } catch {
       setError('Failed to load your travel requests.');
     } finally {
       setIsLoading(false);
@@ -49,7 +49,7 @@ export const MyTravelRequestsPage: React.FC = () => {
     try {
       await cancelTravelRequest(id);
       await fetchMyRequests();
-    } catch (err) {
+    } catch {
       alert('Failed to cancel travel request. It may no longer be open.');
     } finally {
       setCancellingId(null);
@@ -63,7 +63,7 @@ export const MyTravelRequestsPage: React.FC = () => {
         day: 'numeric',
         year: 'numeric',
       });
-    } catch (e) {
+    } catch {
       return isoString;
     }
   };
@@ -74,7 +74,7 @@ export const MyTravelRequestsPage: React.FC = () => {
         hour: '2-digit',
         minute: '2-digit',
       });
-    } catch (e) {
+    } catch {
       return isoString;
     }
   };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -54,7 +54,7 @@ export const ProfilePage: React.FC = () => {
     },
   });
 
-  const loadProfileData = async () => {
+  const loadProfileData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -66,16 +66,16 @@ export const ProfilePage: React.FC = () => {
         gender: (data.gender as any) || '',
         phone_number: data.phone_number || '',
       });
-    } catch (err) {
+    } catch {
       setError('Failed to load profile details. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [reset]);
 
   useEffect(() => {
     loadProfileData();
-  }, []);
+  }, [loadProfileData]);
 
   const onSubmit = async (data: ProfileFormValues) => {
     setIsSaving(true);
