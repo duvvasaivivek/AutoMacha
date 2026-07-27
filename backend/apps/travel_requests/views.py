@@ -86,10 +86,46 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
                 except (ValueError, TypeError):
                     pass
 
+        # Exclude authenticated user's own requests from public exploration list
+        if self.request.user and self.request.user.is_authenticated:
+            queryset = queryset.exclude(user=self.request.user)
+
+            # Support matching_only=true query param to show only rides matching user's open trips
+            if self.request.query_params.get('matching_only') == 'true':
+                my_open_reqs = self.request.user.travel_requests.filter(status='OPEN')
+                if not my_open_reqs.exists():
+                    return queryset.none()
+                from django.db.models import Q
+                match_query = Q()
+                for my_req in my_open_reqs:
+                    start_win = my_req.travel_datetime - timedelta(hours=2)
+                    end_win = my_req.travel_datetime + timedelta(hours=2)
+                    match_query |= Q(
+                        destination=my_req.destination,
+                        direction=my_req.direction,
+                        travel_datetime__range=(start_win, end_win)
+                    )
+                queryset = queryset.filter(match_query)
+
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        travel_request = serializer.save(user=self.request.user)
+        from ..notifications.services import notify_new_match_found
+        time_window_start = travel_request.travel_datetime - timedelta(minutes=30)
+        time_window_end = travel_request.travel_datetime + timedelta(minutes=30)
+        candidates = TravelRequest.objects.filter(
+            status='OPEN',
+            destination=travel_request.destination,
+            direction=travel_request.direction,
+            travel_datetime__gte=time_window_start,
+            travel_datetime__lte=time_window_end,
+        ).exclude(user=self.request.user).select_related('user')
+
+        if candidates.exists():
+            notify_new_match_found(self.request.user, travel_request.id)
+            for cand in candidates:
+                notify_new_match_found(cand.user, cand.id)
 
 
 class MyTravelRequestsView(generics.ListAPIView):
@@ -127,7 +163,22 @@ class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
     def perform_update(self, serializer):
         if serializer.instance.status != 'OPEN':
             raise ValidationError("Only open travel requests can be edited.")
-        serializer.save()
+        travel_request = serializer.save()
+        from ..notifications.services import notify_new_match_found
+        time_window_start = travel_request.travel_datetime - timedelta(minutes=30)
+        time_window_end = travel_request.travel_datetime + timedelta(minutes=30)
+        candidates = TravelRequest.objects.filter(
+            status='OPEN',
+            destination=travel_request.destination,
+            direction=travel_request.direction,
+            travel_datetime__gte=time_window_start,
+            travel_datetime__lte=time_window_end,
+        ).exclude(user=self.request.user).select_related('user')
+
+        if candidates.exists():
+            notify_new_match_found(self.request.user, travel_request.id)
+            for cand in candidates:
+                notify_new_match_found(cand.user, cand.id)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -193,3 +244,62 @@ class TravelRequestMatchesView(generics.ListAPIView):
 
         candidates_list.sort(key=lambda x: (x.time_difference, x.travel_datetime, x.id))
         return candidates_list
+
+
+from rest_framework.views import APIView
+
+class TravelRequestShareView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None, id=None):
+        req_id = pk or id
+        travel_request = get_object_or_404(TravelRequest, pk=req_id)
+        if travel_request.user == request.user:
+            raise ValidationError("You cannot request a ride share on your own travel request.")
+        if travel_request.status != 'OPEN':
+            raise ValidationError("You can only request a ride share on open travel requests.")
+        
+        from ..notifications.services import notify_ride_share_request_received
+        notify_ride_share_request_received(
+            receiver=travel_request.user,
+            sender_username=request.user.username,
+            related_object_id=travel_request.id
+        )
+        return Response({"message": "Ride share request sent successfully!"}, status=status.HTTP_200_OK)
+
+
+class TravelRequestRespondShareView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk=None, id=None):
+        req_id = pk or id
+        travel_request = get_object_or_404(TravelRequest, pk=req_id)
+        if travel_request.user != request.user:
+            raise PermissionDenied("Only the owner of the travel request can respond to ride share requests.")
+        
+        sender_username = request.data.get('sender_username')
+        action = request.data.get('action')
+        if not sender_username or action not in ['ACCEPT', 'DECLINE']:
+            raise ValidationError("Valid sender_username and action ('ACCEPT' or 'DECLINE') are required.")
+        
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        sender_user = get_object_or_404(User, username=sender_username)
+        
+        from ..notifications.services import notify_ride_share_request_accepted, notify_ride_share_request_declined
+        if action == 'ACCEPT':
+            notify_ride_share_request_accepted(
+                sender=sender_user,
+                acceptor_username=request.user.username,
+                related_object_id=travel_request.id
+            )
+            msg = f"Accepted ride share request from @{sender_username}."
+        else:
+            notify_ride_share_request_declined(
+                sender=sender_user,
+                decliner_username=request.user.username,
+                related_object_id=travel_request.id
+            )
+            msg = f"Declined ride share request from @{sender_username}."
+            
+        return Response({"message": msg}, status=status.HTTP_200_OK)

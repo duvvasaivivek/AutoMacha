@@ -5,6 +5,8 @@ from .views import (
     TravelRequestDetailView,
     TravelRequestCancelView,
     TravelRequestMatchesView,
+    TravelRequestShareView,
+    TravelRequestRespondShareView,
 )
 
 app_name = 'travel_requests'
@@ -18,4 +20,8 @@ urlpatterns = [
     path('<int:id>/cancel/', TravelRequestCancelView.as_view(), name='travel-request-cancel-id'),
     path('<int:pk>/matches/', TravelRequestMatchesView.as_view(), name='travel-request-matches'),
     path('<int:id>/matches/', TravelRequestMatchesView.as_view(), name='travel-request-matches-id'),
+    path('<int:pk>/request-share/', TravelRequestShareView.as_view(), name='travel-request-share'),
+    path('<int:id>/request-share/', TravelRequestShareView.as_view(), name='travel-request-share-id'),
+    path('<int:pk>/respond-share/', TravelRequestRespondShareView.as_view(), name='travel-request-respond-share'),
+    path('<int:id>/respond-share/', TravelRequestRespondShareView.as_view(), name='travel-request-respond-share-id'),
 ]

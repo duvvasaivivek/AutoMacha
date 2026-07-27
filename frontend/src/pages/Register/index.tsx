@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { register as registerUser, login } from '@/services/auth.service';
 import { useAuth } from '@/hooks';
+import { BRANCH_OPTIONS, HOSTEL_OPTIONS } from '@/constants/userOptions';
+
 
 const registerSchema = z
   .object({
@@ -234,24 +236,32 @@ export const Register: React.FC = () => {
                 <p className="text-xs text-neutral-500 mb-4">Optional Student Information</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="branch" className="text-neutral-800 font-medium text-xs">Branch</Label>
-                    <Input
+                    <Label htmlFor="branch" className="text-neutral-800 font-medium text-xs">Course</Label>
+                    <select
                       id="branch"
-                      type="text"
-                      placeholder="e.g. AI & DS"
                       disabled={isLoading}
                       {...register('branch')}
-                    />
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Select Course</option>
+                      {BRANCH_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hostel" className="text-neutral-800 font-medium text-xs">Hostel & Room No.</Label>
-                    <Input
+                    <Label htmlFor="hostel" className="text-neutral-800 font-medium text-xs">Hostel</Label>
+                    <select
                       id="hostel"
-                      type="text"
-                      placeholder="e.g. KALAM HALL, R-102"
                       disabled={isLoading}
                       {...register('hostel')}
-                    />
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">Select Hostel</option>
+                      {HOSTEL_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

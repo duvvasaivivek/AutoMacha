@@ -6,6 +6,10 @@ export type Status = 'OPEN' | 'CLOSED' | 'CANCELLED' | 'EXPIRED';
 export interface TravelRequestUser {
   id: number;
   username: string;
+  phone_number?: string;
+  institute_email?: string;
+  branch?: string;
+  hostel?: string;
 }
 
 export interface TravelRequestDestination {
@@ -21,6 +25,8 @@ export interface TravelRequestListItem {
   travel_datetime: string;
   status: Status;
   created_at: string;
+  is_match?: boolean;
+  match_info?: string;
 }
 
 export interface MyTravelRequest {
@@ -36,6 +42,7 @@ export interface TravelRequest {
   id: number;
   destination: number;
   destination_details?: Destination;
+  user?: TravelRequestUser;
   direction: Direction;
   travel_datetime: string;
   status: Status;
@@ -61,11 +68,13 @@ export interface TravelRequestFilters {
   date?: string;
   from_datetime?: string;
   to_datetime?: string;
+  matching_only?: boolean | string;
 }
 
 export interface TravelRequestMatch {
   id: number;
   destination: string | { id: number; name: string };
+  user?: TravelRequestUser;
   username: string;
   direction: Direction;
   travel_datetime: string;

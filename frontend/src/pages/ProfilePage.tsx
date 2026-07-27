@@ -21,6 +21,8 @@ import { Button } from '@/components/ui/button';
 import { getProfile, updateProfile } from '@/services/profile.service';
 import { useAuth } from '@/hooks';
 import type { User } from '@/types';
+import { BRANCH_OPTIONS, HOSTEL_OPTIONS } from '@/constants/userOptions';
+
 
 const profileSchema = z.object({
   branch: z.string().max(100, 'Branch must be at most 100 characters'),
@@ -211,7 +213,7 @@ export const ProfilePage: React.FC = () => {
                   Personal & Contact Details
                 </CardTitle>
                 <CardDescription className="text-xs text-neutral-500 mt-1">
-                  Update your study branch, hostel residence, and optional phone contact for peer coordination.
+                  Update your study course, hostel residence, and optional phone contact for peer coordination.
                 </CardDescription>
               </CardHeader>
 
@@ -235,15 +237,18 @@ export const ProfilePage: React.FC = () => {
                   <div className="space-y-1.5">
                     <label htmlFor="field-branch" className="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
                       <Building2 className="h-3.5 w-3.5 text-neutral-600" />
-                      <span>Branch / Department</span>
+                      <span>Course</span>
                     </label>
-                    <input
+                    <select
                       id="field-branch"
-                      type="text"
-                      placeholder="e.g., Computer Science and Engineering"
                       {...register('branch')}
-                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-black shadow-sm transition-all placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    />
+                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-black shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                    >
+                      <option value="">Select Course</option>
+                      {BRANCH_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                     {errors.branch && (
                       <p className="text-xs font-bold text-red-600 mt-1">{errors.branch.message}</p>
                     )}
@@ -255,13 +260,16 @@ export const ProfilePage: React.FC = () => {
                       <Home className="h-3.5 w-3.5 text-neutral-600" />
                       <span>Hostel / Residence</span>
                     </label>
-                    <input
+                    <select
                       id="field-hostel"
-                      type="text"
-                      placeholder="e.g., Brahmaputra Hostel, Room 204"
                       {...register('hostel')}
-                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-black shadow-sm transition-all placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    />
+                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-black shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                    >
+                      <option value="">Select Hostel</option>
+                      {HOSTEL_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                     {errors.hostel && (
                       <p className="text-xs font-bold text-red-600 mt-1">{errors.hostel.message}</p>
                     )}

@@ -12,6 +12,8 @@ import {
   ArrowRight,
   Search,
   X,
+  Sparkles,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -19,6 +21,7 @@ import { getDestinations } from '@/services/destination.service';
 import { getTravelRequests } from '@/services/travelRequest.service';
 import { useAuth } from '@/hooks';
 import type { Destination, Direction, TravelRequestListItem, TravelRequestFilters, Status } from '@/types';
+import { RideConnectModal } from '@/components/RideConnectModal';
 
 function formatDate(isoString: string): string {
   try {
@@ -52,6 +55,7 @@ export const TravelRequestsPage: React.FC = () => {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<{ user: any; destName: string; dateStr: string; reqId: number } | null>(null);
 
   // Local filter input state
   const [destInput, setDestInput] = useState<string>('');
@@ -62,7 +66,11 @@ export const TravelRequestsPage: React.FC = () => {
   const [toTimeInput, setToTimeInput] = useState<string>('');
 
   // Applied filter state
-  const [activeFilters, setActiveFilters] = useState<TravelRequestFilters>({ status: 'OPEN' });
+  const [filterMode, setFilterMode] = useState<'MATCHES' | 'ALL'>(currentUser ? 'MATCHES' : 'ALL');
+  const [activeFilters, setActiveFilters] = useState<TravelRequestFilters>({
+    status: 'OPEN',
+    matching_only: currentUser ? true : undefined,
+  });
 
   useEffect(() => {
     getDestinations()
@@ -111,6 +119,10 @@ export const TravelRequestsPage: React.FC = () => {
       }
     }
 
+    if (filterMode === 'MATCHES') {
+      filters.matching_only = true;
+    }
+
     setActiveFilters(filters);
   };
 
@@ -121,7 +133,10 @@ export const TravelRequestsPage: React.FC = () => {
     setDateInput('');
     setFromTimeInput('');
     setToTimeInput('');
-    setActiveFilters({ status: 'OPEN' });
+    setActiveFilters({
+      status: 'OPEN',
+      matching_only: filterMode === 'MATCHES' ? true : undefined,
+    });
   };
 
   const hasActiveFilters = Boolean(
@@ -323,8 +338,52 @@ export const TravelRequestsPage: React.FC = () => {
 
       {/* Results Section */}
       <div className="w-full space-y-6">
+        {currentUser && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-neutral-100/80 p-1.5 rounded-2xl border border-neutral-200">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterMode('MATCHES');
+                  setActiveFilters((prev) => ({ ...prev, matching_only: true }));
+                }}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  filterMode === 'MATCHES'
+                    ? 'bg-black text-white shadow-md'
+                    : 'text-neutral-600 hover:text-black hover:bg-white/60'
+                }`}
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                <span>Ride Matches for My Trips</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterMode('ALL');
+                  setActiveFilters((prev) => {
+                    const { matching_only: _matching_only, ...rest } = prev;
+                    return rest;
+                  });
+                }}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                  filterMode === 'ALL'
+                    ? 'bg-black text-white shadow-md'
+                    : 'text-neutral-600 hover:text-black hover:bg-white/60'
+                }`}
+              >
+                <span>Explore All Campus Rides</span>
+              </button>
+            </div>
+            <div className="text-xs font-medium text-neutral-500 px-3 hidden md:block">
+              {filterMode === 'MATCHES'
+                ? 'Showing rides from other students that match your active travel plans.'
+                : 'Showing all open travel requests across campus (excluding your own).'}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs font-bold text-neutral-500 uppercase tracking-wider">
-          <span>Available Rides</span>
+          <span>{filterMode === 'MATCHES' ? '✨ Compatible Rides Found' : 'Available Rides'}</span>
           {!isLoading && !error && (
             <span className="bg-neutral-100 text-neutral-800 px-3 py-1 rounded-full border border-neutral-200">
               {requests.length} Found
@@ -349,10 +408,40 @@ export const TravelRequestsPage: React.FC = () => {
         {!isLoading && !error && requests.length === 0 && (
           <div className="max-w-md mx-auto my-12 p-12 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50/50 text-center space-y-4">
             <div className="space-y-1">
-              <h3 className="font-bold text-black text-lg">No requests found.</h3>
+              <h3 className="font-bold text-black text-lg">
+                {filterMode === 'MATCHES' ? 'No matching rides found.' : 'No requests found.'}
+              </h3>
+              <p className="text-xs text-neutral-500">
+                {filterMode === 'MATCHES'
+                  ? "We couldn't find any open rides from other students that match your active travel requests right now."
+                  : "No open travel requests match your current filters."}
+              </p>
             </div>
-            {hasActiveFilters ? (
-              <Button variant="outline" size="sm" onClick={handleResetFilters} className="font-semibold">
+            {filterMode === 'MATCHES' ? (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setFilterMode('ALL');
+                    setActiveFilters((prev) => {
+                      const { matching_only: _matching_only, ...rest } = prev;
+                      return rest;
+                    });
+                  }}
+                  className="font-semibold text-xs border-neutral-300 hover:bg-neutral-100"
+                >
+                  Browse All Campus Rides
+                </Button>
+                <Link to="/travel-requests/new">
+                  <Button size="sm" className="bg-black text-white hover:bg-neutral-800 font-semibold text-xs gap-1.5">
+                    <span>Create Request</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </Link>
+              </div>
+            ) : hasActiveFilters ? (
+              <Button variant="outline" size="sm" onClick={handleResetFilters} className="font-semibold border-neutral-300 hover:bg-neutral-100">
                 Reset Filters
               </Button>
             ) : (
@@ -377,9 +466,22 @@ export const TravelRequestsPage: React.FC = () => {
               return (
                 <Card
                   key={req.id}
-                  className="group relative overflow-hidden border-neutral-200/80 bg-white hover:shadow-xl hover:border-black transition-all duration-300 flex flex-col justify-between rounded-2xl"
+                  className={`group relative overflow-hidden bg-white hover:shadow-xl transition-all duration-300 flex flex-col justify-between rounded-2xl border ${
+                    req.is_match ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500/20' : 'border-neutral-200/80 hover:border-black'
+                  }`}
                 >
                   <div>
+                    {req.is_match && (
+                      <div className="bg-emerald-600 text-white px-5 py-2.5 text-xs font-extrabold flex items-center justify-between shadow-sm">
+                        <span className="flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
+                          <span>✨ RIDE MATCH</span>
+                        </span>
+                        <span className="text-[11px] font-semibold opacity-95 truncate max-w-[190px]">
+                          {req.match_info || 'Compatible with your trip'}
+                        </span>
+                      </div>
+                    )}
                     <CardHeader className="bg-neutral-50/60 border-b border-neutral-100 px-5 py-4 flex flex-row items-center justify-between gap-2 space-y-0">
                       <div className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-700 bg-white px-2.5 py-1 rounded-lg border border-neutral-200 shadow-2xs">
                         <Navigation className={`h-3.5 w-3.5 text-black ${isLeaving ? 'rotate-45' : '-rotate-135'}`} />
@@ -426,16 +528,41 @@ export const TravelRequestsPage: React.FC = () => {
                     </CardContent>
                   </div>
 
-                  <div className="bg-neutral-50/40 px-5 py-2.5 border-t border-neutral-100 text-[11px] text-neutral-400 font-medium flex items-center justify-between">
+                  <div className="bg-neutral-50/40 px-5 py-2.5 border-t border-neutral-100 text-[11px] text-neutral-400 font-medium flex items-center justify-between gap-2">
                     <span>Posted {formatDate(req.created_at)}</span>
-                    {isOwner && req.status === 'OPEN' && (
-                      <Link to={`/travel-requests/${req.id}/matches`}>
-                        <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-neutral-300 text-black hover:bg-black hover:text-white hover:border-black transition-all gap-1">
-                          <span>View Matches</span>
-                          <ArrowRight className="h-3 w-3" />
+                    <div className="flex items-center gap-2">
+                      {req.is_match && !isOwner && (
+                        <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 text-[11px] shadow-2xs">
+                          <Sparkles className="h-3 w-3 text-emerald-600" />
+                          <span>Compatible</span>
+                        </span>
+                      )}
+                      {!isOwner && req.status === 'OPEN' && (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setSelectedPartner({
+                              user: req.user,
+                              destName: req.destination.name,
+                              dateStr: `${formatDate(req.travel_datetime)} at ${formatTime(req.travel_datetime)}`,
+                              reqId: req.id,
+                            });
+                          }}
+                          className="bg-black text-white hover:bg-neutral-800 font-bold text-xs gap-1 h-7 px-2.5 shadow-2xs"
+                        >
+                          <MessageCircle className="h-3 w-3 text-emerald-400" />
+                          <span>Connect & Chat</span>
                         </Button>
-                      </Link>
-                    )}
+                      )}
+                      {isOwner && req.status === 'OPEN' && (
+                        <Link to={`/travel-requests/${req.id}/matches`}>
+                          <Button size="sm" variant="outline" className="h-7 text-xs font-bold border-neutral-300 text-black hover:bg-black hover:text-white hover:border-black transition-all gap-1">
+                            <span>View Matches</span>
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 </Card>
               );
@@ -443,6 +570,17 @@ export const TravelRequestsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {selectedPartner && (
+        <RideConnectModal
+          isOpen={Boolean(selectedPartner)}
+          onClose={() => setSelectedPartner(null)}
+          partner={selectedPartner.user}
+          destinationName={selectedPartner.destName}
+          travelDate={selectedPartner.dateStr}
+          requestId={selectedPartner.reqId}
+        />
+      )}
     </div>
   );
 };

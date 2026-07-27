@@ -56,6 +56,10 @@ class TravelRequest(models.Model):
     def expire_outdated(cls):
         """
         Centralized expiration logic: automatically update any OPEN travel request
-        whose scheduled travel_datetime has passed to EXPIRED.
+        whose scheduled travel_datetime has passed to EXPIRED and notify owners.
         """
-        cls.objects.filter(status='OPEN', travel_datetime__lt=timezone.now()).update(status='EXPIRED')
+        from ..notifications.services import notify_travel_request_expired
+        outdated = cls.objects.filter(status='OPEN', travel_datetime__lt=timezone.now()).select_related('user')
+        for req in outdated:
+            notify_travel_request_expired(req.user, req.id)
+        outdated.update(status='EXPIRED')

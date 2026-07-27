@@ -34,6 +34,9 @@ export async function getTravelRequests(filters?: TravelRequestFilters): Promise
   if (filters?.to_datetime) {
     params.to_datetime = filters.to_datetime;
   }
+  if (filters?.matching_only !== undefined) {
+    params.matching_only = String(filters.matching_only);
+  }
   const response = await api.get<TravelRequestListItem[]>('/travel-requests/', { params });
   return response.data;
 }
@@ -63,6 +66,16 @@ export async function getMatches(requestId: number | string): Promise<TravelRequ
   return response.data;
 }
 
+export async function requestRideShare(requestId: number | string): Promise<{ message: string }> {
+  const response = await api.post<{ message: string }>(`/travel-requests/${requestId}/request-share/`);
+  return response.data;
+}
+
+export async function respondRideShare(requestId: number | string, sender_username: string, action: 'ACCEPT' | 'DECLINE'): Promise<{ message: string }> {
+  const response = await api.post<{ message: string }>(`/travel-requests/${requestId}/respond-share/`, { sender_username, action });
+  return response.data;
+}
+
 export const travelRequestService = {
   createTravelRequest,
   getTravelRequests,
@@ -71,6 +84,8 @@ export const travelRequestService = {
   updateTravelRequest,
   cancelTravelRequest,
   getMatches,
+  requestRideShare,
+  respondRideShare,
 };
 
 export default travelRequestService;
