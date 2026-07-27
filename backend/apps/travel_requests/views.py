@@ -25,18 +25,66 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         TravelRequest.expire_outdated()
-        # Return only requests with status = OPEN, sorted by travel_datetime (earliest first)
-        queryset = TravelRequest.objects.filter(status='OPEN').select_related('destination', 'user').order_by('travel_datetime')
+        queryset = TravelRequest.objects.select_related('destination', 'user').order_by('travel_datetime')
 
-        # Support optional query parameter: destination=<destination_id>
+        # Status filter (default to OPEN if not specified, unless ALL is specified)
+        status_param = self.request.query_params.get('status')
+        if status_param and status_param in ['OPEN', 'CLOSED', 'CANCELLED', 'EXPIRED']:
+            queryset = queryset.filter(status=status_param)
+        elif status_param != 'ALL':
+            queryset = queryset.filter(status='OPEN')
+
+        # Destination filter
         destination_param = self.request.query_params.get('destination')
         if destination_param:
             queryset = queryset.filter(destination_id=destination_param)
 
-        # Support optional query parameter: direction=TO_CAMPUS | FROM_CAMPUS
+        # Direction filter
         direction_param = self.request.query_params.get('direction')
         if direction_param in ['TO_CAMPUS', 'FROM_CAMPUS']:
             queryset = queryset.filter(direction=direction_param)
+
+        # Date filter (YYYY-MM-DD)
+        date_param = self.request.query_params.get('date')
+        if date_param:
+            from django.utils.dateparse import parse_date
+            parsed_date = parse_date(date_param)
+            if parsed_date:
+                queryset = queryset.filter(travel_datetime__date=parsed_date)
+
+        # From datetime filter
+        from_dt_param = self.request.query_params.get('from_datetime')
+        if from_dt_param:
+            from django.utils.dateparse import parse_datetime
+            from django.utils.timezone import is_naive, make_aware
+            from datetime import datetime
+            parsed_from = parse_datetime(from_dt_param)
+            if parsed_from and isinstance(parsed_from, datetime):
+                if is_naive(parsed_from):
+                    parsed_from = make_aware(parsed_from)
+                queryset = queryset.filter(travel_datetime__gte=parsed_from)
+            else:
+                try:
+                    queryset = queryset.filter(travel_datetime__gte=from_dt_param)
+                except (ValueError, TypeError):
+                    pass
+
+        # To datetime filter
+        to_dt_param = self.request.query_params.get('to_datetime')
+        if to_dt_param:
+            from django.utils.dateparse import parse_datetime
+            from django.utils.timezone import is_naive, make_aware
+            from datetime import datetime
+            parsed_to = parse_datetime(to_dt_param)
+            if parsed_to and isinstance(parsed_to, datetime):
+                if is_naive(parsed_to):
+                    parsed_to = make_aware(parsed_to)
+                queryset = queryset.filter(travel_datetime__lte=parsed_to)
+            else:
+                try:
+                    queryset = queryset.filter(travel_datetime__lte=to_dt_param)
+                except (ValueError, TypeError):
+                    pass
 
         return queryset
 

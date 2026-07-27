@@ -22,6 +22,18 @@ export async function getTravelRequests(filters?: TravelRequestFilters): Promise
   if (filters?.direction) {
     params.direction = filters.direction;
   }
+  if (filters?.status) {
+    params.status = filters.status;
+  }
+  if (filters?.date) {
+    params.date = filters.date;
+  }
+  if (filters?.from_datetime) {
+    params.from_datetime = filters.from_datetime;
+  }
+  if (filters?.to_datetime) {
+    params.to_datetime = filters.to_datetime;
+  }
   const response = await api.get<TravelRequestListItem[]>('/travel-requests/', { params });
   return response.data;
 }

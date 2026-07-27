@@ -20,6 +20,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'branch',
             'hostel',
             'gender',
+            'phone_number',
         )
         read_only_fields = ('id',)
 
@@ -40,5 +41,27 @@ class CurrentUserSerializer(serializers.ModelSerializer):
             'branch',
             'hostel',
             'gender',
+            'phone_number',
         )
         read_only_fields = fields
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'id',
+            'username',
+            'institute_email',
+            'roll_number',
+            'branch',
+            'hostel',
+            'gender',
+            'phone_number',
+        )
+        read_only_fields = ('id', 'username', 'institute_email', 'roll_number')
+
+    def validate_gender(self, value):
+        if value and value not in [choice[0] for choice in User.GenderChoices.choices]:
+            raise serializers.ValidationError("Invalid gender choice.")
+        return value

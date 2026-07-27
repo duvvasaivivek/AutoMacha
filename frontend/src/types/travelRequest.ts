@@ -57,6 +57,10 @@ export interface UpdateTravelRequestPayload {
 export interface TravelRequestFilters {
   destination?: string | number;
   direction?: Direction | '';
+  status?: Status | 'ALL' | '';
+  date?: string;
+  from_datetime?: string;
+  to_datetime?: string;
 }
 
 export interface TravelRequestMatch {

@@ -24,5 +24,6 @@ urlpatterns = [
     path('api/accounts/', include('apps.accounts.urls')),
     path('api/destinations/', include('apps.destinations.urls')),
     path('api/travel-requests/', include('apps.travel_requests.urls')),
+    path('api/dashboard/', include('apps.dashboard.urls')),
 ]
 

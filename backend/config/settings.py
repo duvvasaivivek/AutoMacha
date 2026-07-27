@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.accounts.apps.AccountsConfig',
     'apps.destinations.apps.DestinationsConfig',
     'apps.travel_requests.apps.TravelRequestsConfig',
+    'apps.dashboard.apps.DashboardConfig',
 ]
 
 MIDDLEWARE = [

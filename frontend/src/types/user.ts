@@ -6,4 +6,5 @@ export interface User {
   branch: string;
   hostel: string;
   gender: string;
+  phone_number?: string;
 }

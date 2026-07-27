@@ -34,6 +34,11 @@ class User(AbstractUser):
         blank=True,
         help_text="Gender identity."
     )
+    phone_number = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Contact phone number."
+    )
 
     def __str__(self):
         return f"{self.username} ({self.roll_number})"

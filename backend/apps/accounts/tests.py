@@ -203,7 +203,7 @@ class CurrentUserAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Verify returned fields
-        expected_fields = {'id', 'username', 'institute_email', 'roll_number', 'branch', 'hostel', 'gender'}
+        expected_fields = {'id', 'username', 'institute_email', 'roll_number', 'branch', 'hostel', 'gender', 'phone_number'}
         self.assertEqual(set(response.data.keys()), expected_fields)
         self.assertEqual(response.data['username'], self.username)
         self.assertEqual(response.data['institute_email'], 'me@institute.edu')
