@@ -2,8 +2,8 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 from .models import TravelRequest
-from apps.destinations.models import Destination
-from apps.destinations.serializers import DestinationSerializer
+from ..destinations.models import Destination
+from ..destinations.serializers import DestinationSerializer
 
 User = get_user_model()
 

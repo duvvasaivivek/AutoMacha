@@ -4,7 +4,7 @@ from django.utils import timezone
 from rest_framework import views, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from apps.travel_requests.models import TravelRequest
+from ..travel_requests.models import TravelRequest
 
 
 class DashboardStatsView(views.APIView):
