@@ -29,13 +29,22 @@ class TravelRequestListSerializer(serializers.ModelSerializer):
         fields = ('id', 'destination', 'user', 'direction', 'travel_datetime', 'status', 'created_at')
 
 
-class TravelRequestSerializer(serializers.ModelSerializer):
-    destination_details = DestinationSerializer(source='destination', read_only=True)
+class MyTravelRequestSerializer(serializers.ModelSerializer):
+    destination = DestinationMinimalSerializer(read_only=True)
 
     class Meta:
         model = TravelRequest
-        fields = ('id', 'destination', 'destination_details', 'direction', 'travel_datetime', 'status', 'created_at')
-        read_only_fields = ('id', 'status', 'created_at', 'destination_details')
+        fields = ('id', 'destination', 'direction', 'travel_datetime', 'status', 'created_at')
+
+
+class TravelRequestSerializer(serializers.ModelSerializer):
+    destination_details = DestinationSerializer(source='destination', read_only=True)
+    user = UserMinimalSerializer(read_only=True)
+
+    class Meta:
+        model = TravelRequest
+        fields = ('id', 'user', 'destination', 'destination_details', 'direction', 'travel_datetime', 'status', 'created_at')
+        read_only_fields = ('id', 'user', 'status', 'created_at', 'destination_details')
 
     def validate_destination(self, value):
         if not value.is_active:

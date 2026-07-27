@@ -1,7 +1,7 @@
 import type { Destination } from './destination';
 
 export type Direction = 'TO_CAMPUS' | 'FROM_CAMPUS';
-export type Status = 'OPEN' | 'CLOSED' | 'CANCELLED';
+export type Status = 'OPEN' | 'CLOSED' | 'CANCELLED' | 'EXPIRED';
 
 export interface TravelRequestUser {
   id: number;
@@ -23,6 +23,15 @@ export interface TravelRequestListItem {
   created_at: string;
 }
 
+export interface MyTravelRequest {
+  id: number;
+  destination: TravelRequestDestination;
+  direction: Direction;
+  travel_datetime: string;
+  status: Status;
+  created_at: string;
+}
+
 export interface TravelRequest {
   id: number;
   destination: number;
@@ -37,6 +46,12 @@ export interface CreateTravelRequestPayload {
   destination: number;
   direction: Direction;
   travel_datetime: string;
+}
+
+export interface UpdateTravelRequestPayload {
+  destination?: number;
+  direction?: Direction;
+  travel_datetime?: string;
 }
 
 export interface TravelRequestFilters {

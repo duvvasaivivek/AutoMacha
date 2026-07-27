@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, Home as HomeIcon, PlusCircle, Compass } from 'lucide-react';
+import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, Home as HomeIcon, PlusCircle, Compass, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
 
@@ -16,6 +16,7 @@ export const Navbar: React.FC = () => {
   const authNavItems = [
     { name: 'Home', path: '/', icon: HomeIcon },
     { name: 'Travel Requests', path: '/travel-requests', icon: Compass },
+    { name: 'My Requests', path: '/my-travel-requests', icon: UserIcon },
     { name: 'Create Request', path: '/travel-requests/new', icon: PlusCircle },
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   ];

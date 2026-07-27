@@ -7,6 +7,8 @@ import { Dashboard } from '@/pages/Dashboard';
 import { CreateTravelRequest } from '@/pages/CreateTravelRequest';
 import { TravelRequestsPage } from '@/pages/TravelRequestsPage';
 import { MatchesPage } from '@/pages/MatchesPage';
+import { MyTravelRequestsPage } from '@/pages/MyTravelRequestsPage';
+import { EditTravelRequestPage } from '@/pages/EditTravelRequestPage';
 import { NotFound } from '@/pages/NotFound';
 import { ProtectedRoute, PublicRoute } from '@/components/common';
 
@@ -18,7 +20,9 @@ export const AppRoutes: React.FC = () => {
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/travel-requests" element={<TravelRequestsPage />} />
+        <Route path="/my-travel-requests" element={<MyTravelRequestsPage />} />
         <Route path="/travel-requests/new" element={<CreateTravelRequest />} />
+        <Route path="/travel-requests/:id/edit" element={<EditTravelRequestPage />} />
         <Route path="/travel-requests/:id/matches" element={<MatchesPage />} />
       </Route>
 

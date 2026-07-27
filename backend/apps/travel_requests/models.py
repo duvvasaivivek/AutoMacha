@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -12,6 +13,7 @@ class TravelRequest(models.Model):
         OPEN = 'OPEN', _('Open')
         CLOSED = 'CLOSED', _('Closed')
         CANCELLED = 'CANCELLED', _('Cancelled')
+        EXPIRED = 'EXPIRED', _('Expired')
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -49,3 +51,11 @@ class TravelRequest(models.Model):
 
     def __str__(self):
         return f"{self.user.username} -> {self.destination.name} ({self.get_direction_display()})"
+
+    @classmethod
+    def expire_outdated(cls):
+        """
+        Centralized expiration logic: automatically update any OPEN travel request
+        whose scheduled travel_datetime has passed to EXPIRED.
+        """
+        cls.objects.filter(status='OPEN', travel_datetime__lt=timezone.now()).update(status='EXPIRED')

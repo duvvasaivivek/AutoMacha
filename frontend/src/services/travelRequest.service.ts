@@ -1,5 +1,13 @@
 import { api } from './index';
-import type { TravelRequest, TravelRequestListItem, CreateTravelRequestPayload, TravelRequestFilters, TravelRequestMatch } from '@/types';
+import type {
+  TravelRequest,
+  TravelRequestListItem,
+  MyTravelRequest,
+  CreateTravelRequestPayload,
+  UpdateTravelRequestPayload,
+  TravelRequestFilters,
+  TravelRequestMatch,
+} from '@/types';
 
 export async function createTravelRequest(payload: CreateTravelRequestPayload): Promise<TravelRequest> {
   const response = await api.post<TravelRequest>('/travel-requests/', payload);
@@ -18,6 +26,26 @@ export async function getTravelRequests(filters?: TravelRequestFilters): Promise
   return response.data;
 }
 
+export async function getMyTravelRequests(): Promise<MyTravelRequest[]> {
+  const response = await api.get<MyTravelRequest[]>('/travel-requests/my/');
+  return response.data;
+}
+
+export async function getTravelRequestById(id: number | string): Promise<TravelRequest> {
+  const response = await api.get<TravelRequest>(`/travel-requests/${id}/`);
+  return response.data;
+}
+
+export async function updateTravelRequest(id: number | string, payload: UpdateTravelRequestPayload): Promise<TravelRequest> {
+  const response = await api.patch<TravelRequest>(`/travel-requests/${id}/`, payload);
+  return response.data;
+}
+
+export async function cancelTravelRequest(id: number | string): Promise<TravelRequest> {
+  const response = await api.post<TravelRequest>(`/travel-requests/${id}/cancel/`);
+  return response.data;
+}
+
 export async function getMatches(requestId: number | string): Promise<TravelRequestMatch[]> {
   const response = await api.get<TravelRequestMatch[]>(`/travel-requests/${requestId}/matches/`);
   return response.data;
@@ -26,6 +54,10 @@ export async function getMatches(requestId: number | string): Promise<TravelRequ
 export const travelRequestService = {
   createTravelRequest,
   getTravelRequests,
+  getMyTravelRequests,
+  getTravelRequestById,
+  updateTravelRequest,
+  cancelTravelRequest,
   getMatches,
 };
 

@@ -1,10 +1,18 @@
 from datetime import timedelta
+from django.db.models import Case, When, Value, IntegerField
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
+from django.utils import timezone
+from rest_framework import generics, status
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from .models import TravelRequest
-from .serializers import TravelRequestSerializer, TravelRequestListSerializer, TravelRequestMatchSerializer
+from .serializers import (
+    TravelRequestSerializer,
+    TravelRequestListSerializer,
+    TravelRequestMatchSerializer,
+    MyTravelRequestSerializer,
+)
 
 
 class TravelRequestListCreateView(generics.ListCreateAPIView):
@@ -16,6 +24,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
         return TravelRequestListSerializer
 
     def get_queryset(self):
+        TravelRequest.expire_outdated()
         # Return only requests with status = OPEN, sorted by travel_datetime (earliest first)
         queryset = TravelRequest.objects.filter(status='OPEN').select_related('destination', 'user').order_by('travel_datetime')
 
@@ -35,11 +44,77 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
         serializer.save(user=self.request.user)
 
 
+class MyTravelRequestsView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = MyTravelRequestSerializer
+
+    def get_queryset(self):
+        TravelRequest.expire_outdated()
+        now = timezone.now()
+        # Sort by nearest upcoming first (future trips come first sorted ascending, then past trips)
+        return TravelRequest.objects.filter(user=self.request.user).select_related('destination').annotate(
+            is_past=Case(
+                When(travel_datetime__lt=now, then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ).order_by('is_past', 'travel_datetime')
+
+
+class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = TravelRequestSerializer
+
+    def get_queryset(self):
+        TravelRequest.expire_outdated()
+        return TravelRequest.objects.select_related('destination', 'user')
+
+    def get_object(self):
+        pk = self.kwargs.get('pk') or self.kwargs.get('id')
+        obj = get_object_or_404(self.get_queryset(), pk=pk)
+        if obj.user != self.request.user:
+            raise PermissionDenied("You do not have permission to access or modify this travel request.")
+        return obj
+
+    def perform_update(self, serializer):
+        if serializer.instance.status != 'OPEN':
+            raise ValidationError("Only open travel requests can be edited.")
+        serializer.save()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status != 'OPEN':
+            raise ValidationError("Only open travel requests can be cancelled.")
+        instance.status = 'CANCELLED'
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TravelRequestCancelView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = TravelRequestSerializer
+
+    def post(self, request, *args, **kwargs):
+        TravelRequest.expire_outdated()
+        pk = kwargs.get('pk') or kwargs.get('id')
+        instance = get_object_or_404(TravelRequest.objects.select_related('destination', 'user'), pk=pk)
+        if instance.user != request.user:
+            raise PermissionDenied("You do not have permission to modify this travel request.")
+        if instance.status != 'OPEN':
+            raise ValidationError("Only open travel requests can be cancelled.")
+        instance.status = 'CANCELLED'
+        instance.save()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class TravelRequestMatchesView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = TravelRequestMatchSerializer
 
     def get_queryset(self):
+        TravelRequest.expire_outdated()
         pk = self.kwargs.get('pk') or self.kwargs.get('id')
         travel_request = get_object_or_404(TravelRequest, pk=pk)
 
