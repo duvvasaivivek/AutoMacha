@@ -6,6 +6,12 @@ interface PublicRouteProps {
   children?: React.ReactNode;
 }
 
+interface LocationState {
+  from?: {
+    pathname?: string;
+  };
+}
+
 export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
@@ -22,7 +28,7 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    const from = (location.state as any)?.from?.pathname || '/dashboard';
+    const from = (location.state as LocationState | null)?.from?.pathname || '/dashboard';
     return <Navigate to={from} replace />;
   }
 

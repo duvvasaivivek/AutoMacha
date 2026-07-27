@@ -19,6 +19,12 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+interface LocationState {
+  from?: {
+    pathname?: string;
+  };
+}
+
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,7 +51,7 @@ export const Login: React.FC = () => {
     try {
       const response = await login(data);
       await authLogin(response.access, response.refresh);
-      const from = (location.state as any)?.from?.pathname || '/dashboard';
+      const from = (location.state as LocationState | null)?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
     } catch (error) {
       if (axios.isAxiosError(error)) {

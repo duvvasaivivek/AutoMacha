@@ -47,6 +47,12 @@ const registerSchema = z
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
+interface LocationState {
+  from?: {
+    pathname?: string;
+  };
+}
+
 export const Register: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,18 +66,6 @@ export const Register: React.FC = () => {
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      username: '',
-      institute_email: '',
-      roll_number: '',
-      password: '',
-      confirm_password: '',
-      first_name: '',
-      last_name: '',
-      phone_number: '',
-      branch: '',
-      hostel: '',
-    },
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
@@ -85,7 +79,7 @@ export const Register: React.FC = () => {
         password: data.password,
       });
       await authLogin(tokenResponse.access, tokenResponse.refresh);
-      const from = (location.state as any)?.from?.pathname || '/dashboard';
+      const from = (location.state as LocationState | null)?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
     } catch (error) {
       if (axios.isAxiosError(error)) {

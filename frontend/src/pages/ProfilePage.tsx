@@ -62,10 +62,13 @@ export const ProfilePage: React.FC = () => {
     try {
       const data = await getProfile();
       setProfile(data);
+      const validGender = (g?: string): ProfileFormValues['gender'] =>
+        g && ['M', 'F', 'O', 'P'].includes(g) ? (g as ProfileFormValues['gender']) : '';
+
       reset({
         branch: data.branch || '',
         hostel: data.hostel || '',
-        gender: (data.gender as any) || '',
+        gender: validGender(data.gender),
         phone_number: data.phone_number || '',
       });
     } catch {
@@ -87,16 +90,20 @@ export const ProfilePage: React.FC = () => {
       const updated = await updateProfile(data);
       setProfile(updated);
       updateUser(updated);
+      const validGender = (g?: string): ProfileFormValues['gender'] =>
+        g && ['M', 'F', 'O', 'P'].includes(g) ? (g as ProfileFormValues['gender']) : '';
+
       reset({
         branch: updated.branch || '',
         hostel: updated.hostel || '',
-        gender: (updated.gender as any) || '',
+        gender: validGender(updated.gender),
         phone_number: updated.phone_number || '',
       });
       setSuccessMsg('Profile updated successfully!');
       setTimeout(() => setSuccessMsg(null), 4000);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Failed to save profile changes. Please check your inputs.');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(msg || 'Failed to save profile changes. Please check your inputs.');
     } finally {
       setIsSaving(false);
     }
@@ -104,10 +111,13 @@ export const ProfilePage: React.FC = () => {
 
   const handleCancel = () => {
     if (profile) {
+      const validGender = (g?: string): ProfileFormValues['gender'] =>
+        g && ['M', 'F', 'O', 'P'].includes(g) ? (g as ProfileFormValues['gender']) : '';
+
       reset({
         branch: profile.branch || '',
         hostel: profile.hostel || '',
-        gender: (profile.gender as any) || '',
+        gender: validGender(profile.gender),
         phone_number: profile.phone_number || '',
       });
       setError(null);

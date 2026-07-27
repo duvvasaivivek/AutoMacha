@@ -15,63 +15,27 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getMatches } from '@/services/travelRequest.service';
-import type { TravelRequestMatch } from '@/types';
+import type { TravelRequestMatch, TravelRequestUser } from '@/types';
 import { RideConnectModal } from '@/components/RideConnectModal';
-import axios from 'axios';
-
-function formatDate(isoString: string): string {
-  try {
-    const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return isoString;
-  }
-}
-
-function formatTime(isoString: string): string {
-  try {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  } catch {
-    return '';
-  }
-}
+import { formatDate, formatTime } from '@/utils/date';
 
 export const MatchesPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [matches, setMatches] = useState<TravelRequestMatch[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPartner, setSelectedPartner] = useState<{ match: TravelRequestMatch; destName: string } | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<{ partner: TravelRequestUser; destName: string; match: TravelRequestMatch } | null>(null);
 
   useEffect(() => {
+    if (!id) return;
     const fetchMatchesData = async () => {
-      if (!id) return;
       setIsLoading(true);
       setError(null);
       try {
-        const data = await getMatches(id);
+        const data = await getMatches(parseInt(id, 10));
         setMatches(data);
-      } catch (err) {
-        if (axios.isAxiosError(err)) {
-          if (err.response?.status === 403) {
-            setError('You do not have permission to view matches for this request. Only the owner can view matches.');
-          } else if (err.response?.status === 404) {
-            setError('Travel request not found.');
-          } else {
-            setError('Failed to load matching rides.');
-          }
-        } else {
-          setError('Failed to load matching rides.');
-        }
+      } catch {
+        setError('Failed to load ride matches for this travel request.');
       } finally {
         setIsLoading(false);
       }
@@ -81,36 +45,37 @@ export const MatchesPage: React.FC = () => {
   }, [id]);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12 animate-in fade-in duration-300">
-      {/* Back navigation & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-6">
-        <div className="space-y-1">
-          <Link
-            to="/travel-requests/my"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-500 hover:text-black transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Back to My Trips</span>
-          </Link>
-          <h1 className="text-3xl font-black tracking-tight text-black flex items-center gap-2">
-            <span>Compatible Rides</span>
-            {!isLoading && !error && (
-              <span className="text-xs font-bold bg-black text-white px-3 py-1 rounded-full align-middle">
-                {matches.length} {matches.length === 1 ? 'Match' : 'Matches'}
+    <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 py-8 sm:py-12 max-w-6xl mx-auto w-full">
+      {/* Page Header */}
+      <div className="w-full border-b border-neutral-200 pb-6 mb-8 space-y-4">
+        <Link
+          to="/my-travel-requests"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-neutral-600 hover:text-black transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to My Requests</span>
+        </Link>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-black flex items-center gap-3">
+              <span>Ride Matches</span>
+              <span className="text-xs font-extrabold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-300">
+                Live
               </span>
-            )}
-          </h1>
-          <p className="text-sm text-neutral-500 font-medium">
-            Students traveling in the same direction within 30 minutes of your scheduled departure time.
-          </p>
+            </h1>
+            <p className="text-sm font-semibold text-neutral-600 mt-1">
+              Students traveling in the same direction around your scheduled time window.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Loading State */}
       {isLoading && (
-        <div className="flex flex-col items-center justify-center py-24 space-y-3 bg-neutral-50/50 rounded-2xl border border-neutral-200/60">
+        <div className="w-full flex flex-col items-center justify-center py-24 space-y-3 bg-neutral-50/50 rounded-2xl border border-neutral-200/60">
           <Loader2 className="h-8 w-8 animate-spin text-black" />
-          <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Finding compatible rides...</p>
+          <p className="text-xs font-semibold text-neutral-500">Searching for compatible ride partners...</p>
         </div>
       )}
 
@@ -120,31 +85,28 @@ export const MatchesPage: React.FC = () => {
           <AlertCircle className="h-8 w-8 text-red-600 mx-auto" />
           <h3 className="font-bold text-red-900 text-base">Unable to Load Matches</h3>
           <p className="text-xs text-red-700">{error}</p>
-          <Link to="/travel-requests/my">
-            <Button size="sm" variant="outline" className="mt-2 text-xs font-semibold border-red-300 hover:bg-red-100">
-              Return to My Trips
-            </Button>
-          </Link>
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && !error && matches.length === 0 && (
         <div className="max-w-md mx-auto my-12 p-12 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50/50 text-center space-y-4">
-          <div className="h-12 w-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto text-neutral-400">
+          <div className="h-12 w-12 rounded-full bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
             <Users className="h-6 w-6" />
           </div>
           <div className="space-y-1">
-            <h3 className="font-bold text-black text-lg">No matches found yet.</h3>
-            <p className="text-xs text-neutral-500 max-w-xs mx-auto">
-              We couldn&apos;t find anyone traveling to this destination around your time (+/- 30 mins). Check back later as more students post requests!
+            <h3 className="font-bold text-black text-lg">No Matching Rides Yet</h3>
+            <p className="text-xs text-neutral-500">
+              No other students have posted requests for this destination around your scheduled departure time window.
             </p>
           </div>
-          <Link to="/travel-requests/my">
-            <Button size="sm" className="bg-black text-white hover:bg-neutral-800 font-semibold text-xs">
-              Back to My Trips
-            </Button>
-          </Link>
+          <div className="pt-2">
+            <Link to="/travel-requests">
+              <Button size="sm" variant="outline" className="font-semibold text-xs border-neutral-300">
+                Explore All Campus Rides
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
 
@@ -152,11 +114,12 @@ export const MatchesPage: React.FC = () => {
       {!isLoading && !error && matches.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {matches.map((match) => {
-            const destName = typeof match.destination === 'string' ? match.destination : (match.destination as any).name;
+            const destName = typeof match.destination === 'string' ? match.destination : match.destination.name;
             const isLeaving = match.direction === 'FROM_CAMPUS';
             const diffText = match.time_difference === 0
               ? '0 minutes apart (Same time)'
               : `${match.time_difference} minute${match.time_difference === 1 ? '' : 's'} apart`;
+            const partnerUser: TravelRequestUser = match.user || { id: 0, username: match.username };
 
             return (
               <Card
@@ -204,13 +167,12 @@ export const MatchesPage: React.FC = () => {
 
                 <div className="bg-neutral-50/60 px-5 py-3 border-t border-neutral-100 flex items-center justify-between gap-2">
                   <div className="text-[11px] text-neutral-500 font-semibold truncate max-w-[150px]">
-                    {(match as any).user?.branch || 'Student Partner'}
+                    {partnerUser.branch || 'Student Partner'}
                   </div>
                   <Button
                     size="sm"
                     onClick={() => {
-                      const partnerObj = (match as any).user || { id: 0, username: match.username };
-                      setSelectedPartner({ match: { ...match, user: partnerObj } as any, destName });
+                      setSelectedPartner({ partner: partnerUser, destName, match });
                     }}
                     className="bg-black text-white hover:bg-neutral-800 font-bold text-xs gap-1.5 h-8 px-3 shadow-xs"
                   >
@@ -228,7 +190,7 @@ export const MatchesPage: React.FC = () => {
         <RideConnectModal
           isOpen={Boolean(selectedPartner)}
           onClose={() => setSelectedPartner(null)}
-          partner={(selectedPartner.match as any).user || { id: 0, username: selectedPartner.match.username }}
+          partner={selectedPartner.partner}
           destinationName={selectedPartner.destName}
           travelDate={`${formatDate(selectedPartner.match.travel_datetime)} at ${formatTime(selectedPartner.match.travel_datetime)}`}
           requestId={selectedPartner.match.id}
@@ -237,3 +199,5 @@ export const MatchesPage: React.FC = () => {
     </div>
   );
 };
+
+export default MatchesPage;

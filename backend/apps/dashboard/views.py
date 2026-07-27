@@ -1,44 +1,57 @@
 from datetime import timedelta
-from django.db.models import Count
+
+from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework import views, status
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from ..travel_requests.models import TravelRequest
+from ..travel_requests.services import expire_outdated_requests
 
 
 class DashboardStatsView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        # Ensure outdated open requests transition to EXPIRED before stats calculation
-        TravelRequest.expire_outdated()
+        expire_outdated_requests()
         user = request.user
 
         user_requests = TravelRequest.objects.filter(user=user)
-        total_requests = user_requests.count()
-        active_requests = user_requests.filter(status='OPEN').count()
-        expired_requests = user_requests.filter(status='EXPIRED').count()
-        cancelled_requests = user_requests.filter(status='CANCELLED').count()
 
-        # Calculate available matches across all user's OPEN travel requests
+        # 1 Single aggregated query for all request counts instead of 4 separate queries
+        counts = user_requests.aggregate(
+            total_requests=Count('id'),
+            active_requests=Count('id', filter=Q(status='OPEN')),
+            expired_requests=Count('id', filter=Q(status='EXPIRED')),
+            cancelled_requests=Count('id', filter=Q(status='CANCELLED')),
+        )
+
+        # Efficient batch lookup for available matches without N+1 query loop
         open_user_requests = user_requests.filter(status='OPEN').select_related('destination')
-        unique_candidate_ids = set()
-        for u_req in open_user_requests:
-            time_window_start = u_req.travel_datetime - timedelta(minutes=30)
-            time_window_end = u_req.travel_datetime + timedelta(minutes=30)
-            cands = TravelRequest.objects.filter(
-                status='OPEN',
-                destination=u_req.destination,
-                direction=u_req.direction,
-                travel_datetime__gte=time_window_start,
-                travel_datetime__lte=time_window_end,
-            ).exclude(user=user).values_list('id', flat=True)
-            unique_candidate_ids.update(cands)
+        if open_user_requests.exists():
+            match_query = Q()
+            for u_req in open_user_requests:
+                time_window_start = u_req.travel_datetime - timedelta(minutes=30)
+                time_window_end = u_req.travel_datetime + timedelta(minutes=30)
+                match_query |= Q(
+                    destination=u_req.destination,
+                    direction=u_req.direction,
+                    travel_datetime__gte=time_window_start,
+                    travel_datetime__lte=time_window_end,
+                )
 
-        available_matches = len(unique_candidate_ids)
+            available_matches = (
+                TravelRequest.objects.filter(match_query, status='OPEN')
+                .exclude(user=user)
+                .values('id')
+                .distinct()
+                .count()
+            )
+        else:
+            available_matches = 0
 
-        # Determine most frequently selected destination for user
+        # Most frequently selected destination for user
         fav_dest_query = (
             user_requests
             .values('destination__id', 'destination__name')
@@ -46,13 +59,14 @@ class DashboardStatsView(views.APIView):
             .order_by('-count', 'destination__name')
             .first()
         )
-        if fav_dest_query:
-            favorite_destination = {
+        favorite_destination = (
+            {
                 "id": fav_dest_query['destination__id'],
                 "name": fav_dest_query['destination__name'],
             }
-        else:
-            favorite_destination = None
+            if fav_dest_query
+            else None
+        )
 
         # Nearest upcoming OPEN trip
         next_trip_obj = (
@@ -61,20 +75,21 @@ class DashboardStatsView(views.APIView):
             .order_by('travel_datetime')
             .first()
         )
-        if next_trip_obj:
-            next_trip = {
+        next_trip = (
+            {
                 "id": next_trip_obj.id,
                 "destination": next_trip_obj.destination.name,
                 "travel_datetime": next_trip_obj.travel_datetime.isoformat(),
             }
-        else:
-            next_trip = None
+            if next_trip_obj
+            else None
+        )
 
         return Response({
-            "active_requests": active_requests,
-            "expired_requests": expired_requests,
-            "cancelled_requests": cancelled_requests,
-            "total_requests": total_requests,
+            "active_requests": counts['active_requests'] or 0,
+            "expired_requests": counts['expired_requests'] or 0,
+            "cancelled_requests": counts['cancelled_requests'] or 0,
+            "total_requests": counts['total_requests'] or 0,
             "available_matches": available_matches,
             "favorite_destination": favorite_destination,
             "next_trip": next_trip,

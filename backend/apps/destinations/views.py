@@ -5,8 +5,11 @@ from .serializers import DestinationSerializer
 
 
 class DestinationListView(generics.ListAPIView):
+    """
+    Public endpoint — intentionally allows unauthenticated access.
+    Destinations are displayed on the public home page for all visitors.
+    """
+    queryset = Destination.objects.all().order_by('name')
     serializer_class = DestinationSerializer
     permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        return Destination.objects.filter(is_active=True).order_by('name')
+    pagination_class = None  # Destinations are a small, fixed list — no pagination needed

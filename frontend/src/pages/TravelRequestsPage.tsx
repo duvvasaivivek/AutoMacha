@@ -20,34 +20,9 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { getDestinations } from '@/services/destination.service';
 import { getTravelRequests } from '@/services/travelRequest.service';
 import { useAuth } from '@/hooks';
-import type { Destination, Direction, TravelRequestListItem, TravelRequestFilters, Status } from '@/types';
+import type { Destination, Direction, TravelRequestListItem, TravelRequestFilters, Status, TravelRequestUser } from '@/types';
 import { RideConnectModal } from '@/components/RideConnectModal';
-
-function formatDate(isoString: string): string {
-  try {
-    const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  } catch {
-    return isoString;
-  }
-}
-
-function formatTime(isoString: string): string {
-  try {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  } catch {
-    return '';
-  }
-}
+import { formatDate, formatTime } from '@/utils/date';
 
 export const TravelRequestsPage: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -55,7 +30,7 @@ export const TravelRequestsPage: React.FC = () => {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPartner, setSelectedPartner] = useState<{ user: any; destName: string; dateStr: string; reqId: number } | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<{ user: TravelRequestUser; destName: string; dateStr: string; reqId: number } | null>(null);
 
   // Local filter input state
   const [destInput, setDestInput] = useState<string>('');

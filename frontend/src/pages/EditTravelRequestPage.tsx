@@ -115,8 +115,9 @@ export const EditTravelRequestPage: React.FC = () => {
 
         setValue('date', dateStr);
         setValue('time', timeStr);
-      } catch (err: any) {
-        setInitError(err.response?.data?.detail || 'Failed to load travel request details.');
+      } catch (err: unknown) {
+        const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+        setInitError(msg || 'Failed to load travel request details.');
       } finally {
         setLoading(false);
       }
@@ -184,16 +185,17 @@ export const EditTravelRequestPage: React.FC = () => {
       setTimeout(() => {
         navigate('/my-travel-requests');
       }, 1500);
-    } catch (err: any) {
-      const errorData = err.response?.data;
+    } catch (err: unknown) {
+      const errorData = (err as { response?: { data?: Record<string, unknown> | string } })?.response?.data;
       let errorMessage = 'Failed to update request. Please try again.';
       if (typeof errorData === 'string') {
         errorMessage = errorData;
       } else if (errorData && typeof errorData === 'object') {
         const firstKey = Object.keys(errorData)[0];
-        if (firstKey && Array.isArray(errorData[firstKey])) {
-          errorMessage = `${firstKey}: ${errorData[firstKey][0]}`;
-        } else if (errorData.detail) {
+        const val = (errorData as Record<string, unknown>)[firstKey];
+        if (firstKey && Array.isArray(val) && val.length > 0) {
+          errorMessage = `${firstKey}: ${val[0]}`;
+        } else if (typeof errorData.detail === 'string') {
           errorMessage = errorData.detail;
         }
       }

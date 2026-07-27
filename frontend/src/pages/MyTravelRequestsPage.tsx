@@ -17,6 +17,7 @@ import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { getMyTravelRequests, cancelTravelRequest } from '@/services/travelRequest.service';
 import type { MyTravelRequest } from '@/types';
+import { formatDate, formatTime } from '@/utils/date';
 
 export const MyTravelRequestsPage: React.FC = () => {
   const [requests, setRequests] = useState<MyTravelRequest[]>([]);
@@ -53,29 +54,6 @@ export const MyTravelRequestsPage: React.FC = () => {
       alert('Failed to cancel travel request. It may no longer be open.');
     } finally {
       setCancellingId(null);
-    }
-  };
-
-  const formatDate = (isoString: string) => {
-    try {
-      return new Date(isoString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return isoString;
-    }
-  };
-
-  const formatTime = (isoString: string) => {
-    try {
-      return new Date(isoString).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return isoString;
     }
   };
 

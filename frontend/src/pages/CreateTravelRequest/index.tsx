@@ -161,12 +161,13 @@ export const CreateTravelRequest: React.FC = () => {
       setTimeout(() => {
         navigate('/my-travel-requests');
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errData = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
       const errorMessage =
-        err?.response?.data?.detail ||
-        err?.response?.data?.non_field_errors?.[0] ||
-        err?.response?.data?.destination?.[0] ||
-        err?.response?.data?.travel_datetime?.[0] ||
+        (errData?.detail as string) ||
+        (Array.isArray(errData?.non_field_errors) ? (errData.non_field_errors[0] as string) : null) ||
+        (Array.isArray(errData?.destination) ? (errData.destination[0] as string) : null) ||
+        (Array.isArray(errData?.travel_datetime) ? (errData.travel_datetime[0] as string) : null) ||
         'Failed to submit request. Please try again.';
       setApiError(errorMessage);
     } finally {

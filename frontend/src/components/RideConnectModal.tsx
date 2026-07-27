@@ -62,8 +62,10 @@ export const RideConnectModal: React.FC<RideConnectModalProps> = ({
     try {
       await requestRideShare(requestId);
       setRequestSent(true);
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.detail || 'Failed to send ride share request. Please try again or use WhatsApp/Email.';
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string; detail?: string } } })?.response?.data?.message ||
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        'Failed to send ride share request. Please try again or use WhatsApp/Email.';
       setErrorMsg(msg);
     } finally {
       setIsSending(false);

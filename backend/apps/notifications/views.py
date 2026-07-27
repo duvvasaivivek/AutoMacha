@@ -12,7 +12,7 @@ class NotificationListView(generics.ListAPIView):
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+        return Notification.objects.filter(user=self.request.user).select_related('sender').order_by('-created_at')
 
 
 class NotificationUnreadCountView(views.APIView):
@@ -27,15 +27,14 @@ class NotificationMarkReadView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def patch(self, request, *args, **kwargs):
-        pk = kwargs.get('pk') or kwargs.get('id')
-        notification = get_object_or_404(Notification, pk=pk)
+        notification = get_object_or_404(Notification, pk=kwargs['pk'])
         if notification.user != request.user:
             raise PermissionDenied("You do not have permission to modify this notification.")
-        
+
         if not notification.is_read:
             notification.is_read = True
             notification.save(update_fields=['is_read'])
-            
+
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

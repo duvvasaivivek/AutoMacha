@@ -1,7 +1,7 @@
 from .models import Notification
 
 
-def create_notification(user, title, message, notification_type, related_object_id=None):
+def create_notification(user, title, message, notification_type, related_object_id=None, sender=None):
     """
     Creates a notification for the given user if an identical notification does not already exist
     for this event/related object to avoid duplicates.
@@ -13,44 +13,48 @@ def create_notification(user, title, message, notification_type, related_object_
         defaults={
             'title': title,
             'message': message,
+            'sender': sender,
         }
     )
     return notification, created
 
 
-def notify_ride_share_request_received(receiver, sender_username, related_object_id=None):
+def notify_ride_share_request_received(receiver, sender, related_object_id=None):
     title = "New Ride Share Request"
-    message = f"{sender_username} wants to share a ride with you."
+    message = f"{sender.username} wants to share a ride with you."
     return create_notification(
         user=receiver,
         title=title,
         message=message,
         notification_type=Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_RECEIVED,
-        related_object_id=related_object_id
+        related_object_id=related_object_id,
+        sender=sender,
     )
 
 
-def notify_ride_share_request_accepted(sender, acceptor_username, related_object_id=None):
+def notify_ride_share_request_accepted(sender, acceptor, related_object_id=None):
     title = "Ride Request Accepted"
-    message = f"{acceptor_username} accepted your ride request."
+    message = f"{acceptor.username} accepted your ride request."
     return create_notification(
         user=sender,
         title=title,
         message=message,
         notification_type=Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_ACCEPTED,
-        related_object_id=related_object_id
+        related_object_id=related_object_id,
+        sender=acceptor,
     )
 
 
-def notify_ride_share_request_declined(sender, decliner_username, related_object_id=None):
+def notify_ride_share_request_declined(sender, decliner, related_object_id=None):
     title = "Ride Request Declined"
-    message = f"{decliner_username} declined your ride request."
+    message = f"{decliner.username} declined your ride request."
     return create_notification(
         user=sender,
         title=title,
         message=message,
         notification_type=Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_DECLINED,
-        related_object_id=related_object_id
+        related_object_id=related_object_id,
+        sender=decliner,
     )
 
 
@@ -62,7 +66,7 @@ def notify_travel_request_expired(owner, related_object_id=None):
         title=title,
         message=message,
         notification_type=Notification.NotificationTypeChoices.TRAVEL_REQUEST_EXPIRED,
-        related_object_id=related_object_id
+        related_object_id=related_object_id,
     )
 
 
@@ -74,5 +78,5 @@ def notify_new_match_found(user, related_object_id=None):
         title=title,
         message=message,
         notification_type=Notification.NotificationTypeChoices.NEW_MATCH_FOUND,
-        related_object_id=related_object_id
+        related_object_id=related_object_id,
     )

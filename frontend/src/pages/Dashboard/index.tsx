@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { getDashboardStats } from '@/services/dashboard.service';
 import type { DashboardStats } from '@/types';
 import { useAuth } from '@/hooks';
+import { formatDate, formatTime } from '@/utils/date';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -47,30 +48,6 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     fetchStats();
   }, []);
-
-  const formatDate = (isoString: string) => {
-    try {
-      return new Date(isoString).toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return isoString;
-    }
-  };
-
-  const formatTime = (isoString: string) => {
-    try {
-      return new Date(isoString).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return isoString;
-    }
-  };
 
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 py-8 sm:py-12 max-w-6xl mx-auto w-full">

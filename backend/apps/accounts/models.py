@@ -40,5 +40,11 @@ class User(AbstractUser):
         help_text="Contact phone number."
     )
 
+    class Meta:
+        ordering = ['username']
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
     def __str__(self):
         return f"{self.username} ({self.roll_number})"
+

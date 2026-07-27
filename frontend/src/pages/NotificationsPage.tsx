@@ -23,25 +23,10 @@ import {
   markAllAsRead,
 } from '@/services/notification.service';
 import { respondRideShare } from '@/services/travelRequest.service';
-import type { Notification, NotificationType } from '@/types';
+import type { Notification, NotificationType, TravelRequestUser } from '@/types';
 import { RideConnectModal } from '@/components/RideConnectModal';
+import { formatDateTime } from '@/utils/date';
 import axios from 'axios';
-
-function formatDateTime(isoString: string): string {
-  try {
-    const date = new Date(isoString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-  } catch {
-    return isoString;
-  }
-}
 
 function getNotificationBadge(type: NotificationType) {
   switch (type) {
@@ -92,7 +77,7 @@ export const NotificationsPage: React.FC = () => {
   const [markingIds, setMarkingIds] = useState<Record<number, boolean>>({});
   const [respondingId, setRespondingId] = useState<Record<number, boolean>>({});
   const [responseStatus, setResponseStatus] = useState<Record<number, 'ACCEPTED' | 'DECLINED'>>({});
-  const [selectedPartner, setSelectedPartner] = useState<{ user: any; destName: string; dateStr: string; reqId: number } | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<{ user: TravelRequestUser; destName: string; dateStr: string; reqId: number } | null>(null);
 
   const handleRespond = async (notif: Notification, action: 'ACCEPT' | 'DECLINE') => {
     if (!notif.related_object_id) return;
@@ -108,8 +93,9 @@ export const NotificationsPage: React.FC = () => {
         );
         window.dispatchEvent(new Event('notifications-updated'));
       }
-    } catch (err: any) {
-      alert(err.response?.data?.message || err.response?.data?.detail || 'Failed to respond to ride share request.');
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? (err.response?.data?.message || err.response?.data?.detail) : null;
+      alert(msg || 'Failed to respond to ride share request.');
     } finally {
       setRespondingId((prev) => ({ ...prev, [notif.id]: false }));
     }

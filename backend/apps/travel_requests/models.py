@@ -48,18 +48,17 @@ class TravelRequest(models.Model):
         ordering = ['-created_at']
         verbose_name = "Travel Request"
         verbose_name_plural = "Travel Requests"
+        indexes = [
+            models.Index(fields=['status'], name='idx_travelreq_status'),
+            models.Index(fields=['travel_datetime'], name='idx_travelreq_datetime'),
+            models.Index(fields=['user', 'status'], name='idx_travelreq_user_status'),
+            models.Index(fields=['status', 'destination', 'direction'], name='idx_travelreq_match'),
+            models.Index(fields=['status', 'travel_datetime'], name='idx_travelreq_status_dt'),
+        ]
 
     def __str__(self):
         return f"{self.user.username} -> {self.destination.name} ({self.get_direction_display()})"
 
-    @classmethod
-    def expire_outdated(cls):
-        """
-        Centralized expiration logic: automatically update any OPEN travel request
-        whose scheduled travel_datetime has passed to EXPIRED and notify owners.
-        """
-        from ..notifications.services import notify_travel_request_expired
-        outdated = cls.objects.filter(status='OPEN', travel_datetime__lt=timezone.now()).select_related('user')
-        for req in outdated:
-            notify_travel_request_expired(req.user, req.id)
-        outdated.update(status='EXPIRED')
+    # NOTE: Expiration logic has been moved to services.expire_outdated_requests()
+    # and the management command: python manage.py expire_requests
+
