@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 from .models import User
 
@@ -23,6 +24,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'phone_number',
         )
         read_only_fields = ('id',)
+
+    def validate_institute_email(self, value):
+        feature_flags = getattr(settings, 'FEATURE_FLAGS', {})
+        if feature_flags.get('ENABLE_EMAIL_VERIFICATION', False):
+            domain = getattr(settings, 'SUPPORTED_EMAIL_DOMAIN', '@iiitk.ac.in')
+            if domain and not value.lower().endswith(domain.lower()):
+                raise serializers.ValidationError(
+                    f"Email must belong to the authorized domain '{domain}'."
+                )
+        return value
 
     def create(self, validated_data):
         if 'institute_email' in validated_data and 'email' not in validated_data:
@@ -60,8 +71,3 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'phone_number',
         )
         read_only_fields = ('id', 'username', 'institute_email', 'roll_number')
-
-    def validate_gender(self, value):
-        if value and value not in [choice[0] for choice in User.GenderChoices.choices]:
-            raise serializers.ValidationError("Invalid gender choice.")
-        return value

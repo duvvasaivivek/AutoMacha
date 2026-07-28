@@ -1,12 +1,13 @@
 import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
+import { appConfig } from '@/config/app.config';
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '@/lib/auth';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+export const API_BASE_URL = appConfig.API_BASE_URL;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: appConfig.REQUEST_TIMEOUT_MS,
   headers: {
     'Content-Type': 'application/json',
   },

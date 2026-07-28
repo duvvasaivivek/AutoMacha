@@ -4,9 +4,7 @@ Extracts reusable logic from views to avoid duplication and improve testability.
 """
 import logging
 from datetime import timedelta
-
 from django.utils import timezone
-
 from .models import TravelRequest
 
 logger = logging.getLogger(__name__)
@@ -31,7 +29,7 @@ def find_matching_candidates(travel_request, time_window_minutes=30):
         travel_datetime__lte=time_window_end,
     ).exclude(
         user=travel_request.user
-    ).select_related('user')
+    ).select_related('user', 'destination')
 
 
 def notify_matches_for_request(travel_request):
@@ -58,23 +56,22 @@ def expire_outdated_requests():
     """
     Transition any OPEN travel requests whose scheduled travel_datetime
     has passed to EXPIRED status, and notify the owners.
-
-    This should ideally be called from a periodic background task
-    (e.g., Django management command via cron or Celery beat),
-    not on every API request.
+    Efficiently processes records to prevent duplicate SQL evaluations.
     """
     from ..notifications.services import notify_travel_request_expired
 
-    outdated = TravelRequest.objects.filter(
+    outdated_list = list(TravelRequest.objects.filter(
         status='OPEN',
         travel_datetime__lt=timezone.now(),
-    ).select_related('user')
+    ).select_related('user'))
 
-    expired_count = 0
-    for req in outdated:
+    if not outdated_list:
+        return 0
+
+    expired_ids = [req.id for req in outdated_list]
+    for req in outdated_list:
         notify_travel_request_expired(req.user, req.id)
-        expired_count += 1
 
-    if expired_count:
-        outdated.update(status='EXPIRED')
-        logger.info("Expired %d outdated travel request(s).", expired_count)
+    updated_count = TravelRequest.objects.filter(id__in=expired_ids).update(status='EXPIRED')
+    logger.info("Expired %d outdated travel request(s).", updated_count)
+    return updated_count
