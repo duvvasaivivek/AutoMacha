@@ -104,8 +104,26 @@ DATABASES = {
         'PASSWORD': env('DB_PASSWORD'),
         'HOST': env('DB_HOST', default='localhost'),
         'PORT': env('DB_PORT', default='5432'),
+        'CONN_MAX_AGE': env.int('CONN_MAX_AGE', default=600),
+        'CONN_HEALTH_CHECKS': True,
     }
 }
+
+# Caching & Throttling Configuration (Redis in production, LocMemCache in local/testing)
+if env.bool('USE_REDIS_CACHE', default=False):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': env('REDIS_URL', default='redis://127.0.0.1:6379/0'),
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'automacha-cache',
+        }
+    }
 
 
 # Password validation
@@ -248,3 +266,41 @@ LOGGING = {
         },
     },
 }
+
+# Celery Configuration
+REDIS_URL = env('REDIS_URL', default='redis://127.0.0.1:6379/0')
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=REDIS_URL)
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=REDIS_URL)
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+# Background Job Retention & Expiry Settings
+TRAVEL_REQUEST_EXPIRY_HOURS = env.int('TRAVEL_REQUEST_EXPIRY_HOURS', default=24)
+NOTIFICATION_RETENTION_DAYS = env.int('NOTIFICATION_RETENTION_DAYS', default=30)
+OTP_RETENTION_HOURS = env.int('OTP_RETENTION_HOURS', default=1)
+HEALTH_CHECK_INTERVAL = env.int('HEALTH_CHECK_INTERVAL', default=3600)
+
+# Celery Beat Periodic Tasks Schedule
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'expire-travel-requests': {
+        'task': 'apps.travel_requests.tasks.expire_travel_requests_task',
+        'schedule': crontab(minute='*/5'),
+    },
+    'delete-expired-otps': {
+        'task': 'apps.accounts.tasks.cleanup_expired_otps_task',
+        'schedule': crontab(minute=0, hour='*'),
+    },
+    'delete-old-notifications': {
+        'task': 'apps.notifications.tasks.cleanup_old_notifications_task',
+        'schedule': crontab(minute=0, hour=0),
+    },
+    'health-check-task': {
+        'task': 'apps.common.tasks.system_health_check_task',
+        'schedule': crontab(minute=0, hour='*'),
+    },
+}
+

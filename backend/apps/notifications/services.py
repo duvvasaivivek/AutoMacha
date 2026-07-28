@@ -1,6 +1,11 @@
+import logging
+from datetime import timedelta
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from .models import Notification
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -70,7 +75,7 @@ def notify_ride_share_request_declined(sender, decliner, related_object_id=None)
         user=sender,
         title=title,
         message=message,
-        notification_type=Notification.NotificationTypeChoices.TRAVEL_REQUEST_DECLINED if hasattr(Notification.NotificationTypeChoices, 'TRAVEL_REQUEST_DECLINED') else Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_DECLINED,
+        notification_type=Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_DECLINED,
         related_object_id=related_object_id,
         sender=decliner_instance,
     )
@@ -98,3 +103,21 @@ def notify_new_match_found(user, related_object_id=None):
         notification_type=Notification.NotificationTypeChoices.NEW_MATCH_FOUND,
         related_object_id=related_object_id,
     )
+
+
+def delete_old_read_notifications(retention_days=None):
+    """
+    Deletes read notifications older than the retention period.
+    Does NOT delete unread notifications.
+    """
+    if retention_days is None:
+        retention_days = getattr(settings, 'NOTIFICATION_RETENTION_DAYS', 30)
+
+    cutoff = timezone.now() - timedelta(days=retention_days)
+    deleted_count, _ = Notification.objects.filter(
+        is_read=True,
+        created_at__lt=cutoff
+    ).delete()
+
+    logger.info("Deleted %d old read notification(s) created before %s.", deleted_count, cutoff)
+    return deleted_count
