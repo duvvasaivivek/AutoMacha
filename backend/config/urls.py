@@ -15,4 +15,5 @@ urlpatterns = [
     path('api/travel-requests/', include('apps.travel_requests.urls')),
     path('api/dashboard/', include('apps.dashboard.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
+    path('api/auto-drivers/', include('apps.auto_drivers.urls')),
 ]

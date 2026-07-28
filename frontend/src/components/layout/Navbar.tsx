@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, PlusCircle, Compass, User as UserIcon, UserCog, Bell } from 'lucide-react';
+import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, PlusCircle, Compass, User as UserIcon, UserCog, Bell, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
 import { getUnreadCount } from '@/services/notification.service';
@@ -34,6 +34,7 @@ export const Navbar: React.FC = () => {
   }, [isAuthenticated, location.pathname]);
 
   const publicNavItems = [
+    { name: 'Auto Drivers', path: '/auto-drivers', icon: Phone },
     { name: 'Login', path: '/login', icon: LogIn },
     { name: 'Register', path: '/register', icon: UserPlus },
   ];
@@ -43,6 +44,7 @@ export const Navbar: React.FC = () => {
     { name: 'Travel Requests', path: '/travel-requests', icon: Compass },
     { name: 'My Requests', path: '/my-travel-requests', icon: UserIcon },
     { name: 'Create Request', path: '/travel-requests/new', icon: PlusCircle },
+    { name: 'Auto Drivers', path: '/auto-drivers', icon: Phone },
     { name: 'Notifications', path: '/notifications', icon: Bell },
     { name: 'Profile', path: '/profile', icon: UserCog },
   ];
@@ -219,4 +221,3 @@ export const Navbar: React.FC = () => {
     </header>
   );
 };
-

@@ -105,6 +105,7 @@ INSTALLED_APPS = [
     'apps.travel_requests.apps.TravelRequestsConfig',
     'apps.dashboard.apps.DashboardConfig',
     'apps.notifications.apps.NotificationsConfig',
+    'apps.auto_drivers.apps.AutoDriversConfig',
 ]
 
 MIDDLEWARE = [

@@ -13,6 +13,7 @@ const MyTravelRequestsPage = lazy(() => import('@/pages/MyTravelRequestsPage'));
 const EditTravelRequestPage = lazy(() => import('@/pages/EditTravelRequestPage'));
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
+const AutoDriversPage = lazy(() => import('@/pages/AutoDriversPage'));
 const NotFound = lazy(() => import('@/pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 export const AppRoutes: React.FC = () => {
@@ -20,6 +21,7 @@ export const AppRoutes: React.FC = () => {
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/auto-drivers" element={<AutoDriversPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
