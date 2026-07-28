@@ -1,8 +1,11 @@
+import logging
 from rest_framework import status
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from .serializers import CurrentUserSerializer, UserRegistrationSerializer, UserProfileSerializer
+
+auth_logger = logging.getLogger('auth')
 
 
 class UserRegistrationView(CreateAPIView):
@@ -13,6 +16,15 @@ class UserRegistrationView(CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        auth_logger.info(
+            "User Registration Success | User ID: %d | Username: %s | Roll Number: %s | Email: %s",
+            user.id,
+            user.username,
+            user.roll_number,
+            user.institute_email,
+        )
+
         response_data = {
             "message": "User registered successfully.",
             "user": {
@@ -39,3 +51,7 @@ class UserProfileView(RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+    def perform_update(self, serializer):
+        user = serializer.save()
+        auth_logger.info("User Profile Updated | User ID: %d | Username: %s", user.id, user.username)

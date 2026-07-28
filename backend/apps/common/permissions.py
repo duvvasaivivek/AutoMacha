@@ -1,7 +1,10 @@
 """
-Common reusable permissions across all Django apps.
+Common reusable permissions across all Django apps with security audit logging.
 """
+import logging
 from rest_framework import permissions
+
+sec_logger = logging.getLogger('security')
 
 
 class IsOwner(permissions.BasePermission):
@@ -11,7 +14,17 @@ class IsOwner(permissions.BasePermission):
     """
 
     def has_object_permission(self, request, view, obj):
-        return bool(request.user and request.user.is_authenticated and hasattr(obj, 'user') and obj.user == request.user)
+        is_granted = bool(
+            request.user and request.user.is_authenticated and hasattr(obj, 'user') and obj.user == request.user
+        )
+        if not is_granted:
+            sec_logger.warning(
+                "Permission Denied: User %s attempted unauthorized access to %s owned by %s",
+                getattr(request.user, 'username', 'anonymous'),
+                obj.__class__.__name__,
+                getattr(getattr(obj, 'user', None), 'username', 'unknown'),
+            )
+        return is_granted
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -23,4 +36,16 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        return bool(request.user and request.user.is_authenticated and hasattr(obj, 'user') and obj.user == request.user)
+
+        is_granted = bool(
+            request.user and request.user.is_authenticated and hasattr(obj, 'user') and obj.user == request.user
+        )
+        if not is_granted:
+            sec_logger.warning(
+                "Permission Denied: User %s attempted unauthorized modification (%s) to %s owned by %s",
+                getattr(request.user, 'username', 'anonymous'),
+                request.method,
+                obj.__class__.__name__,
+                getattr(getattr(obj, 'user', None), 'username', 'unknown'),
+            )
+        return is_granted

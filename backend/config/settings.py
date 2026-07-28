@@ -63,6 +63,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.common.middleware.RequestLoggingMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -233,34 +234,120 @@ if not DEBUG:
     X_FRAME_OPTIONS = 'DENY'
 
 
-# Logging
+# Centralized Log Directory
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+LOG_LEVEL = env('LOG_LEVEL', default='INFO' if not DEBUG else 'DEBUG')
+
+# Centralized Structured Logging Configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'request_context': {
+            '()': 'apps.common.logging.RequestContextFilter',
+        },
+    },
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+        'structured': {
+            '()': 'apps.common.logging.StructuredFormatter',
+        },
+        'simple': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
             'style': '{',
         },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'filters': ['request_context'],
+            'formatter': 'structured',
+            'level': 'DEBUG',
+        },
+        'application_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'application.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 5,
+            'filters': ['request_context'],
+            'formatter': 'structured',
+            'level': 'INFO',
+        },
+        'authentication_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'authentication.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'filters': ['request_context'],
+            'formatter': 'structured',
+            'level': 'INFO',
+        },
+        'security_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'security.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'filters': ['request_context'],
+            'formatter': 'structured',
+            'level': 'WARNING',
+        },
+        'background_tasks_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'background_tasks.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'filters': ['request_context'],
+            'formatter': 'structured',
+            'level': 'INFO',
+        },
+        'errors_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'errors.log',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'filters': ['request_context'],
+            'formatter': 'structured',
+            'level': 'ERROR',
         },
     },
     'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
+        'handlers': ['console', 'application_file', 'errors_file'],
+        'level': LOG_LEVEL,
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['console', 'application_file', 'errors_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'api.request': {
+            'handlers': ['console', 'application_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'auth': {
+            'handlers': ['console', 'authentication_file', 'security_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'security': {
+            'handlers': ['console', 'security_file', 'errors_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'database': {
+            'handlers': ['console', 'errors_file'],
             'level': 'WARNING',
             'propagate': False,
         },
         'apps': {
-            'handlers': ['console'],
+            'handlers': ['console', 'application_file', 'errors_file'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'apps.background_tasks': {
+            'handlers': ['console', 'background_tasks_file', 'errors_file'],
             'level': 'INFO',
             'propagate': False,
         },
