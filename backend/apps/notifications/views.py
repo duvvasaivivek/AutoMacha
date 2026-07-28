@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, views, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
+from apps.common.permissions import IsOwner
 from .models import Notification
 from .serializers import NotificationSerializer
 
@@ -10,6 +10,7 @@ from .serializers import NotificationSerializer
 class NotificationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = NotificationSerializer
+    pagination_class = None
 
     def get_queryset(self):
         return Notification.objects.filter(user=self.request.user).select_related('sender').order_by('-created_at')
@@ -24,12 +25,11 @@ class NotificationUnreadCountView(views.APIView):
 
 
 class NotificationMarkReadView(views.APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
 
     def patch(self, request, *args, **kwargs):
         notification = get_object_or_404(Notification, pk=kwargs['pk'])
-        if notification.user != request.user:
-            raise PermissionDenied("You do not have permission to modify this notification.")
+        self.check_object_permissions(request, notification)
 
         if not notification.is_read:
             notification.is_read = True

@@ -1,4 +1,5 @@
-import axios, { InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '@/lib/auth';
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';

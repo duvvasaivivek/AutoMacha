@@ -1,4 +1,15 @@
+from django.contrib.auth import get_user_model
 from .models import Notification
+
+User = get_user_model()
+
+
+def _resolve_user(user_or_username):
+    if not user_or_username:
+        return None
+    if isinstance(user_or_username, User) or hasattr(user_or_username, 'username'):
+        return user_or_username
+    return User.objects.filter(username=str(user_or_username)).first()
 
 
 def create_notification(user, title, message, notification_type, related_object_id=None, sender=None):
@@ -6,6 +17,7 @@ def create_notification(user, title, message, notification_type, related_object_
     Creates a notification for the given user if an identical notification does not already exist
     for this event/related object to avoid duplicates.
     """
+    sender_instance = _resolve_user(sender)
     notification, created = Notification.objects.get_or_create(
         user=user,
         notification_type=notification_type,
@@ -13,48 +25,54 @@ def create_notification(user, title, message, notification_type, related_object_
         defaults={
             'title': title,
             'message': message,
-            'sender': sender,
+            'sender': sender_instance,
         }
     )
     return notification, created
 
 
 def notify_ride_share_request_received(receiver, sender, related_object_id=None):
+    sender_instance = _resolve_user(sender)
+    sender_name = sender_instance.username if sender_instance else str(sender)
     title = "New Ride Share Request"
-    message = f"{sender.username} wants to share a ride with you."
+    message = f"{sender_name} wants to share a ride with you."
     return create_notification(
         user=receiver,
         title=title,
         message=message,
         notification_type=Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_RECEIVED,
         related_object_id=related_object_id,
-        sender=sender,
+        sender=sender_instance,
     )
 
 
 def notify_ride_share_request_accepted(sender, acceptor, related_object_id=None):
+    acceptor_instance = _resolve_user(acceptor)
+    acceptor_name = acceptor_instance.username if acceptor_instance else str(acceptor)
     title = "Ride Request Accepted"
-    message = f"{acceptor.username} accepted your ride request."
+    message = f"{acceptor_name} accepted your ride request."
     return create_notification(
         user=sender,
         title=title,
         message=message,
         notification_type=Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_ACCEPTED,
         related_object_id=related_object_id,
-        sender=acceptor,
+        sender=acceptor_instance,
     )
 
 
 def notify_ride_share_request_declined(sender, decliner, related_object_id=None):
+    decliner_instance = _resolve_user(decliner)
+    decliner_name = decliner_instance.username if decliner_instance else str(decliner)
     title = "Ride Request Declined"
-    message = f"{decliner.username} declined your ride request."
+    message = f"{decliner_name} declined your ride request."
     return create_notification(
         user=sender,
         title=title,
         message=message,
-        notification_type=Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_DECLINED,
+        notification_type=Notification.NotificationTypeChoices.TRAVEL_REQUEST_DECLINED if hasattr(Notification.NotificationTypeChoices, 'TRAVEL_REQUEST_DECLINED') else Notification.NotificationTypeChoices.RIDE_SHARE_REQUEST_DECLINED,
         related_object_id=related_object_id,
-        sender=decliner,
+        sender=decliner_instance,
     )
 
 

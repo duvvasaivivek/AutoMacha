@@ -7,11 +7,12 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.timezone import is_naive, make_aware
 from rest_framework import generics, status
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.common.permissions import IsOwner
 from .models import TravelRequest
 from .serializers import (
     TravelRequestSerializer,
@@ -26,6 +27,7 @@ User = get_user_model()
 
 class TravelRequestListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -33,7 +35,6 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
         return TravelRequestListSerializer
 
     def get_queryset(self):
-        # Expire outdated requests (kept here for correctness until background task is scheduled)
         expire_outdated_requests()
 
         queryset = TravelRequest.objects.select_related('destination', 'user').order_by('travel_datetime')
@@ -110,6 +111,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
 class MyTravelRequestsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = MyTravelRequestSerializer
+    pagination_class = None
 
     def get_queryset(self):
         expire_outdated_requests()
@@ -125,17 +127,11 @@ class MyTravelRequestsView(generics.ListAPIView):
 
 
 class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = TravelRequestSerializer
 
     def get_queryset(self):
         return TravelRequest.objects.select_related('destination', 'user')
-
-    def get_object(self):
-        obj = get_object_or_404(self.get_queryset(), pk=self.kwargs['pk'])
-        if obj.user != self.request.user:
-            raise PermissionDenied("You do not have permission to access or modify this travel request.")
-        return obj
 
     def perform_update(self, serializer):
         if serializer.instance.status != 'OPEN':
@@ -154,13 +150,12 @@ class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class TravelRequestCancelView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = TravelRequestSerializer
 
     def post(self, request, *args, **kwargs):
         instance = get_object_or_404(TravelRequest.objects.select_related('destination', 'user'), pk=kwargs['pk'])
-        if instance.user != request.user:
-            raise PermissionDenied("You do not have permission to modify this travel request.")
+        self.check_object_permissions(request, instance)
         if instance.status != 'OPEN':
             raise ValidationError("Only open travel requests can be cancelled.")
         instance.status = 'CANCELLED'
@@ -170,20 +165,17 @@ class TravelRequestCancelView(generics.GenericAPIView):
 
 
 class TravelRequestMatchesView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = TravelRequestMatchSerializer
+    pagination_class = None
 
     def get_queryset(self):
         travel_request = get_object_or_404(TravelRequest, pk=self.kwargs['pk'])
-
-        # Verify the authenticated user owns the request
-        if travel_request.user != self.request.user:
-            raise PermissionDenied("You do not have permission to view matches for this travel request.")
+        self.check_object_permissions(self.request, travel_request)
 
         # Use the centralized service to find candidates
         candidates = find_matching_candidates(travel_request)
 
-        # Calculate time difference and sort by smallest time difference
         candidates_list = list(candidates)
         for cand in candidates_list:
             diff_seconds = abs((cand.travel_datetime - travel_request.travel_datetime).total_seconds())
@@ -203,7 +195,7 @@ class TravelRequestShareView(APIView):
         if travel_request.status != 'OPEN':
             raise ValidationError("You can only request a ride share on open travel requests.")
 
-        from ..notifications.services import notify_ride_share_request_received
+        from apps.notifications.services import notify_ride_share_request_received
         notify_ride_share_request_received(
             receiver=travel_request.user,
             sender=request.user,
@@ -218,7 +210,7 @@ class TravelRequestRespondShareView(APIView):
     def post(self, request, pk=None):
         travel_request = get_object_or_404(TravelRequest, pk=pk)
         if travel_request.user != request.user:
-            raise PermissionDenied("Only the owner of the travel request can respond to ride share requests.")
+            raise ValidationError("Only the owner of the travel request can respond to ride share requests.")
 
         sender_username = request.data.get('sender_username')
         action = request.data.get('action')
@@ -227,7 +219,7 @@ class TravelRequestRespondShareView(APIView):
 
         sender_user = get_object_or_404(User, username=sender_username)
 
-        from ..notifications.services import notify_ride_share_request_accepted, notify_ride_share_request_declined
+        from apps.notifications.services import notify_ride_share_request_accepted, notify_ride_share_request_declined
         if action == 'ACCEPT':
             notify_ride_share_request_accepted(
                 sender=sender_user,

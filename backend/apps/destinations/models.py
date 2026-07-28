@@ -22,6 +22,9 @@ class Destination(models.Model):
         ordering = ['name']
         verbose_name = "Destination"
         verbose_name_plural = "Destinations"
+        indexes = [
+            models.Index(fields=['is_active', 'name'], name='idx_destination_active_name'),
+        ]
 
     def __str__(self):
         return self.name

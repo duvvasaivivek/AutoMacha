@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Bell,
@@ -17,15 +17,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  getNotifications,
-  markAsRead,
-  markAllAsRead,
-} from '@/services/notification.service';
 import { respondRideShare } from '@/services/travelRequest.service';
 import type { Notification, NotificationType, TravelRequestUser } from '@/types';
 import { RideConnectModal } from '@/components/RideConnectModal';
 import { formatDateTime } from '@/utils/date';
+import { useNotifications } from '@/hooks';
+import { EmptyState } from '@/components/common/EmptyState';
 import axios from 'axios';
 
 function getNotificationBadge(type: NotificationType) {
@@ -70,9 +67,7 @@ function getNotificationBadge(type: NotificationType) {
 }
 
 export const NotificationsPage: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { notifications, unreadCount, isLoading, error, refetch, markAsRead, markAllRead } = useNotifications();
   const [isMarkingAll, setIsMarkingAll] = useState<boolean>(false);
   const [markingIds, setMarkingIds] = useState<Record<number, boolean>>({});
   const [respondingId, setRespondingId] = useState<Record<number, boolean>>({});
@@ -88,9 +83,6 @@ export const NotificationsPage: React.FC = () => {
       setResponseStatus((prev) => ({ ...prev, [notif.id]: action === 'ACCEPT' ? 'ACCEPTED' : 'DECLINED' }));
       if (!notif.is_read) {
         await markAsRead(notif.id);
-        setNotifications((prev) =>
-          prev.map((item) => (item.id === notif.id ? { ...item, is_read: true } : item))
-        );
         window.dispatchEvent(new Event('notifications-updated'));
       }
     } catch (err: unknown) {
@@ -101,51 +93,24 @@ export const NotificationsPage: React.FC = () => {
     }
   };
 
-  const fetchNotifications = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getNotifications();
-      setNotifications(data);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to load notifications. Please try again.');
-      } else {
-        setError('An unexpected error occurred while loading notifications.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
-
   const handleMarkAsRead = async (id: number) => {
     if (markingIds[id]) return;
     setMarkingIds((prev) => ({ ...prev, [id]: true }));
     try {
-      const updated = await markAsRead(id);
-      setNotifications((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, is_read: updated.is_read } : item))
-      );
+      await markAsRead(id);
       window.dispatchEvent(new Event('notifications-updated'));
     } catch {
-      // Silently revert or ignore if error occurs
+      // Silently ignore
     } finally {
       setMarkingIds((prev) => ({ ...prev, [id]: false }));
     }
   };
 
   const handleMarkAllAsRead = async () => {
-    const unreadExists = notifications.some((item) => !item.is_read);
-    if (!unreadExists || isMarkingAll) return;
-
+    if (unreadCount === 0 || isMarkingAll) return;
     setIsMarkingAll(true);
     try {
-      await markAllAsRead();
-      setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
+      await markAllRead();
       window.dispatchEvent(new Event('notifications-updated'));
     } catch {
       // Handle failure
@@ -153,8 +118,6 @@ export const NotificationsPage: React.FC = () => {
       setIsMarkingAll(false);
     }
   };
-
-  const unreadCount = notifications.filter((item) => !item.is_read).length;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 py-8 sm:py-12 max-w-4xl mx-auto w-full">
@@ -181,7 +144,7 @@ export const NotificationsPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchNotifications}
+              onClick={refetch}
               className="gap-1.5 font-semibold text-neutral-700 hover:text-black border-neutral-200"
               title="Refresh notifications"
             >
@@ -233,7 +196,7 @@ export const NotificationsPage: React.FC = () => {
             <p className="text-xs text-red-700">{error}</p>
           </div>
           <Button
-            onClick={fetchNotifications}
+            onClick={refetch}
             size="sm"
             variant="outline"
             className="font-semibold border-red-300 text-red-900 hover:bg-red-100 gap-1.5"
@@ -246,17 +209,10 @@ export const NotificationsPage: React.FC = () => {
 
       {/* Empty State */}
       {!isLoading && !error && notifications.length === 0 && (
-        <div className="w-full max-w-md mx-auto my-16 p-12 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50/50 text-center space-y-4">
-          <div className="h-14 w-14 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center mx-auto text-neutral-400">
-            <Bell className="h-7 w-7" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-bold text-black text-lg">No notifications yet.</h3>
-            <p className="text-xs text-neutral-500">
-              When you receive ride requests, matches, or trip updates, they will show up here.
-            </p>
-          </div>
-        </div>
+        <EmptyState
+          title="No notifications yet."
+          description="When you receive ride requests, matches, or trip updates, they will show up here."
+        />
       )}
 
       {/* Notifications List */}
@@ -426,3 +382,5 @@ export const NotificationsPage: React.FC = () => {
     </div>
   );
 };
+
+export default NotificationsPage;
