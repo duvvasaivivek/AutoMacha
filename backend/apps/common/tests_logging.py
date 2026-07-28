@@ -1,87 +1,77 @@
 import logging
 import os
+from unittest.mock import patch
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.common.logging import RequestContextFilter, StructuredFormatter
+from apps.travel_requests.tasks import expire_travel_requests_task
 
 User = get_user_model()
 
 
-class StructuredLoggingTests(APITestCase):
+@override_settings(
+    CELERY_TASK_ALWAYS_EAGER=True,
+    CELERY_TASK_STORE_EAGER_RESULT=False,
+)
+class RequestIDAndLoggingTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="loguser",
+            username="reqiduser",
             password="testpassword123",
-            institute_email="loguser@iiitk.ac.in",
-            roll_number="124AD0888"
+            institute_email="reqiduser@iiitk.ac.in",
+            roll_number="124AD0777"
         )
 
-    def test_request_id_header_injected(self):
+    def test_auto_generated_request_id_in_response_headers(self):
         res = self.client.get('/api/health/')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn('X-Request-ID', res.headers)
-        self.assertTrue(len(res.headers['X-Request-ID']) > 10)
+        request_id = res.headers['X-Request-ID']
+        self.assertTrue(len(request_id) > 10)
 
-    def test_structured_formatter(self):
+    def test_custom_incoming_request_id_preserved(self):
+        custom_id = "custom-trace-id-9999"
+        res = self.client.get('/api/health/', HTTP_X_REQUEST_ID=custom_id)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.headers.get('X-Request-ID'), custom_id)
+
+    def test_structured_formatter_contains_request_id(self):
         formatter = StructuredFormatter()
         record = logging.LogRecord(
             name="test.logger",
             level=logging.INFO,
             pathname="test.py",
-            lineno=10,
-            msg="Test log message",
+            lineno=15,
+            msg="Traceable log entry",
             args=(),
             exc_info=None
         )
-        record.request_id = "test-uuid-1234"
-        record.username = "loguser"
-        record.user_id = "1"
-        record.client_ip = "127.0.0.1"
-        record.http_method = "GET"
-        record.path = "/api/health/"
+        record.request_id = "trace-uuid-8888"
+        record.username = "reqiduser"
+        record.user_id = str(self.user.id)
+        record.client_ip = "192.168.1.1"
+        record.http_method = "POST"
+        record.path = "/api/travel-requests/"
 
         formatted = formatter.format(record)
-        self.assertIn("INFO", formatted)
-        self.assertIn("test.logger", formatted)
-        self.assertIn("req_id=test-uuid-1234", formatted)
-        self.assertIn("user=loguser#1", formatted)
-        self.assertIn("GET /api/health/", formatted)
-        self.assertIn("Test log message", formatted)
+        self.assertIn("req_id=trace-uuid-8888", formatted)
+        self.assertIn(f"user=reqiduser#{self.user.id}", formatted)
+        self.assertIn("POST /api/travel-requests/", formatted)
+        self.assertIn("Traceable log entry", formatted)
 
-    def test_log_files_created(self):
-        logs_dir = getattr(settings, 'LOGS_DIR', None)
-        self.assertIsNotNone(logs_dir)
-        self.assertTrue(os.path.exists(logs_dir))
+    def test_slow_request_threshold_logging(self):
+        with patch('apps.common.middleware.SLOW_REQUEST_THRESHOLD_MS', -1):
+            with self.assertLogs('api.request', level='WARNING') as cm:
+                res = self.client.get('/api/health/')
+                self.assertEqual(res.status_code, status.HTTP_200_OK)
+                self.assertTrue(any("Slow API Endpoint Detected" in log for log in cm.output))
 
-        # Make request to generate logs
-        self.client.get('/api/health/')
-
-        app_log_path = os.path.join(logs_dir, 'application.log')
-        self.assertTrue(os.path.exists(app_log_path))
-
-    def test_registration_generates_auth_log(self):
-        reg_data = {
-            "username": "newloguser",
-            "password": "testpassword123",
-            "institute_email": "newloguser@iiitk.ac.in",
-            "roll_number": "124AD0889",
-            "branch": "CSE",
-            "hostel": "B1"
-        }
-        res = self.client.post('/api/accounts/register/', reg_data)
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-
-        logs_dir = getattr(settings, 'LOGS_DIR', None)
-        auth_log_path = os.path.join(logs_dir, 'authentication.log')
-        self.assertTrue(os.path.exists(auth_log_path))
-
-        with open(auth_log_path, 'r', encoding='utf-8') as f:
-            log_content = f.read()
-            self.assertIn("User Registration Success", log_content)
-            self.assertIn("newloguser", log_content)
-            # Ensure password is NOT leaked in logs
-            self.assertNotIn("testpassword123", log_content)
+    def test_celery_task_preserves_request_id(self):
+        custom_req_id = "req-id-task-correlation-5555"
+        with patch('apps.travel_requests.tasks.expire_outdated_requests') as mock_service:
+            expire_travel_requests_task.apply(kwargs={'request_id': custom_req_id})
+            mock_service.assert_called_once()

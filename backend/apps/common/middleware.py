@@ -1,49 +1,60 @@
 """
-Request Logging Middleware for request tracking, execution timing, and security context.
+Request ID Tracking & Performance Logging Middleware.
 """
 import logging
 import time
 import uuid
+from django.conf import settings
 from .logging import set_request_context, clear_request_context
 
 logger = logging.getLogger('api.request')
 sec_logger = logging.getLogger('security')
 
+SLOW_REQUEST_THRESHOLD_MS = getattr(settings, 'SLOW_REQUEST_THRESHOLD_MS', 1000)
+
 
 class RequestLoggingMiddleware:
     """
-    Middleware to inject unique X-Request-ID, measure performance duration,
-    and log every incoming request and response safely.
+    Middleware that assigns a unique Request ID (X-Request-ID) to every incoming HTTP request,
+    attaches it to request.request_id, tracks execution duration, logs performance metrics,
+    and sets the X-Request-ID response header.
     """
 
     def __init__(self, get_response):
         self.get_response = get_response
 
     def __call__(self, request):
-        # Generate or extract Request ID
-        request_id = request.headers.get('X-Request-ID') or str(uuid.uuid4())
+        # 1. Extract or generate Request ID
+        incoming_request_id = request.headers.get('X-Request-ID') or request.META.get('HTTP_X_REQUEST_ID')
+        request_id = incoming_request_id.strip() if incoming_request_id else str(uuid.uuid4())
+        
+        # 2. Attach request.request_id for global access during request handling
         request.request_id = request_id
 
-        # Extract Client IP
+        # 3. Extract Client IP
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
             client_ip = x_forwarded_for.split(',')[0].strip()
         else:
             client_ip = request.META.get('REMOTE_ADDR', '-')
 
-        # User details (if authenticated)
+        # 4. Extract User Agent
+        user_agent = request.META.get('HTTP_USER_AGENT', '-')
+
+        # 5. Extract Authenticated User info
         user_id = '-'
         username = 'anonymous'
         if hasattr(request, 'user') and request.user.is_authenticated:
             user_id = str(request.user.id)
             username = request.user.username
 
-        # Set thread-local request context for logger records
+        # 6. Set thread-local context for all loggers
         context = {
             'request_id': request_id,
             'user_id': user_id,
             'username': username,
             'client_ip': client_ip,
+            'user_agent': user_agent,
             'http_method': request.method,
             'path': request.path,
         }
@@ -51,14 +62,21 @@ class RequestLoggingMiddleware:
 
         start_time = time.time()
 
-        logger.info("Incoming %s request to %s", request.method, request.path)
+        logger.info(
+            "Incoming %s request to %s from %s (User-Agent: %s)",
+            request.method,
+            request.path,
+            client_ip,
+            user_agent,
+        )
 
         try:
             response = self.get_response(request)
         except Exception as exc:
             duration_ms = round((time.time() - start_time) * 1000, 2)
             logger.error(
-                "Request failed with unhandled exception: %s | Duration: %.2fms",
+                "Request failed with unhandled exception [%s]: %s | Duration: %.2fms",
+                exc.__class__.__name__,
                 str(exc),
                 duration_ms,
                 exc_info=exc,
@@ -78,10 +96,17 @@ class RequestLoggingMiddleware:
         else:
             logger.info("Response %d for %s %s | Duration: %.2fms", response.status_code, request.method, request.path, duration_ms)
 
-        # Warn if endpoint execution is slow (> 500ms)
-        if duration_ms > 500:
-            logger.warning("Slow API Endpoint Detected: %s %s took %.2fms", request.method, request.path, duration_ms)
+        # Warn if endpoint execution is slow (> 1000ms threshold)
+        if duration_ms > SLOW_REQUEST_THRESHOLD_MS:
+            logger.warning(
+                "Slow API Endpoint Detected: %s %s took %.2fms (Threshold: %dms)",
+                request.method,
+                request.path,
+                duration_ms,
+                SLOW_REQUEST_THRESHOLD_MS,
+            )
 
+        # 7. Inject X-Request-ID into response header
         response['X-Request-ID'] = request_id
         clear_request_context()
         return response

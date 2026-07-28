@@ -5,7 +5,7 @@ import logging
 import threading
 from datetime import datetime, timezone
 
-# Thread-local storage for request context (request_id, user, IP, method, path)
+# Thread-local storage for request context (request_id, user, IP, user_agent, method, path)
 _thread_locals = threading.local()
 
 
@@ -24,7 +24,7 @@ def clear_request_context():
 
 class RequestContextFilter(logging.Filter):
     """
-    Enriches log records with request context attributes (request_id, user_id, username, client_ip, method, path).
+    Enriches log records with request context attributes (request_id, user_id, username, client_ip, user_agent, method, path).
     """
 
     def filter(self, record):
@@ -33,6 +33,7 @@ class RequestContextFilter(logging.Filter):
         record.user_id = ctx.get('user_id', '-')
         record.username = ctx.get('username', 'anonymous')
         record.client_ip = ctx.get('client_ip', '-')
+        record.user_agent = ctx.get('user_agent', '-')
         record.http_method = ctx.get('http_method', '-')
         record.path = ctx.get('path', '-')
         return True
@@ -57,7 +58,7 @@ class StructuredFormatter(logging.Formatter):
 
         log_msg = record.getMessage()
 
-        # Format: ISO_TIMESTAMP | LEVEL | LOGGER | MOD.FUNC | REQ_ID | USER | IP | METHOD PATH | MESSAGE
+        # Format: ISO_TIMESTAMP | LEVEL | LOGGER | MOD.FUNC | req_id=UUID | user=USER#ID | ip=IP | METHOD PATH | MESSAGE
         formatted_message = (
             f"{now} | {record.levelname:<7} | {record.name} | "
             f"{record.module}.{record.funcName} | req_id={req_id} | "
