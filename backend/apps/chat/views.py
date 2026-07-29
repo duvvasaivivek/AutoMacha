@@ -2,7 +2,7 @@ from django.db.models import Q, Count, Subquery, OuterRef, Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, views, status, permissions
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied, NotFound
+from rest_framework.exceptions import PermissionDenied
 
 from apps.common.cache_services import ChatCacheService
 from .models import ChatRoom, ChatMessage
@@ -10,6 +10,7 @@ from .serializers import (
     ChatRoomSerializer,
     ChatMessageSerializer,
 )
+from .services import broadcast_deletion_event
 
 
 class ChatRoomListView(generics.ListAPIView):
@@ -156,7 +157,6 @@ class ChatMessageDeleteView(views.APIView):
             msg.save(update_fields=['is_deleted_everyone', 'message'])
 
             # Broadcast real-time deletion event
-            from .services import broadcast_deletion_event
             broadcast_deletion_event(msg, mode='everyone')
             return Response({"status": "deleted_everyone", "id": msg.id}, status=status.HTTP_200_OK)
         else:

@@ -53,12 +53,14 @@ class AdminUserListView(generics.ListAPIView):
         queryset = User.objects.all().order_by('-date_joined')
         search = self.request.query_params.get('search', '').strip()
         if search:
-            queryset = queryset.filter(
+            search_q = (
                 Q(username__icontains=search) |
                 Q(institute_email__icontains=search) |
-                Q(roll_number__icontains=search) |
-                Q(full_name__icontains=search) if hasattr(User, 'full_name') else Q(username__icontains=search)
+                Q(roll_number__icontains=search)
             )
+            if hasattr(User, 'full_name'):
+                search_q |= Q(full_name__icontains=search)
+            queryset = queryset.filter(search_q)
 
         role = self.request.query_params.get('role', '')
         if role == 'staff':

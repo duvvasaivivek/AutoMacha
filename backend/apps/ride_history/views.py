@@ -5,7 +5,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied, MethodNotAllowed
+from rest_framework.exceptions import MethodNotAllowed
 
 from .models import RideHistory
 from .serializers import (
