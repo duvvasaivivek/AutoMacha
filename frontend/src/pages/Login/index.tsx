@@ -71,8 +71,14 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-md space-y-6">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-xs font-bold text-neutral-500 hover:text-black transition-colors"
+        >
+          <span>← Back to Landing Page</span>
+        </Link>
         <div className="text-center space-y-2">
           <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-neutral-100 text-black ring-1 ring-neutral-200 mb-2 shadow-sm">
             <LogIn className="h-6 w-6" />
