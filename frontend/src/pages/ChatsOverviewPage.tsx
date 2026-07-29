@@ -4,12 +4,8 @@ import {
   MessageSquare,
   Search,
   MapPin,
-  Clock,
-  ChevronRight,
   Loader2,
   ShieldCheck,
-  PlusCircle,
-  Car,
   Compass,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -18,7 +14,7 @@ import { useAuth } from '@/hooks';
 import { getChatRooms } from '@/services/chat.service';
 import type { ChatRoom } from '@/types';
 import { ChatPage } from './ChatPage';
-import { formatTime, formatDate } from '@/utils/date';
+import { formatTime } from '@/utils/date';
 
 export const ChatsOverviewPage: React.FC = () => {
   const { rideRequestId } = useParams<{ rideRequestId?: string }>();

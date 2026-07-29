@@ -4,15 +4,12 @@ import {
   MapPin,
   Calendar,
   Clock,
-  User as UserIcon,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   GraduationCap,
   Home,
-  Hash,
   Star,
-  MessageSquare,
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

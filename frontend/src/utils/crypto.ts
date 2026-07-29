@@ -77,10 +77,10 @@ export async function encryptMessage(
   const encryptedBuffer = await window.crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv,
+      iv: iv as unknown as BufferSource,
     },
     key,
-    data
+    data as unknown as BufferSource
   );
 
   return {
@@ -109,10 +109,10 @@ export async function decryptMessage(
     const decryptedBuffer = await window.crypto.subtle.decrypt(
       {
         name: 'AES-GCM',
-        iv,
+        iv: iv as unknown as BufferSource,
       },
       key,
-      encryptedData
+      encryptedData as unknown as BufferSource
     );
 
     const decoder = new TextDecoder();

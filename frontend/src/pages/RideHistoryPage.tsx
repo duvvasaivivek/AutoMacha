@@ -4,14 +4,12 @@ import {
   History,
   Search,
   Filter,
-  ArrowUpDown,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   MapPin,
   Calendar,
   Clock,
-  User as UserIcon,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -20,7 +18,6 @@ import {
   Compass,
   Eye,
   X,
-  Sparkles,
   Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,7 +33,7 @@ import type {
   RideHistorySummary,
   RideStatus,
 } from '@/types';
-import { formatDate, formatTime, formatDateTime } from '@/utils/date';
+import { formatDate, formatTime } from '@/utils/date';
 import { RideDetailsModal } from '@/components/RideDetailsModal';
 
 export const RideHistoryPage: React.FC = () => {

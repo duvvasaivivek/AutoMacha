@@ -1,5 +1,3 @@
-import type { TravelRequestUser } from './travelRequest';
-
 export type RideStatus = 'COMPLETED' | 'CANCELLED' | 'EXPIRED';
 
 export interface RideHistoryPartner {

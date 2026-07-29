@@ -6,11 +6,8 @@ from rest_framework import views, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from ..travel_requests.models import TravelRequest
-from ..travel_requests.services import expire_outdated_requests
-
-
 from apps.common.cache_services import DashboardCacheService
+from ..travel_requests.models import TravelRequest
 
 
 class DashboardStatsView(views.APIView):

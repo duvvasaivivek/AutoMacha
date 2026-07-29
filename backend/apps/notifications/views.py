@@ -1,7 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, views, status
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from apps.common.cache_services import NotificationCacheService
 from apps.common.permissions import IsOwner
 from .models import Notification
 from .serializers import NotificationSerializer
@@ -14,9 +16,6 @@ class NotificationListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Notification.objects.filter(user=self.request.user).select_related('sender').order_by('-created_at')
-
-
-from apps.common.cache_services import NotificationCacheService
 
 
 class NotificationUnreadCountView(views.APIView):

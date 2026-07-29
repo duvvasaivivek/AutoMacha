@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,18 +10,11 @@ import {
   ArrowRight,
   Lock,
   User,
-  Mail,
-  Hash,
   AlertCircle,
   Phone,
-  Building2,
-  Home as HomeIcon,
-  GraduationCap,
   Car,
   ShieldCheck,
   Zap,
-  Sparkles,
-  CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

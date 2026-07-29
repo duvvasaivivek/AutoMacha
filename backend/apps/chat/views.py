@@ -4,6 +4,7 @@ from rest_framework import generics, views, status, permissions
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, NotFound
 
+from apps.common.cache_services import ChatCacheService
 from .models import ChatRoom, ChatMessage
 from .serializers import (
     ChatRoomSerializer,
@@ -91,9 +92,6 @@ class ChatMessageListView(generics.ListAPIView):
         ).exclude(
             deleted_for=self.request.user
         ).select_related('sender').order_by('created_at')
-
-
-from apps.common.cache_services import ChatCacheService
 
 
 class ChatUnreadCountView(views.APIView):

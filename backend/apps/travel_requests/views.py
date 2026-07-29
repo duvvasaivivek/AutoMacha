@@ -8,14 +8,14 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.timezone import is_naive, make_aware
-from rest_framework import generics, status
 
-logger = logging.getLogger(__name__)
+from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.common.cache_services import DashboardCacheService
 from apps.common.permissions import IsOwner
 from .models import TravelRequest
 from .serializers import (
@@ -25,7 +25,9 @@ from .serializers import (
     MyTravelRequestSerializer,
 )
 from .services import find_matching_candidates, notify_matches_for_request, expire_outdated_requests
+from .tasks import dispatch_match_notifications_task
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -109,13 +111,11 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         travel_request = serializer.save(user=self.request.user)
         try:
-            from .tasks import dispatch_match_notifications_task
             req_id = getattr(self.request, 'request_id', None)
             dispatch_match_notifications_task.delay(travel_request.id, request_id=req_id)
         except Exception:
             notify_matches_for_request(travel_request)
 
-        from apps.common.cache_services import DashboardCacheService
         DashboardCacheService.invalidate_user_dashboard(self.request.user.id)
         DashboardCacheService.invalidate_admin_stats()
 

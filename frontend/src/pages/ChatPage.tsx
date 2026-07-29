@@ -3,8 +3,6 @@ import { useParams, Link } from 'react-router-dom';
 import {
   Send,
   MapPin,
-  Calendar,
-  Clock,
   Phone,
   ArrowLeft,
   Search,
@@ -14,13 +12,9 @@ import {
   AlertCircle,
   Lock,
   MessageSquare,
-  Sparkles,
-  Info,
-  X,
   Trash2,
   ShieldCheck,
   MoreVertical,
-  User as UserIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,8 +27,8 @@ import {
   deleteChatMessage,
   clearChatHistory,
 } from '@/services/chat.service';
-import type { ChatRoom, ChatMessage } from '@/types';
-import { formatDate, formatTime } from '@/utils/date';
+import type { ChatRoom } from '@/types';
+import { formatTime } from '@/utils/date';
 import { deriveRoomKey, decryptMessage } from '@/utils/crypto';
 
 export const ChatPage: React.FC = () => {
@@ -52,7 +46,7 @@ export const ChatPage: React.FC = () => {
   const [activeMenuMsgId, setActiveMenuMsgId] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const typingDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const typingDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleNewMessage = useCallback(() => {
     if (parsedRideRequestId) {
@@ -70,7 +64,6 @@ export const ChatPage: React.FC = () => {
     setMessages,
     sendMessage,
     sendTyping,
-    markRead,
     isConnected,
     partnerIsTyping,
     error: wsError,
@@ -459,9 +452,9 @@ export const ChatPage: React.FC = () => {
                   {isMe && !msg.is_deleted_everyone && (
                     <span className="inline-flex items-center">
                       {msg.is_read ? (
-                        <CheckCheck className="h-3.5 w-3.5 text-emerald-500" title="Read" />
+                        <span title="Read"><CheckCheck className="h-3.5 w-3.5 text-emerald-500" /></span>
                       ) : (
-                        <Check className="h-3.5 w-3.5 text-neutral-400" title="Delivered" />
+                        <span title="Delivered"><Check className="h-3.5 w-3.5 text-neutral-400" /></span>
                       )}
                     </span>
                   )}
