@@ -203,14 +203,14 @@ class CurrentUserAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Verify returned fields
-        expected_fields = {'id', 'username', 'institute_email', 'roll_number', 'branch', 'hostel', 'gender', 'phone_number'}
+        expected_fields = {'id', 'username', 'institute_email', 'roll_number', 'branch', 'hostel', 'gender', 'phone_number', 'is_staff', 'is_superuser'}
         self.assertEqual(set(response.data.keys()), expected_fields)
         self.assertEqual(response.data['username'], self.username)
         self.assertEqual(response.data['institute_email'], 'me@institute.edu')
         self.assertEqual(response.data['roll_number'], 'CS2026888')
 
         # Verify forbidden fields are never exposed
-        for forbidden_field in ['password', 'is_staff', 'is_superuser', 'groups', 'user_permissions', 'last_login']:
+        for forbidden_field in ['password', 'groups', 'user_permissions', 'last_login']:
             self.assertNotIn(forbidden_field, response.data)
 
     def test_get_current_user_unauthorized_no_token(self):

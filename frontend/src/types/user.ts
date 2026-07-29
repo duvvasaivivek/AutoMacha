@@ -7,4 +7,6 @@ export interface User {
   hostel: string;
   gender: string;
   phone_number?: string;
+  is_staff?: boolean;
+  is_superuser?: boolean;
 }

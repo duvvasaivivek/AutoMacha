@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, PlusCircle, Compass, User as UserIcon, UserCog, Bell, Phone } from 'lucide-react';
+import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, PlusCircle, Compass, User as UserIcon, UserCog, Bell, Phone, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
 import { getUnreadCount } from '@/services/notification.service';
@@ -93,6 +93,15 @@ export const Navbar: React.FC = () => {
                   </NavLink>
                 );
               })}
+              {user && (user.is_staff || user.is_superuser) && (
+                <NavLink
+                  to="/admin"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-amber-500 hover:bg-amber-600 text-black transition shadow-xs"
+                >
+                  <ShieldCheck className="h-4 w-4" />
+                  <span>Admin Portal</span>
+                </NavLink>
+              )}
               {user && (
                 <span className="text-sm font-semibold text-neutral-800 ml-2 px-3 py-1.5 rounded-lg bg-neutral-100 border border-neutral-200">
                   Hello, {user.username}

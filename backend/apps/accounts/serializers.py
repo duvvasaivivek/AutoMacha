@@ -53,6 +53,8 @@ class CurrentUserSerializer(serializers.ModelSerializer):
             'hostel',
             'gender',
             'phone_number',
+            'is_staff',
+            'is_superuser',
         )
         read_only_fields = fields
 

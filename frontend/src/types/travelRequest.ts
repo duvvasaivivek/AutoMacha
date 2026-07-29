@@ -41,8 +41,10 @@ export interface MyTravelRequest {
 export interface TravelRequest {
   id: number;
   destination: number;
+  destination_name?: string;
   destination_details?: Destination;
-  user?: TravelRequestUser;
+  user?: number | TravelRequestUser;
+  user_username?: string;
   direction: Direction;
   travel_datetime: string;
   status: Status;

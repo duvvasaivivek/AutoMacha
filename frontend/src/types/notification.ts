@@ -9,6 +9,8 @@ export type NotificationType =
 
 export interface Notification {
   id: number;
+  user?: number;
+  user_username?: string;
   title: string;
   message: string;
   notification_type: NotificationType;
