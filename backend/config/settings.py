@@ -424,10 +424,15 @@ LOGGING = {
 REDIS_URL = env('REDIS_URL', default='redis://127.0.0.1:6379/0')
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=REDIS_URL)
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=REDIS_URL)
+CELERY_TASK_ALWAYS_EAGER = env.bool('CELERY_TASK_ALWAYS_EAGER', default=not env.bool('USE_REDIS_CACHE', default=False))
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_ENABLE_UTC = True
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_TASK_SOFT_TIME_LIMIT = 5 * 60
 
 # Background Job Retention & Expiry Settings
 TRAVEL_REQUEST_EXPIRY_HOURS = env.int('TRAVEL_REQUEST_EXPIRY_HOURS', default=24)
@@ -450,6 +455,10 @@ CELERY_BEAT_SCHEDULE = {
     'delete-old-notifications': {
         'task': 'apps.notifications.tasks.cleanup_old_notifications_task',
         'schedule': crontab(minute=0, hour=0),
+    },
+    'refresh-dashboard-cache': {
+        'task': 'apps.dashboard.tasks.refresh_dashboard_cache_task',
+        'schedule': crontab(minute='*/1'),
     },
     'health-check-task': {
         'task': 'apps.common.tasks.system_health_check_task',

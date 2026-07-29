@@ -3,9 +3,51 @@ import time
 import uuid
 from celery import shared_task
 from apps.common.logging import set_request_context, clear_request_context
-from .services import delete_old_read_notifications
+from .services import delete_old_read_notifications, create_notification
 
 logger = logging.getLogger('apps.background_tasks')
+
+
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3,
+    name='apps.notifications.tasks.send_notification_async_task'
+)
+def send_notification_async_task(self, user_id, title, message, notification_type, related_object_id=None, sender_id=None, request_id=None):
+    """
+    Asynchronously creates and delivers user notifications.
+    Idempotent: Uses get_or_create to avoid duplicate notifications.
+    """
+    task_req_id = request_id or str(uuid.uuid4())
+    set_request_context({'request_id': task_req_id})
+
+    logger.info("Task [send_notification_async_task] Started for User ID #%s", user_id)
+    start_time = time.time()
+    try:
+        from apps.accounts.models import User
+
+        user = User.objects.get(pk=user_id)
+        sender = User.objects.filter(pk=sender_id).first() if sender_id else None
+
+        notification, created = create_notification(
+            user=user,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            related_object_id=related_object_id,
+            sender=sender
+        )
+        duration = time.time() - start_time
+        logger.info("Task [send_notification_async_task] Completed in %.2fs (Created: %s)", duration, created)
+        return {"notification_id": notification.id, "created": created}
+    except Exception as exc:
+        logger.error("Task [send_notification_async_task] Failed: %s", str(exc), exc_info=exc)
+        clear_request_context()
+        raise
+    finally:
+        clear_request_context()
 
 
 @shared_task(
