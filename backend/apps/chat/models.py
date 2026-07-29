@@ -134,6 +134,7 @@ class ChatMessage(models.Model):
         indexes = [
             models.Index(fields=['chat_room', 'created_at'], name='idx_chatmsg_room_created'),
             models.Index(fields=['chat_room', 'is_read'], name='idx_chatmsg_room_read'),
+            models.Index(fields=['chat_room', 'sender', 'is_read'], name='idx_chatmsg_room_sndr_read'),
         ]
 
     def __str__(self):

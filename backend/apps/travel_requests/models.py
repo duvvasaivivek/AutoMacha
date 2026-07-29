@@ -52,8 +52,7 @@ class TravelRequest(models.Model):
             models.Index(fields=['status'], name='idx_travelreq_status'),
             models.Index(fields=['travel_datetime'], name='idx_travelreq_datetime'),
             models.Index(fields=['user', 'status'], name='idx_travelreq_user_status'),
-            models.Index(fields=['status', 'destination', 'direction'], name='idx_travelreq_match'),
-            models.Index(fields=['status', 'travel_datetime'], name='idx_travelreq_status_dt'),
+            models.Index(fields=['status', 'destination', 'direction', 'travel_datetime'], name='idx_travelreq_match_full'),
         ]
 
     def __str__(self):

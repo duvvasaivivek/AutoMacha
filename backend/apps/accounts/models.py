@@ -104,6 +104,9 @@ class User(AbstractUser):
         ordering = ['username']
         verbose_name = "User"
         verbose_name_plural = "Users"
+        indexes = [
+            models.Index(fields=['is_active', 'date_joined'], name='idx_user_active_joined'),
+        ]
 
     def __str__(self):
         name = self.full_name if self.full_name else self.username

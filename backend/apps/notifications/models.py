@@ -48,8 +48,7 @@ class Notification(models.Model):
         verbose_name = "Notification"
         verbose_name_plural = "Notifications"
         indexes = [
-            models.Index(fields=['user', 'is_read'], name='idx_notif_user_read'),
-            models.Index(fields=['user', '-created_at'], name='idx_notif_user_created'),
+            models.Index(fields=['user', 'is_read', '-created_at'], name='idx_notif_user_read_created'),
         ]
 
     def __str__(self):
