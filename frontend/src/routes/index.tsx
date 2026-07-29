@@ -16,6 +16,7 @@ const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 const AutoDriversPage = lazy(() => import('@/pages/AutoDriversPage'));
 const RideHistoryPage = lazy(() => import('@/pages/RideHistoryPage'));
+const ChatPage = lazy(() => import('@/pages/ChatPage'));
 
 // Admin Pages
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
@@ -48,6 +49,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/travel-requests/:id/edit" element={<EditTravelRequestPage />} />
           <Route path="/travel-requests/:id/matches" element={<MatchesPage />} />
           <Route path="/rides/history" element={<RideHistoryPage />} />
+          <Route path="/chat/:rideRequestId" element={<ChatPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

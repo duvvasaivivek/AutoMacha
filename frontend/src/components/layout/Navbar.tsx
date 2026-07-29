@@ -19,22 +19,29 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
 import { getUnreadCount } from '@/services/notification.service';
+import { getChatUnreadCount } from '@/services/chat.service';
 
 export const Navbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [chatUnreadCount, setChatUnreadCount] = useState<number>(0);
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
     if (!isAuthenticated) {
       setUnreadCount(0);
+      setChatUnreadCount(0);
       return;
     }
     const fetchUnread = async () => {
       try {
-        const res = await getUnreadCount();
-        setUnreadCount(res.count);
+        const [notifRes, chatRes] = await Promise.all([
+          getUnreadCount().catch(() => ({ count: 0 })),
+          getChatUnreadCount().catch(() => ({ unread_count: 0 })),
+        ]);
+        setUnreadCount(notifRes.count);
+        setChatUnreadCount(chatRes.unread_count);
       } catch {
         // ignore silently
       }
@@ -45,7 +52,11 @@ export const Navbar: React.FC = () => {
       fetchUnread();
     };
     window.addEventListener('notifications-updated', handleUpdate);
-    return () => window.removeEventListener('notifications-updated', handleUpdate);
+    window.addEventListener('chat-unread-updated', handleUpdate);
+    return () => {
+      window.removeEventListener('notifications-updated', handleUpdate);
+      window.removeEventListener('chat-unread-updated', handleUpdate);
+    };
   }, [isAuthenticated, location.pathname]);
 
   const publicNavItems = [

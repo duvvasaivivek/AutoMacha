@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   X,
   MessageCircle,
+  MessageSquare,
   Phone,
   Mail,
   Copy,
@@ -123,23 +125,27 @@ export const RideConnectModal: React.FC<RideConnectModalProps> = ({
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                to={`/chat/${requestId}`}
+                onClick={onClose}
+                className="col-span-1 sm:col-span-2 bg-black hover:bg-neutral-800 text-white p-3.5 rounded-2xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 group"
+              >
+                <MessageSquare className="h-5 w-5 text-emerald-400 fill-current" />
+                <span>Open In-App Live Chat</span>
+              </Link>
+
               {whatsappUrl ? (
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="col-span-1 sm:col-span-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-3.5 rounded-2xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2.5 group"
+                  className="col-span-1 sm:col-span-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-3 rounded-xl font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 group"
                 >
-                  <MessageCircle className="h-5 w-5 fill-current animate-bounce" />
+                  <MessageCircle className="h-4 w-4 fill-current" />
                   <span>Chat on WhatsApp</span>
-                  <ExternalLink className="h-4 w-4 opacity-80 group-hover:translate-x-0.5 transition-transform" />
+                  <ExternalLink className="h-3.5 w-3.5 opacity-80 group-hover:translate-x-0.5 transition-transform" />
                 </a>
-              ) : (
-                <div className="col-span-1 sm:col-span-2 bg-neutral-100 border border-neutral-200 text-neutral-600 p-3 rounded-2xl text-xs font-semibold text-center flex items-center justify-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-neutral-400" />
-                  <span>Student hasn&apos;t linked a WhatsApp phone number yet.</span>
-                </div>
-              )}
+              ) : null}
 
               {partner.phone_number ? (
                 <a

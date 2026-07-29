@@ -146,7 +146,9 @@ class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance.status = 'CANCELLED'
         instance.save(update_fields=['status'])
         from apps.ride_history.services import record_cancelled_ride
+        from apps.chat.services import close_chat_room
         record_cancelled_ride(instance)
+        close_chat_room(instance, reason='CANCELLED')
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -163,7 +165,9 @@ class TravelRequestCancelView(generics.GenericAPIView):
         instance.status = 'CANCELLED'
         instance.save(update_fields=['status'])
         from apps.ride_history.services import record_cancelled_ride
+        from apps.chat.services import close_chat_room
         record_cancelled_ride(instance)
+        close_chat_room(instance, reason='CANCELLED')
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -225,6 +229,7 @@ class TravelRequestRespondShareView(APIView):
 
         from apps.notifications.services import notify_ride_share_request_accepted, notify_ride_share_request_declined
         from apps.ride_history.services import record_completed_ride
+        from apps.chat.services import get_or_create_chat_room
 
         if action == 'ACCEPT':
             notify_ride_share_request_accepted(
@@ -237,6 +242,11 @@ class TravelRequestRespondShareView(APIView):
                 travel_request=travel_request,
                 partner_user=sender_user,
                 ride_request_id=travel_request.id
+            )
+            # Automatically establish ChatRoom for real-time coordination
+            get_or_create_chat_room(
+                travel_request=travel_request,
+                partner_user=sender_user
             )
             msg = f"Accepted ride share request from @{sender_username}."
         else:

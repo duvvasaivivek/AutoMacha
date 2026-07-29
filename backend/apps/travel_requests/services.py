@@ -60,6 +60,7 @@ def expire_outdated_requests():
     """
     from ..notifications.services import notify_travel_request_expired
     from apps.ride_history.services import record_expired_ride
+    from apps.chat.services import close_chat_room
 
     outdated_list = list(TravelRequest.objects.filter(
         status='OPEN',
@@ -73,6 +74,7 @@ def expire_outdated_requests():
     for req in outdated_list:
         notify_travel_request_expired(req.user, req.id)
         record_expired_ride(req)
+        close_chat_room(req, reason='EXPIRED')
 
     updated_count = TravelRequest.objects.filter(id__in=expired_ids).update(status='EXPIRED')
     logger.info("Expired %d outdated travel request(s).", updated_count)

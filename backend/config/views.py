@@ -16,6 +16,7 @@ def api_root(request):
             "dashboard": "/api/dashboard/",
             "notifications": "/api/notifications/",
             "ride_history": "/api/ride-history/",
+            "chat": "/api/chat/",
             "health": "/api/health/",
         }
     })

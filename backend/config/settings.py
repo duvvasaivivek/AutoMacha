@@ -87,9 +87,8 @@ DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 
-# Application definition
-
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -100,6 +99,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'channels',
     'apps.accounts.apps.AccountsConfig',
     'apps.destinations.apps.DestinationsConfig',
     'apps.travel_requests.apps.TravelRequestsConfig',
@@ -108,7 +108,16 @@ INSTALLED_APPS = [
     'apps.auto_drivers.apps.AutoDriversConfig',
     'apps.admin_portal.apps.AdminPortalConfig',
     'apps.ride_history.apps.RideHistoryConfig',
+    'apps.chat.apps.ChatConfig',
 ]
+
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
