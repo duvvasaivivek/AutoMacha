@@ -22,6 +22,7 @@ from apps.auto_drivers.serializers import AutoDriverSerializer
 from .models import AuditLog
 from .permissions import IsStaffOrSuperUser, IsSuperUserOnly
 from .serializers import AdminUserSerializer, AuditLogSerializer
+from .services import get_admin_dashboard_stats
 from .utils import log_audit_event
 
 User = get_user_model()
@@ -30,33 +31,13 @@ User = get_user_model()
 class AdminDashboardStatsView(views.APIView):
     """
     Returns aggregated system statistics for the Admin Portal dashboard.
+    Optimized to execute 1 single combined query instead of 8 separate count queries.
     """
     permission_classes = [IsStaffOrSuperUser]
 
     def get(self, request, *args, **kwargs):
-        today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-
-        total_users = User.objects.count()
-        verified_users = User.objects.filter(is_active=True).count()
-        today_registrations = User.objects.filter(date_joined__gte=today_start).count()
-
-        active_travel_requests = TravelRequest.objects.filter(status='OPEN').count()
-        completed_rides = TravelRequest.objects.filter(status='CLOSED').count()
-        
-        pending_driver_suggestions = AutoDriver.objects.filter(is_verified=False).count()
-        pending_destination_suggestions = Destination.objects.filter(is_active=False).count()
-        unread_notifications = Notification.objects.filter(is_read=False).count()
-
-        return Response({
-            "total_users": total_users,
-            "verified_users": verified_users,
-            "today_registrations": today_registrations,
-            "active_travel_requests": active_travel_requests,
-            "completed_rides": completed_rides,
-            "pending_driver_suggestions": pending_driver_suggestions,
-            "pending_destination_suggestions": pending_destination_suggestions,
-            "unread_notifications": unread_notifications,
-        }, status=status.HTTP_200_OK)
+        stats = get_admin_dashboard_stats()
+        return Response(stats, status=status.HTTP_200_OK)
 
 
 class AdminUserListView(generics.ListAPIView):
