@@ -14,21 +14,21 @@ class DashboardStatsView(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        expire_outdated_requests()
         user = request.user
+        now = timezone.now()
 
         user_requests = TravelRequest.objects.filter(user=user)
 
-        # 1 Single aggregated query for all request counts instead of 4 separate queries
+        # 1 Single aggregated query for all request counts without making database writes
         counts = user_requests.aggregate(
             total_requests=Count('id'),
-            active_requests=Count('id', filter=Q(status='OPEN')),
-            expired_requests=Count('id', filter=Q(status='EXPIRED')),
+            active_requests=Count('id', filter=Q(status='OPEN', travel_datetime__gte=now)),
+            expired_requests=Count('id', filter=Q(status='EXPIRED') | Q(status='OPEN', travel_datetime__lt=now)),
             cancelled_requests=Count('id', filter=Q(status='CANCELLED')),
         )
 
         # Efficient batch lookup for available matches without N+1 query loop
-        open_user_requests = user_requests.filter(status='OPEN').select_related('destination')
+        open_user_requests = user_requests.filter(status='OPEN', travel_datetime__gte=now).select_related('destination')
         if open_user_requests.exists():
             match_query = Q()
             for u_req in open_user_requests:
@@ -42,7 +42,7 @@ class DashboardStatsView(views.APIView):
                 )
 
             available_matches = (
-                TravelRequest.objects.filter(match_query, status='OPEN')
+                TravelRequest.objects.filter(match_query, status='OPEN', travel_datetime__gte=now)
                 .exclude(user=user)
                 .values('id')
                 .distinct()
@@ -70,7 +70,7 @@ class DashboardStatsView(views.APIView):
 
         # Nearest upcoming OPEN trip
         next_trip_obj = (
-            user_requests.filter(status='OPEN', travel_datetime__gte=timezone.now())
+            user_requests.filter(status='OPEN', travel_datetime__gte=now)
             .select_related('destination')
             .order_by('travel_datetime')
             .first()

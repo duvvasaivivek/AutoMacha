@@ -39,8 +39,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
         return TravelRequestListSerializer
 
     def get_queryset(self):
-        expire_outdated_requests()
-
+        now = timezone.now()
         queryset = TravelRequest.objects.select_related('destination', 'user').order_by('travel_datetime')
 
         # Status filter (default to OPEN if not specified, unless ALL is specified)
@@ -48,7 +47,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
         if status_param and status_param in ['OPEN', 'CLOSED', 'CANCELLED', 'EXPIRED']:
             queryset = queryset.filter(status=status_param)
         elif status_param != 'ALL':
-            queryset = queryset.filter(status='OPEN')
+            queryset = queryset.filter(status='OPEN', travel_datetime__gte=now)
 
         # Destination filter
         destination_param = self.request.query_params.get('destination')
@@ -91,7 +90,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
 
             # Support matching_only=true query param to show only rides matching user's open trips
             if self.request.query_params.get('matching_only') == 'true':
-                my_open_reqs = self.request.user.travel_requests.filter(status='OPEN')
+                my_open_reqs = self.request.user.travel_requests.filter(status='OPEN', travel_datetime__gte=now)
                 if not my_open_reqs.exists():
                     return queryset.none()
                 match_query = Q()
@@ -118,7 +117,6 @@ class MyTravelRequestsView(generics.ListAPIView):
     pagination_class = None
 
     def get_queryset(self):
-        expire_outdated_requests()
         now = timezone.now()
         # Sort by nearest upcoming first (future trips come first sorted ascending, then past trips)
         return TravelRequest.objects.filter(user=self.request.user).select_related('destination').annotate(
