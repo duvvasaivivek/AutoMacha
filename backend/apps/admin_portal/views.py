@@ -24,6 +24,7 @@ from .permissions import IsStaffOrSuperUser, IsSuperUserOnly
 from .serializers import AdminUserSerializer, AuditLogSerializer
 from .services import get_admin_dashboard_stats
 from .utils import log_audit_event
+from apps.common.cache_services import DashboardCacheService, DestinationCacheService
 
 User = get_user_model()
 
@@ -31,12 +32,12 @@ User = get_user_model()
 class AdminDashboardStatsView(views.APIView):
     """
     Returns aggregated system statistics for the Admin Portal dashboard.
-    Optimized to execute 1 single combined query instead of 8 separate count queries.
+    Cached in Redis using DashboardCacheService for high performance.
     """
     permission_classes = [IsStaffOrSuperUser]
 
     def get(self, request, *args, **kwargs):
-        stats = get_admin_dashboard_stats()
+        stats = DashboardCacheService.get_admin_stats(get_admin_dashboard_stats)
         return Response(stats, status=status.HTTP_200_OK)
 
 
@@ -92,6 +93,8 @@ class AdminUserToggleActiveView(views.APIView):
         target_user.is_active = not target_user.is_active
         target_user.save(update_fields=['is_active'])
 
+        DashboardCacheService.invalidate_admin_stats()
+
         action_name = "USER_ENABLED" if target_user.is_active else "USER_DISABLED"
         log_audit_event(
             request,
@@ -121,6 +124,9 @@ class AdminDestinationManagementView(views.APIView):
         serializer.is_valid(raise_exception=True)
         dest = serializer.save()
         
+        DestinationCacheService.invalidate()
+        DashboardCacheService.invalidate_admin_stats()
+
         log_audit_event(
             request,
             action="DESTINATION_CREATED",
@@ -135,6 +141,9 @@ class AdminDestinationManagementView(views.APIView):
         serializer.is_valid(raise_exception=True)
         updated_dest = serializer.save()
 
+        DestinationCacheService.invalidate()
+        DashboardCacheService.invalidate_admin_stats()
+
         log_audit_event(
             request,
             action="DESTINATION_UPDATED",
@@ -147,6 +156,9 @@ class AdminDestinationManagementView(views.APIView):
         dest = generics.get_object_or_404(Destination, pk=pk)
         name = dest.name
         dest.delete()
+
+        DestinationCacheService.invalidate()
+        DashboardCacheService.invalidate_admin_stats()
 
         log_audit_event(
             request,

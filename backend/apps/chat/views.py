@@ -93,19 +93,25 @@ class ChatMessageListView(generics.ListAPIView):
         ).select_related('sender').order_by('created_at')
 
 
+from apps.common.cache_services import ChatCacheService
+
+
 class ChatUnreadCountView(views.APIView):
     """
     Returns the total unread chat message count across all active chat rooms for the authenticated user.
+    Cached using ChatCacheService.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        unread_count = ChatMessage.objects.filter(
-            Q(chat_room__created_by=user) | Q(chat_room__partner=user),
-            is_read=False,
-        ).exclude(sender=user).exclude(deleted_for=user).count()
+        def _fetch():
+            return ChatMessage.objects.filter(
+                Q(chat_room__created_by=user) | Q(chat_room__partner=user),
+                is_read=False,
+            ).exclude(sender=user).exclude(deleted_for=user).count()
 
+        unread_count = ChatCacheService.get_unread_count(user.id, _fetch)
         return Response({"unread_count": unread_count}, status=status.HTTP_200_OK)
 
 
@@ -125,6 +131,7 @@ class ChatMarkReadView(views.APIView):
             is_read=False
         ).exclude(sender=request.user).update(is_read=True)
 
+        ChatCacheService.invalidate_unread_count(request.user.id)
         return Response({"status": "success", "marked_read": updated_count}, status=status.HTTP_200_OK)
 
 

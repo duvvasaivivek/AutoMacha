@@ -109,6 +109,9 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         travel_request = serializer.save(user=self.request.user)
         notify_matches_for_request(travel_request)
+        from apps.common.cache_services import DashboardCacheService
+        DashboardCacheService.invalidate_user_dashboard(self.request.user.id)
+        DashboardCacheService.invalidate_admin_stats()
 
 
 class MyTravelRequestsView(generics.ListAPIView):

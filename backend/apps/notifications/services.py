@@ -33,6 +33,9 @@ def create_notification(user, title, message, notification_type, related_object_
             'sender': sender_instance,
         }
     )
+    if created and hasattr(user, 'id'):
+        from apps.common.cache_services import NotificationCacheService
+        NotificationCacheService.invalidate_unread_count(user.id)
     return notification, created
 
 
