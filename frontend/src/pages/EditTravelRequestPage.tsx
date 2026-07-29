@@ -4,8 +4,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Calendar,
-  Clock,
+  Calendar as CalendarIcon,
+  Clock as ClockIcon,
   Loader2,
   AlertCircle,
   CheckCircle2,
@@ -15,7 +15,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getDestinations } from '@/services/destination.service';
@@ -49,6 +49,18 @@ const editRequestSchema = z
 
 type EditRequestFormData = z.infer<typeof editRequestSchema>;
 
+const QUICK_TIME_SLOTS = [
+  { label: '06:00 AM', value: '06:00' },
+  { label: '08:00 AM', value: '08:00' },
+  { label: '10:00 AM', value: '10:00' },
+  { label: '12:00 PM', value: '12:00' },
+  { label: '02:00 PM', value: '14:00' },
+  { label: '04:00 PM', value: '16:00' },
+  { label: '06:00 PM', value: '18:00' },
+  { label: '08:00 PM', value: '20:00' },
+  { label: '10:00 PM', value: '22:00' },
+];
+
 export const EditTravelRequestPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -65,10 +77,20 @@ export const EditTravelRequestPage: React.FC = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const tomorrowObj = new Date();
+  tomorrowObj.setDate(tomorrowObj.getDate() + 1);
+  const tomorrowStr = tomorrowObj.toISOString().split('T')[0];
+
+  const inTwoDaysObj = new Date();
+  inTwoDaysObj.setDate(inTwoDaysObj.getDate() + 2);
+  const inTwoDaysStr = inTwoDaysObj.toISOString().split('T')[0];
+
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<EditRequestFormData>({
     resolver: zodResolver(editRequestSchema),
@@ -77,6 +99,9 @@ export const EditTravelRequestPage: React.FC = () => {
       time: '',
     },
   });
+
+  const selectedDate = watch('date');
+  const selectedTime = watch('time');
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -216,16 +241,16 @@ export const EditTravelRequestPage: React.FC = () => {
   if (initError) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 py-12">
-        <Card className="max-w-md w-full border-red-200 bg-red-50 text-center p-8 space-y-6 rounded-2xl shadow-xl">
-          <div className="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-red-600/30">
+        <Card className="max-w-md w-full border-red-200 bg-red-50 text-center p-8 space-y-6 rounded-3xl shadow-xl">
+          <div className="h-16 w-16 rounded-2xl bg-red-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-red-600/30">
             <AlertCircle className="h-8 w-8" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-red-950">Cannot Edit Request</h2>
-            <p className="text-sm text-red-800">{initError}</p>
+            <h2 className="text-xl font-black text-red-950">Cannot Edit Request</h2>
+            <p className="text-sm font-semibold text-red-800">{initError}</p>
           </div>
           <Link to="/my-travel-requests">
-            <Button className="bg-black text-white hover:bg-neutral-800 font-semibold w-full">
+            <Button className="bg-black text-white hover:bg-neutral-800 font-bold w-full rounded-xl">
               Back to My Requests
             </Button>
           </Link>
@@ -237,13 +262,13 @@ export const EditTravelRequestPage: React.FC = () => {
   if (isSuccess) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 py-12">
-        <Card className="max-w-md w-full border-green-200 bg-green-50/80 shadow-2xl text-center p-8 space-y-6 animate-in zoom-in-95 duration-300 rounded-2xl">
-          <div className="h-16 w-16 rounded-full bg-green-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-green-600/30">
+        <Card className="max-w-md w-full border-emerald-200 bg-emerald-50/80 shadow-2xl text-center p-8 space-y-6 animate-in zoom-in-95 duration-300 rounded-3xl">
+          <div className="h-16 w-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-600/30">
             <CheckCircle2 className="h-10 w-10 animate-bounce" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-black text-green-950">Request Updated!</h2>
-            <p className="text-sm text-green-800 font-medium">Redirecting to your requests...</p>
+            <h2 className="text-2xl font-black text-emerald-950">Request Updated!</h2>
+            <p className="text-sm font-semibold text-emerald-800">Redirecting to your requests...</p>
           </div>
         </Card>
       </div>
@@ -251,7 +276,7 @@ export const EditTravelRequestPage: React.FC = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 py-8 sm:py-12 max-w-xl mx-auto w-full">
+    <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-6 lg:p-8 py-8 sm:py-12 max-w-2xl mx-auto w-full">
       <div className="w-full space-y-6">
         <Link
           to="/my-travel-requests"
@@ -266,23 +291,29 @@ export const EditTravelRequestPage: React.FC = () => {
             <Edit2 className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-black">
-              Edit Request
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-neutral-900">
+              Edit Travel Request
             </h1>
+            <p className="text-xs font-semibold text-neutral-600 mt-0.5">
+              Update your pickup, dropoff, date, or time details.
+            </p>
           </div>
         </div>
 
-        <Card className="border-neutral-200 shadow-xl bg-white overflow-hidden rounded-2xl">
-          <CardHeader className="bg-neutral-50/60 border-b border-neutral-100 px-6 py-5">
-            <CardTitle className="text-base font-bold text-black">
-              Update Route & Schedule
+        <Card className="border-neutral-200 shadow-xl bg-white overflow-hidden rounded-3xl">
+          <CardHeader className="bg-neutral-50/70 border-b border-neutral-100 px-6 py-5">
+            <CardTitle className="text-lg font-black text-neutral-900">
+              Update Schedule & Locations
             </CardTitle>
+            <CardDescription className="text-xs font-semibold text-neutral-500">
+              Modify your existing trip information.
+            </CardDescription>
           </CardHeader>
 
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <CardContent className="p-6 sm:p-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
               {apiError && (
-                <div className="p-4 rounded-xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
+                <div className="p-4 rounded-2xl border border-red-200 bg-red-50 text-red-800 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
                   <AlertCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold">Error</p>
@@ -291,105 +322,182 @@ export const EditTravelRequestPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Location Selector */}
-              <div className="space-y-4 bg-neutral-50 p-4 sm:p-5 rounded-2xl border border-neutral-200/80">
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-3 items-center">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="from-location" className="text-xs font-bold text-neutral-700 uppercase tracking-wider">
-                      From (Pickup)
-                    </Label>
-                    <select
-                      id="from-location"
-                      value={fromLocation}
-                      onChange={(e) => handleFromChange(e.target.value)}
-                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-black shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    >
-                      <option value="CAMPUS" className="font-bold text-black">
-                        🏫 Campus
+              {/* Location Selectors */}
+              <div className="space-y-4 bg-neutral-50/80 p-5 rounded-2xl border border-neutral-200/80">
+                <div className="space-y-1.5">
+                  <Label htmlFor="from-location" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
+                    <span>Pickup Location (From)</span>
+                  </Label>
+                  <select
+                    id="from-location"
+                    value={fromLocation}
+                    onChange={(e) => handleFromChange(e.target.value)}
+                    className="flex h-12 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm font-bold text-neutral-900 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black"
+                  >
+                    <option value="CAMPUS">IIITDM Kurnool Campus</option>
+                    {destinations.map((dest) => (
+                      <option key={`from-${dest.id}`} value={dest.id.toString()}>
+                        {dest.name}
                       </option>
-                      {destinations.map((dest) => (
-                        <option key={`from-${dest.id}`} value={dest.id.toString()}>
-                          📍 {dest.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    ))}
+                  </select>
+                </div>
 
-                  <div className="flex justify-center sm:pt-6">
-                    <button
-                      type="button"
-                      onClick={handleSwapLocations}
-                      className="h-10 w-10 rounded-xl bg-white border border-neutral-200 hover:border-black hover:bg-neutral-50 text-black flex items-center justify-center shadow-xs transition-all active:scale-95"
-                      title="Swap From and To"
-                    >
-                      <ArrowUpDown className="h-4 w-4 sm:rotate-90 text-neutral-600" />
-                    </button>
-                  </div>
+                <div className="flex justify-center py-1">
+                  <button
+                    type="button"
+                    onClick={handleSwapLocations}
+                    className="h-10 w-10 rounded-full bg-black text-white hover:bg-neutral-800 hover:scale-105 shadow-md flex items-center justify-center border-2 border-white transition-all focus:outline-none"
+                    title="Swap Pickup and Dropoff"
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                  </button>
+                </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="to-location" className="text-xs font-bold text-neutral-700 uppercase tracking-wider">
-                      To (Dropoff)
-                    </Label>
-                    <select
-                      id="to-location"
-                      value={toLocation}
-                      onChange={(e) => handleToChange(e.target.value)}
-                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-black shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-                    >
-                      <option value="CAMPUS" className="font-bold text-black">
-                        🏫 Campus
+                <div className="space-y-1.5">
+                  <Label htmlFor="to-location" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-red-200" />
+                    <span>Dropoff Location (To)</span>
+                  </Label>
+                  <select
+                    id="to-location"
+                    value={toLocation}
+                    onChange={(e) => handleToChange(e.target.value)}
+                    className="flex h-12 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm font-bold text-neutral-900 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black"
+                  >
+                    <option value="CAMPUS">IIITDM Kurnool Campus</option>
+                    {destinations.map((dest) => (
+                      <option key={`to-${dest.id}`} value={dest.id.toString()}>
+                        {dest.name}
                       </option>
-                      {destinations.map((dest) => (
-                        <option key={`to-${dest.id}`} value={dest.id.toString()}>
-                          📍 {dest.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    ))}
+                  </select>
                 </div>
               </div>
 
-              {/* Date & Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="date" className="text-xs font-bold text-black uppercase tracking-wider">
-                    Travel Date
+              {/* Date Selection Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="date" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <CalendarIcon className="h-4 w-4 text-neutral-600" />
+                    <span>Travel Date</span>
                   </Label>
-                  <div className="relative">
-                    <Input
-                      id="date"
-                      type="date"
-                      {...register('date')}
-                      className={`h-11 rounded-xl font-semibold pl-10 bg-white ${
-                        errors.date ? 'border-red-500 focus-visible:ring-red-500' : 'border-neutral-300'
-                      }`}
-                    />
-                    <Calendar className="h-4 w-4 text-neutral-500 absolute left-3.5 top-3.5 pointer-events-none" />
-                  </div>
-                  {errors.date && (
-                    <p className="text-xs font-semibold text-red-600">{errors.date.message}</p>
-                  )}
+                  <span className="text-[11px] font-semibold text-neutral-400">Quick selection available</span>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="time" className="text-xs font-bold text-black uppercase tracking-wider">
-                    Travel Time
+                {/* Date Quick Choice Chips */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setValue('date', todayStr, { shouldValidate: true })}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                      selectedDate === todayStr
+                        ? 'bg-black text-white shadow-sm'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setValue('date', tomorrowStr, { shouldValidate: true })}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                      selectedDate === tomorrowStr
+                        ? 'bg-black text-white shadow-sm'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    Tomorrow
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setValue('date', inTwoDaysStr, { shouldValidate: true })}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+                      selectedDate === inTwoDaysStr
+                        ? 'bg-black text-white shadow-sm'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    In 2 Days
+                  </button>
+                </div>
+
+                <Input
+                  id="date"
+                  type="date"
+                  min={todayStr}
+                  {...register('date')}
+                  disabled={isSubmitting}
+                  className={`h-11 rounded-xl shadow-sm text-sm font-semibold bg-white ${
+                    errors.date ? 'border-red-500 focus-visible:ring-red-500' : 'border-neutral-300'
+                  }`}
+                />
+                {errors.date && <p className="text-xs text-red-600 font-bold mt-1">{errors.date.message}</p>}
+              </div>
+
+              {/* Time Selection Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="time" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <ClockIcon className="h-4 w-4 text-neutral-600" />
+                    <span>Travel Time</span>
                   </Label>
-                  <div className="relative">
+                  <span className="text-[11px] font-semibold text-neutral-400">Popular departure slots</span>
+                </div>
+
+                {/* Quick Time Slots Chips */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {QUICK_TIME_SLOTS.map((slot) => {
+                    const isSelected = selectedTime === slot.value;
+                    return (
+                      <button
+                        key={slot.value}
+                        type="button"
+                        onClick={() => setValue('time', slot.value, { shouldValidate: true })}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          isSelected
+                            ? 'bg-black text-white shadow-sm'
+                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        {slot.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-semibold text-neutral-500">Standard Slot Dropdown</span>
+                    <select
+                      value={selectedTime || ''}
+                      onChange={(e) => setValue('time', e.target.value, { shouldValidate: true })}
+                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-neutral-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
+                    >
+                      <option value="">-- Select Time Slot --</option>
+                      {QUICK_TIME_SLOTS.map((slot) => (
+                        <option key={slot.value} value={slot.value}>
+                          {slot.label} ({slot.value})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[11px] font-semibold text-neutral-500">Exact Custom Time</span>
                     <Input
                       id="time"
                       type="time"
                       {...register('time')}
-                      className={`h-11 rounded-xl font-semibold pl-10 bg-white ${
+                      disabled={isSubmitting}
+                      className={`h-11 rounded-xl shadow-sm text-sm font-semibold bg-white ${
                         errors.time ? 'border-red-500 focus-visible:ring-red-500' : 'border-neutral-300'
                       }`}
                     />
-                    <Clock className="h-4 w-4 text-neutral-500 absolute left-3.5 top-3.5 pointer-events-none" />
                   </div>
-                  {errors.time && (
-                    <p className="text-xs font-semibold text-red-600">{errors.time.message}</p>
-                  )}
                 </div>
+                {errors.time && <p className="text-xs text-red-600 font-bold mt-1">{errors.time.message}</p>}
               </div>
 
               <div className="pt-4 border-t border-neutral-100 flex items-center justify-end gap-3">
@@ -397,7 +505,7 @@ export const EditTravelRequestPage: React.FC = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-11 px-6 font-bold text-sm border-neutral-300 hover:bg-neutral-100"
+                    className="h-12 px-6 font-bold text-sm border-neutral-300 hover:bg-neutral-100 rounded-xl"
                     disabled={isSubmitting}
                   >
                     Cancel
@@ -405,13 +513,13 @@ export const EditTravelRequestPage: React.FC = () => {
                 </Link>
                 <Button
                   type="submit"
-                  className="h-11 px-8 font-bold text-sm bg-black text-white hover:bg-neutral-800 shadow-md gap-2"
+                  className="h-12 px-8 font-bold text-sm bg-black text-white hover:bg-neutral-800 shadow-md gap-2 rounded-xl"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Updating...</span>
+                      <span>Saving Changes...</span>
                     </>
                   ) : (
                     <>

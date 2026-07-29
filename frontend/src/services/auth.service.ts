@@ -14,14 +14,14 @@ export interface TokenResponse {
 
 export interface RegisterData {
   username: string;
+  full_name?: string;
   institute_email: string;
   roll_number: string;
   branch?: string;
+  academic_year?: string;
   hostel?: string;
   gender?: string;
   password?: string;
-  first_name?: string;
-  last_name?: string;
   phone_number?: string;
 }
 

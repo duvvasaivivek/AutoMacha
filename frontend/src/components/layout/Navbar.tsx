@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Car, Menu, X, LogIn, UserPlus, LogOut, LayoutDashboard, PlusCircle, Compass, User as UserIcon, UserCog, Bell, Phone, ShieldCheck } from 'lucide-react';
+import {
+  Car,
+  Menu,
+  X,
+  LogIn,
+  UserPlus,
+  LogOut,
+  LayoutDashboard,
+  PlusCircle,
+  Compass,
+  UserCog,
+  Bell,
+  Phone,
+  ShieldCheck,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
 import { getUnreadCount } from '@/services/notification.service';
@@ -42,7 +56,6 @@ export const Navbar: React.FC = () => {
   const authNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Travel Requests', path: '/travel-requests', icon: Compass },
-    { name: 'My Requests', path: '/my-travel-requests', icon: UserIcon },
     { name: 'Create Request', path: '/travel-requests/new', icon: PlusCircle },
     { name: 'Auto Drivers', path: '/auto-drivers', icon: Phone },
     { name: 'Notifications', path: '/notifications', icon: Bell },
@@ -50,16 +63,22 @@ export const Navbar: React.FC = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white/90 backdrop-blur-xl transition-all shadow-xs">
+    <header className="sticky top-0 z-50 w-full border-b border-neutral-200 bg-white/95 backdrop-blur-md shadow-xs">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white transition-all duration-300 group-hover:bg-neutral-800 group-hover:shadow-md group-hover:scale-105">
+        
+        {/* Brand Logo */}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-black text-white transition-transform duration-200 group-hover:scale-105 shadow-sm">
             <Car className="h-5 w-5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-black group-hover:text-neutral-600 transition-all">
-            AutoMacha
-          </span>
+          <div className="flex flex-col">
+            <span className="text-xl font-black tracking-tight text-neutral-900 leading-none">
+              AutoMacha
+            </span>
+            <span className="text-[10px] font-bold text-neutral-500 tracking-wider uppercase mt-0.5">
+              IIITDM Kurnool Rides
+            </span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
@@ -74,9 +93,9 @@ export const Navbar: React.FC = () => {
                     key={item.path}
                     to={item.path}
                     className={({ isActive }) =>
-                      `flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      `flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
                         isActive
-                          ? 'bg-black text-white font-semibold shadow-xs'
+                          ? 'bg-neutral-900 text-white shadow-xs'
                           : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
                       }`
                     }
@@ -84,7 +103,7 @@ export const Navbar: React.FC = () => {
                     <div className="relative flex items-center">
                       <Icon className="h-4 w-4" />
                       {isNotif && unreadCount > 0 && (
-                        <span className="absolute -top-2 -right-2 flex.5 h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-2xs">
+                        <span className="absolute -top-2 -right-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs">
                           {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                       )}
@@ -93,25 +112,30 @@ export const Navbar: React.FC = () => {
                   </NavLink>
                 );
               })}
+
+              {/* Admin Portal Button */}
               {user && (user.is_staff || user.is_superuser) && (
                 <NavLink
                   to="/admin"
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold bg-amber-500 hover:bg-amber-600 text-black transition shadow-xs"
+                  className={({ isActive }) =>
+                    `flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-bold transition shadow-xs ${
+                      isActive
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-amber-500 hover:bg-amber-600 text-black'
+                    }`
+                  }
                 >
                   <ShieldCheck className="h-4 w-4" />
                   <span>Admin Portal</span>
                 </NavLink>
               )}
-              {user && (
-                <span className="text-sm font-semibold text-neutral-800 ml-2 px-3 py-1.5 rounded-lg bg-neutral-100 border border-neutral-200">
-                  Hello, {user.username}
-                </span>
-              )}
+
+              {/* Logout Action */}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className="ml-2 gap-2 font-semibold border-neutral-300 hover:bg-neutral-100 text-black"
+                className="ml-3 gap-2 font-bold border-neutral-300 hover:bg-neutral-100 text-neutral-800 rounded-xl"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
@@ -125,45 +149,40 @@ export const Navbar: React.FC = () => {
                   key={item.path}
                   to={item.path}
                   className={({ isActive }) =>
-                    `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
                       isActive
-                        ? 'bg-black text-white font-semibold shadow-xs'
+                        ? 'bg-neutral-900 text-white shadow-xs'
                         : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
                     }`
                   }
                 >
                   <Icon className="h-4 w-4" />
-                  {item.name}
+                  <span>{item.name}</span>
                 </NavLink>
               );
             })
           )}
         </nav>
 
-        {/* Mobile menu button */}
+        {/* Mobile Hamburger Button */}
         <div className="flex lg:hidden">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle Menu"
-            className="text-neutral-700 hover:bg-neutral-100"
+            className="text-neutral-800 hover:bg-neutral-100 rounded-xl"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
+      {/* Mobile Navigation Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-neutral-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg animate-in slide-in-from-top-2 duration-200">
+        <div className="lg:hidden border-t border-neutral-200 bg-white px-4 pt-3 pb-5 space-y-1 shadow-xl animate-in slide-in-from-top-2 duration-150">
           {isAuthenticated ? (
             <>
-              {user && (
-                <div className="px-4 py-2.5 text-sm font-semibold text-neutral-800 bg-neutral-100 rounded-lg border border-neutral-200 mb-2">
-                  Hello, {user.username}
-                </div>
-              )}
               {authNavItems.map((item) => {
                 const Icon = item.icon;
                 const isNotif = item.path === '/notifications';
@@ -173,10 +192,10 @@ export const Navbar: React.FC = () => {
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
                     className={({ isActive }) =>
-                      `flex items-center justify-between px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                      `flex items-center justify-between px-4 py-3 rounded-xl text-base font-semibold transition-all ${
                         isActive
-                          ? 'bg-black text-white font-semibold shadow-md'
-                          : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                          ? 'bg-neutral-900 text-white shadow-sm'
+                          : 'text-neutral-700 hover:text-black hover:bg-neutral-100'
                       }`
                     }
                   >
@@ -192,12 +211,24 @@ export const Navbar: React.FC = () => {
                   </NavLink>
                 );
               })}
+
+              {user && (user.is_staff || user.is_superuser) && (
+                <NavLink
+                  to="/admin"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold bg-amber-500 text-black hover:bg-amber-600 transition-all"
+                >
+                  <ShieldCheck className="h-5 w-5" />
+                  <span>Admin Portal</span>
+                </NavLink>
+              )}
+
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   logout();
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium text-red-600 hover:bg-red-50 transition-all text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold text-red-600 hover:bg-red-50 transition-all text-left"
               >
                 <LogOut className="h-5 w-5" />
                 <span>Logout</span>
@@ -212,15 +243,15 @@ export const Navbar: React.FC = () => {
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-lg text-base font-medium transition-all ${
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-base font-semibold transition-all ${
                       isActive
-                        ? 'bg-black text-white font-semibold shadow-md'
-                        : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
+                        ? 'bg-neutral-900 text-white shadow-sm'
+                        : 'text-neutral-700 hover:text-black hover:bg-neutral-100'
                     }`
                   }
                 >
                   <Icon className="h-5 w-5" />
-                  {item.name}
+                  <span>{item.name}</span>
                 </NavLink>
               );
             })
