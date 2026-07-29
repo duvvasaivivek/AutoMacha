@@ -78,16 +78,25 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_unread_count(self, obj):
+        if hasattr(obj, 'annotated_unread_count'):
+            return obj.annotated_unread_count
+
         request = self.context.get('request')
         if not request or not request.user.is_authenticated:
             return 0
         return ChatMessage.objects.filter(
             chat_room=obj,
             is_read=False
-        ).exclude(sender=request.user).count()
+        ).exclude(sender=request.user).exclude(deleted_for=request.user).count()
 
     def get_last_message(self, obj):
-        last_msg = obj.messages.last()
+        if hasattr(obj, 'prefetched_last_msg_list'):
+            last_msg = obj.prefetched_last_msg_list[0] if obj.prefetched_last_msg_list else None
+        else:
+            request = self.context.get('request')
+            user = request.user if request and request.user.is_authenticated else None
+            last_msg = obj.messages.exclude(deleted_for=user).last() if user else obj.messages.last()
+
         if not last_msg:
             return None
         return ChatMessageSerializer(last_msg, context=self.context).data

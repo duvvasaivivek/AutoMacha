@@ -1,12 +1,16 @@
+import logging
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.db import transaction, IntegrityError, DatabaseError
 from django.db.models import Case, When, Value, IntegerField, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.timezone import is_naive, make_aware
 from rest_framework import generics, status
+
+logger = logging.getLogger(__name__)
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -158,18 +162,27 @@ class TravelRequestCancelView(generics.GenericAPIView):
     serializer_class = TravelRequestSerializer
 
     def post(self, request, *args, **kwargs):
-        instance = get_object_or_404(TravelRequest.objects.select_related('destination', 'user'), pk=kwargs['pk'])
-        self.check_object_permissions(request, instance)
-        if instance.status != 'OPEN':
-            raise ValidationError("Only open travel requests can be cancelled.")
-        instance.status = 'CANCELLED'
-        instance.save(update_fields=['status'])
-        from apps.ride_history.services import record_cancelled_ride
-        from apps.chat.services import close_chat_room
-        record_cancelled_ride(instance)
-        close_chat_room(instance, reason='CANCELLED')
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        try:
+            with transaction.atomic():
+                instance = TravelRequest.objects.select_for_update().select_related('destination', 'user').get(pk=kwargs['pk'])
+                self.check_object_permissions(request, instance)
+                if instance.status != 'OPEN':
+                    raise ValidationError("Only open travel requests can be cancelled.")
+                instance.status = 'CANCELLED'
+                instance.save(update_fields=['status', 'updated_at'])
+                from apps.ride_history.services import record_cancelled_ride
+                from apps.chat.services import close_chat_room
+                record_cancelled_ride(instance)
+                close_chat_room(instance, reason='CANCELLED')
+                serializer = self.get_serializer(instance)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+        except TravelRequest.DoesNotExist:
+            return Response({"detail": "Travel request not found."}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError as ve:
+            raise ve
+        except (IntegrityError, DatabaseError) as db_err:
+            logger.error("Database error during cancellation for TravelRequest #%s: %s", kwargs.get('pk'), db_err)
+            return Response({"detail": "Database error during cancellation."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TravelRequestMatchesView(generics.ListAPIView):
@@ -216,10 +229,6 @@ class TravelRequestRespondShareView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk=None):
-        travel_request = get_object_or_404(TravelRequest.objects.select_related('destination', 'user'), pk=pk)
-        if travel_request.user != request.user:
-            raise ValidationError("Only the owner of the travel request can respond to ride share requests.")
-
         sender_username = request.data.get('sender_username')
         action = request.data.get('action')
         if not sender_username or action not in ['ACCEPT', 'DECLINE']:
@@ -231,30 +240,60 @@ class TravelRequestRespondShareView(APIView):
         from apps.ride_history.services import record_completed_ride
         from apps.chat.services import get_or_create_chat_room
 
-        if action == 'ACCEPT':
-            notify_ride_share_request_accepted(
-                sender=sender_user,
-                acceptor=request.user,
-                related_object_id=travel_request.id
-            )
-            # Record completed ride history entries for both driver/owner and acceptor
-            record_completed_ride(
-                travel_request=travel_request,
-                partner_user=sender_user,
-                ride_request_id=travel_request.id
-            )
-            # Automatically establish ChatRoom for real-time coordination
-            get_or_create_chat_room(
-                travel_request=travel_request,
-                partner_user=sender_user
-            )
-            msg = f"Accepted ride share request from @{sender_username}."
-        else:
-            notify_ride_share_request_declined(
-                sender=sender_user,
-                decliner=request.user,
-                related_object_id=travel_request.id
-            )
-            msg = f"Declined ride share request from @{sender_username}."
+        try:
+            with transaction.atomic():
+                # Acquire row-level lock on the TravelRequest object being accepted/declined
+                travel_request = TravelRequest.objects.select_for_update().select_related('destination', 'user').get(pk=pk)
 
-        return Response({"message": msg}, status=status.HTTP_200_OK)
+                if travel_request.user != request.user:
+                    raise ValidationError("Only the owner of the travel request can respond to ride share requests.")
+
+                if action == 'ACCEPT':
+                    # Re-verify latest state after lock acquisition to prevent duplicate ride acceptance
+                    if travel_request.status != 'OPEN':
+                        return Response(
+                            {"detail": "This travel request is no longer open for ride acceptance."},
+                            status=status.HTTP_409_CONFLICT
+                        )
+
+                    # Update status to CLOSED inside the transaction to block concurrent acceptances
+                    travel_request.status = 'CLOSED'
+                    travel_request.save(update_fields=['status', 'updated_at'])
+
+                    notify_ride_share_request_accepted(
+                        sender=sender_user,
+                        acceptor=request.user,
+                        related_object_id=travel_request.id
+                    )
+                    # Record completed ride history entries for both driver/owner and acceptor
+                    record_completed_ride(
+                        travel_request=travel_request,
+                        partner_user=sender_user,
+                        ride_request_id=travel_request.id
+                    )
+                    # Automatically establish ChatRoom for real-time coordination
+                    get_or_create_chat_room(
+                        travel_request=travel_request,
+                        partner_user=sender_user
+                    )
+                    msg = f"Accepted ride share request from @{sender_username}."
+                else:
+                    notify_ride_share_request_declined(
+                        sender=sender_user,
+                        decliner=request.user,
+                        related_object_id=travel_request.id
+                    )
+                    msg = f"Declined ride share request from @{sender_username}."
+
+            return Response({"message": msg}, status=status.HTTP_200_OK)
+
+        except TravelRequest.DoesNotExist:
+            return Response({"detail": "Travel request not found."}, status=status.HTTP_404_NOT_FOUND)
+        except ValidationError as ve:
+            raise ve
+        except (IntegrityError, DatabaseError) as db_err:
+            logger.error("Database error during ride response for TravelRequest #%s: %s", pk, db_err)
+            return Response(
+                {"detail": "A database error occurred during ride acceptance. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST
+            )

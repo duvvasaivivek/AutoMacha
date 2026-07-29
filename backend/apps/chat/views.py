@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, Count, Subquery, OuterRef, Prefetch
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, views, status, permissions
 from rest_framework.response import Response
@@ -14,17 +14,43 @@ from .serializers import (
 class ChatRoomListView(generics.ListAPIView):
     """
     Returns all active and past ChatRooms where the authenticated user is a participant.
+    Optimized with annotated unread counts and prefetched latest messages to eliminate N+1 queries.
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChatRoomSerializer
 
     def get_queryset(self):
         user = self.request.user
+
+        # Subquery to fetch the ID of the single latest non-deleted message per chat room
+        last_msg_id_subquery = Subquery(
+            ChatMessage.objects.filter(
+                chat_room=OuterRef('chat_room')
+            ).exclude(
+                deleted_for=user
+            ).order_by('-created_at', '-id').values('id')[:1]
+        )
+
+        # Prefetch to load only that 1 latest ChatMessage per room with sender details in 1 single bulk query
+        last_msg_prefetch = Prefetch(
+            'messages',
+            queryset=ChatMessage.objects.filter(
+                id__in=last_msg_id_subquery
+            ).select_related('sender'),
+            to_attr='prefetched_last_msg_list'
+        )
+
         return ChatRoom.objects.filter(
             Q(created_by=user) | Q(partner=user)
         ).select_related(
             'created_by', 'partner', 'ride_request', 'ride_request__destination'
-        ).order_by('-updated_at')
+        ).annotate(
+            annotated_unread_count=Count(
+                'messages',
+                filter=Q(messages__is_read=False) & ~Q(messages__sender=user) & ~Q(messages__deleted_for=user),
+                distinct=True
+            )
+        ).prefetch_related(last_msg_prefetch).order_by('-updated_at')
 
 
 class ChatRoomDetailView(generics.RetrieveAPIView):
