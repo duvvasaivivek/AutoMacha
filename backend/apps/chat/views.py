@@ -11,6 +11,22 @@ from .serializers import (
 )
 
 
+class ChatRoomListView(generics.ListAPIView):
+    """
+    Returns all active and past ChatRooms where the authenticated user is a participant.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ChatRoomSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatRoom.objects.filter(
+            Q(created_by=user) | Q(partner=user)
+        ).select_related(
+            'created_by', 'partner', 'ride_request', 'ride_request__destination'
+        ).order_by('-updated_at')
+
+
 class ChatRoomDetailView(generics.RetrieveAPIView):
     """
     Retrieves ChatRoom details for a given ride_request_id.
@@ -33,7 +49,7 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
 class ChatMessageListView(generics.ListAPIView):
     """
     Returns message history for a chat room.
-    Requires participant authorization. Supports pagination.
+    Requires participant authorization. Excludes messages deleted by the current user.
     """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChatMessageSerializer
@@ -44,7 +60,11 @@ class ChatMessageListView(generics.ListAPIView):
         if not room.is_participant(self.request.user):
             raise PermissionDenied("You do not have permission to view messages for this chat room.")
 
-        return ChatMessage.objects.filter(chat_room=room).select_related('sender').order_by('created_at')
+        return ChatMessage.objects.filter(
+            chat_room=room
+        ).exclude(
+            deleted_for=self.request.user
+        ).select_related('sender').order_by('created_at')
 
 
 class ChatUnreadCountView(views.APIView):
@@ -58,7 +78,7 @@ class ChatUnreadCountView(views.APIView):
         unread_count = ChatMessage.objects.filter(
             Q(chat_room__created_by=user) | Q(chat_room__partner=user),
             is_read=False,
-        ).exclude(sender=user).count()
+        ).exclude(sender=user).exclude(deleted_for=user).count()
 
         return Response({"unread_count": unread_count}, status=status.HTTP_200_OK)
 
@@ -80,3 +100,53 @@ class ChatMarkReadView(views.APIView):
         ).exclude(sender=request.user).update(is_read=True)
 
         return Response({"status": "success", "marked_read": updated_count}, status=status.HTTP_200_OK)
+
+
+class ChatMessageDeleteView(views.APIView):
+    """
+    Deletes a chat message.
+    mode='everyone': Soft deletes for all participants (requires sender ownership).
+    mode='me': Hides message for the requesting user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def delete(self, request, pk=None, *args, **kwargs):
+        msg = get_object_or_404(ChatMessage.objects.select_related('chat_room'), pk=pk)
+        if not msg.chat_room.is_participant(request.user):
+            raise PermissionDenied("You do not have permission to delete this message.")
+
+        mode = request.query_params.get('mode', 'me')
+
+        if mode == 'everyone':
+            if msg.sender != request.user:
+                raise PermissionDenied("Only the sender can delete a message for everyone.")
+            msg.is_deleted_everyone = True
+            msg.message = "This message was deleted"
+            msg.save(update_fields=['is_deleted_everyone', 'message'])
+
+            # Broadcast real-time deletion event
+            from .services import broadcast_deletion_event
+            broadcast_deletion_event(msg, mode='everyone')
+            return Response({"status": "deleted_everyone", "id": msg.id}, status=status.HTTP_200_OK)
+        else:
+            msg.deleted_for.add(request.user)
+            return Response({"status": "deleted_me", "id": msg.id}, status=status.HTTP_200_OK)
+
+
+class ChatClearHistoryView(views.APIView):
+    """
+    Clears all conversation messages for the requesting user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, ride_request_id=None, *args, **kwargs):
+        room = get_object_or_404(ChatRoom, ride_request_id=ride_request_id)
+        if not room.is_participant(request.user):
+            raise PermissionDenied("You do not have permission to clear history for this room.")
+
+        messages = ChatMessage.objects.filter(chat_room=room)
+        for m in messages:
+            m.deleted_for.add(request.user)
+
+        room.cleared_by.add(request.user)
+        return Response({"status": "cleared", "ride_request_id": ride_request_id}, status=status.HTTP_200_OK)

@@ -17,8 +17,10 @@ export interface ChatMessage {
   sender: number | null;
   sender_user?: ChatMessageSender | null;
   message: string;
+  iv?: string | null;
   message_type: MessageType;
   is_read: boolean;
+  is_deleted_everyone?: boolean;
   created_at: string;
 }
 
@@ -55,8 +57,10 @@ export interface WebSocketChatMessageEvent {
   sender: string | null;
   sender_id: number | null;
   message: string;
+  iv?: string | null;
   message_type: MessageType;
   is_read: boolean;
+  is_deleted_everyone?: boolean;
   created_at: string;
 }
 
@@ -74,6 +78,13 @@ export interface WebSocketReadReceiptEvent {
   reader_id: number;
 }
 
+export interface WebSocketDeleteEvent {
+  type: 'delete_message_broadcast';
+  message_id: number;
+  chat_room_id: number;
+  mode: 'me' | 'everyone';
+}
+
 export interface WebSocketErrorEvent {
   type: 'error';
   message: string;
@@ -83,4 +94,5 @@ export type WebSocketEvent =
   | WebSocketChatMessageEvent
   | WebSocketTypingEvent
   | WebSocketReadReceiptEvent
+  | WebSocketDeleteEvent
   | WebSocketErrorEvent;

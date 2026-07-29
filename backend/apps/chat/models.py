@@ -32,6 +32,12 @@ class ChatRoom(models.Model):
         blank=True,
         help_text="Timestamp when the room was closed to new messages."
     )
+    cleared_by = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='cleared_chat_rooms',
+        blank=True,
+        help_text="Users who have cleared chat history for themselves."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -92,7 +98,13 @@ class ChatMessage(models.Model):
         related_name='sent_chat_messages',
         help_text="The user who sent this message. Null for system messages."
     )
-    message = models.TextField(help_text="Text message or system event description.")
+    message = models.TextField(help_text="Encrypted text payload or system event description.")
+    iv = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text="Base64 IV for AES-256-GCM encryption."
+    )
     message_type = models.CharField(
         max_length=20,
         choices=MessageTypeChoices.choices,
@@ -102,6 +114,16 @@ class ChatMessage(models.Model):
     is_read = models.BooleanField(
         default=False,
         help_text="Whether the recipient has read this message."
+    )
+    is_deleted_everyone = models.BooleanField(
+        default=False,
+        help_text="True if soft deleted for all participants."
+    )
+    deleted_for = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='deleted_chat_messages',
+        blank=True,
+        help_text="Users who have deleted this message for themselves."
     )
     created_at = models.DateTimeField(auto_now_add=True)
 

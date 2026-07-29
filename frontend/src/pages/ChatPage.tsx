@@ -17,6 +17,9 @@ import {
   Sparkles,
   Info,
   X,
+  Trash2,
+  ShieldCheck,
+  MoreVertical,
   User as UserIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,9 +30,12 @@ import {
   getChatRoom,
   getChatMessages,
   markChatRoomRead,
+  deleteChatMessage,
+  clearChatHistory,
 } from '@/services/chat.service';
 import type { ChatRoom, ChatMessage } from '@/types';
 import { formatDate, formatTime } from '@/utils/date';
+import { deriveRoomKey, decryptMessage } from '@/utils/crypto';
 
 export const ChatPage: React.FC = () => {
   const { rideRequestId } = useParams<{ rideRequestId: string }>();
@@ -37,11 +43,13 @@ export const ChatPage: React.FC = () => {
   const { user: currentUser } = useAuth();
 
   const [room, setRoom] = useState<ChatRoom | null>(null);
+  const [cryptoKey, setCryptoKey] = useState<CryptoKey | null>(null);
   const [inputText, setInputText] = useState<string>('');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [showSearch, setShowSearch] = useState<boolean>(false);
   const [isLoadingRoom, setIsLoadingRoom] = useState<boolean>(true);
   const [roomError, setRoomError] = useState<string | null>(null);
+  const [activeMenuMsgId, setActiveMenuMsgId] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const typingDebounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -52,6 +60,10 @@ export const ChatPage: React.FC = () => {
       window.dispatchEvent(new Event('chat-unread-updated'));
     }
   }, [parsedRideRequestId]);
+
+  const isUserParticipant = Boolean(
+    currentUser && room && (currentUser.id === room.created_by || currentUser.id === room.partner)
+  );
 
   const {
     messages,
@@ -64,8 +76,9 @@ export const ChatPage: React.FC = () => {
     error: wsError,
   } = useChatWebSocket({
     rideRequestId: parsedRideRequestId,
-    enabled: Boolean(parsedRideRequestId && room?.is_participant(currentUser)),
+    enabled: Boolean(parsedRideRequestId && isUserParticipant),
     currentUsername: currentUser?.username,
+    cryptoKey,
     onNewMessage: handleNewMessage,
   });
 
@@ -80,15 +93,36 @@ export const ChatPage: React.FC = () => {
         const roomData = await getChatRoom(parsedRideRequestId);
         setRoom(roomData);
 
+        // Derive E2EE AES-256 key for room
+        const key = await deriveRoomKey(
+          roomData.ride_request,
+          roomData.created_by_user.username,
+          roomData.partner_user.username
+        );
+        setCryptoKey(key);
+
         const historyData = await getChatMessages(parsedRideRequestId);
-        setMessages(historyData.results || []);
+        const rawResults = historyData.results || [];
+
+        // Decrypt historical messages
+        const decryptedResults = await Promise.all(
+          rawResults.map(async (msg) => {
+            if (msg.message_type === 'TEXT' && msg.iv && !msg.is_deleted_everyone) {
+              const decrypted = await decryptMessage(msg.message, msg.iv, key);
+              return { ...msg, message: decrypted };
+            }
+            return msg;
+          })
+        );
+
+        setMessages(decryptedResults);
 
         // Mark room as read on open
         await markChatRoomRead(parsedRideRequestId);
         window.dispatchEvent(new Event('chat-unread-updated'));
       } catch (err: any) {
         setRoomError(err?.response?.data?.detail || 'Unable to access chat room. You may not be an authorized ride participant.');
-      } font: {
+      } finally {
         setIsLoadingRoom(false);
       }
     };
@@ -125,6 +159,42 @@ export const ChatPage: React.FC = () => {
     setInputText('');
     sendTyping(false);
     if (typingDebounceRef.current) clearTimeout(typingDebounceRef.current);
+  };
+
+  const handleDeleteForMe = async (msgId: number) => {
+    try {
+      await deleteChatMessage(msgId, 'me');
+      setMessages((prev) => prev.filter((m) => m.id !== msgId));
+      setActiveMenuMsgId(null);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleDeleteForEveryone = async (msgId: number) => {
+    try {
+      await deleteChatMessage(msgId, 'everyone');
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId ? { ...m, is_deleted_everyone: true, message: 'This message was deleted' } : m
+        )
+      );
+      setActiveMenuMsgId(null);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleClearChat = async () => {
+    if (!parsedRideRequestId) return;
+    if (window.confirm('Are you sure you want to clear your chat history? This will hide messages for your view.')) {
+      try {
+        await clearChatHistory(parsedRideRequestId);
+        setMessages([]);
+      } catch {
+        // ignore
+      }
+    }
   };
 
   // Filter messages by search keyword
@@ -168,6 +238,10 @@ export const ChatPage: React.FC = () => {
                       {room.is_active ? 'Active Ride' : 'Archived'}
                     </span>
                   )}
+                  <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">
+                    <ShieldCheck className="h-3 w-3" />
+                    <span>E2E Encrypted</span>
+                  </span>
                 </div>
                 {room && (
                   <div className="text-xs text-neutral-400 flex items-center gap-2 truncate">
@@ -196,6 +270,14 @@ export const ChatPage: React.FC = () => {
             title="Search in chat"
           >
             <Search className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={handleClearChat}
+            className="p-2 rounded-xl transition-colors text-neutral-300 hover:text-red-400 hover:bg-neutral-800"
+            title="Clear Chat History"
+          >
+            <Trash2 className="h-4 w-4" />
           </button>
 
           {partnerUser?.phone_number && (
@@ -240,7 +322,7 @@ export const ChatPage: React.FC = () => {
         {isLoadingRoom && (
           <div className="flex flex-col items-center justify-center py-20 space-y-2">
             <Loader2 className="h-8 w-8 animate-spin text-black" />
-            <p className="text-xs font-medium text-neutral-500">Establishing chat connection...</p>
+            <p className="text-xs font-medium text-neutral-500">Establishing E2EE chat connection...</p>
           </div>
         )}
 
@@ -250,10 +332,15 @@ export const ChatPage: React.FC = () => {
             <AlertCircle className="h-8 w-8 text-red-600 mx-auto" />
             <h3 className="font-bold text-red-900 text-base">Chat Access Restricted</h3>
             <p className="text-xs text-red-700 leading-relaxed">{roomError}</p>
-            <div className="pt-2">
+            <div className="pt-2 flex items-center justify-center gap-2">
+              <Link to="/dashboard">
+                <Button size="sm" className="font-semibold text-xs bg-black text-white hover:bg-neutral-800">
+                  Go to Dashboard
+                </Button>
+              </Link>
               <Link to="/my-travel-requests">
                 <Button size="sm" variant="outline" className="font-semibold text-xs border-red-300 text-red-900">
-                  Return to My Requests
+                  My Requests
                 </Button>
               </Link>
             </div>
@@ -277,7 +364,7 @@ export const ChatPage: React.FC = () => {
             <div className="space-y-1">
               <h3 className="font-bold text-black text-base">No messages yet</h3>
               <p className="text-xs text-neutral-500 font-medium">
-                Say hello and coordinate your pickup point and timing!
+                Say hello and coordinate your pickup point and timing! Messages are End-to-End Encrypted.
               </p>
             </div>
           </div>
@@ -289,6 +376,7 @@ export const ChatPage: React.FC = () => {
           filteredMessages.map((msg) => {
             const isSystem = msg.message_type === 'SYSTEM' || msg.sender === null;
             const isMe = msg.sender_user?.username === currentUser?.username;
+            const isMenuOpen = activeMenuMsgId === msg.id;
 
             if (isSystem) {
               return (
@@ -303,21 +391,72 @@ export const ChatPage: React.FC = () => {
             return (
               <div
                 key={msg.id}
-                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1`}
+                className={`group flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1 relative`}
               >
-                <div
-                  className={`max-w-[80%] sm:max-w-[70%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed shadow-2xs ${
-                    isMe
-                      ? 'bg-black text-white rounded-br-none'
-                      : 'bg-white text-neutral-900 border border-neutral-200 rounded-bl-none'
-                  }`}
-                >
-                  <p className="break-words whitespace-pre-wrap">{msg.message}</p>
+                <div className="flex items-center gap-2 max-w-[85%] sm:max-w-[75%]">
+                  {isMe && (
+                    <button
+                      onClick={() => setActiveMenuMsgId(isMenuOpen ? null : msg.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-400 hover:text-black transition-opacity"
+                      title="Message options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  )}
+
+                  <div
+                    className={`px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed shadow-2xs ${
+                      msg.is_deleted_everyone
+                        ? 'bg-neutral-100 text-neutral-500 italic border border-neutral-200'
+                        : isMe
+                        ? 'bg-black text-white rounded-br-none'
+                        : 'bg-white text-neutral-900 border border-neutral-200 rounded-bl-none'
+                    }`}
+                  >
+                    <p className="break-words whitespace-pre-wrap">{msg.message}</p>
+                  </div>
+
+                  {!isMe && (
+                    <button
+                      onClick={() => setActiveMenuMsgId(isMenuOpen ? null : msg.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1 text-neutral-400 hover:text-black transition-opacity"
+                      title="Message options"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
+
+                {/* Message Dropdown Action Menu */}
+                {isMenuOpen && (
+                  <div
+                    className={`z-20 bg-white border border-neutral-200 shadow-lg rounded-xl p-1 text-xs font-semibold space-y-1 ${
+                      isMe ? 'self-end' : 'self-start'
+                    }`}
+                  >
+                    <button
+                      onClick={() => handleDeleteForMe(msg.id)}
+                      className="w-full text-left px-3 py-1.5 hover:bg-neutral-100 rounded-lg text-neutral-700 flex items-center gap-2"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-neutral-500" />
+                      <span>Delete for me</span>
+                    </button>
+
+                    {isMe && !msg.is_deleted_everyone && (
+                      <button
+                        onClick={() => handleDeleteForEveryone(msg.id)}
+                        className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 rounded-lg flex items-center gap-2"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+                        <span>Delete for everyone</span>
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex items-center gap-1.5 text-[10px] text-neutral-400 font-medium px-1">
                   <span>{formatTime(msg.created_at)}</span>
-                  {isMe && (
+                  {isMe && !msg.is_deleted_everyone && (
                     <span className="inline-flex items-center">
                       {msg.is_read ? (
                         <CheckCheck className="h-3.5 w-3.5 text-emerald-500" title="Read" />

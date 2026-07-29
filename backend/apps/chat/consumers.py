@@ -51,6 +51,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         if event_type == 'chat_message':
             message_text = data.get('message', '').strip()
+            iv_str = data.get('iv')
             if not message_text:
                 return
 
@@ -64,7 +65,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
             # Save ChatMessage to DB
-            chat_msg = await self.save_chat_message(self.user, message_text)
+            chat_msg = await self.save_chat_message(self.user, message_text, iv_str)
 
             # Broadcast to channel layer group
             await self.channel_layer.group_send(
@@ -77,8 +78,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'sender': self.user.username,
                     'sender_id': self.user.id,
                     'message': chat_msg.message,
+                    'iv': chat_msg.iv,
                     'message_type': chat_msg.message_type,
                     'is_read': chat_msg.is_read,
+                    'is_deleted_everyone': chat_msg.is_deleted_everyone,
                     'created_at': chat_msg.created_at.isoformat(),
                 }
             )
@@ -118,6 +121,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def read_receipt_broadcast(self, event):
         await self.send(text_data=json.dumps(event))
 
+    async def delete_message_broadcast(self, event):
+        await self.send(text_data=json.dumps(event))
+
     # Database Helpers
     @database_sync_to_async
     def get_room_and_verify_access(self, ride_request_id, user):
@@ -138,11 +144,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return False
 
     @database_sync_to_async
-    def save_chat_message(self, sender, text):
+    def save_chat_message(self, sender, text, iv=None):
         return ChatMessage.objects.create(
             chat_room=self.room,
             sender=sender,
             message=text,
+            iv=iv,
             message_type=ChatMessage.MessageTypeChoices.TEXT,
             is_read=False,
         )

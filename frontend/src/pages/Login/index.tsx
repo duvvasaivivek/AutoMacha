@@ -51,8 +51,10 @@ export const Login: React.FC = () => {
     try {
       const response = await login(data);
       await authLogin(response.access, response.refresh);
-      const from = (location.state as LocationState | null)?.from?.pathname || '/dashboard';
-      navigate(from, { replace: true });
+      const fromPath = (location.state as LocationState | null)?.from?.pathname || '/dashboard';
+      // Parameterized chat routes shouldn't be auto-redirect targets when switching accounts
+      const targetPath = fromPath.startsWith('/chat/') ? '/dashboard' : fromPath;
+      navigate(targetPath, { replace: true });
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 401) {

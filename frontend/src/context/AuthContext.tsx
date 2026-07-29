@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearTokens();
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/login');
+    navigate('/login', { replace: true, state: null });
   };
 
   const updateUser = (updatedUser: User) => {

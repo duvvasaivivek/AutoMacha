@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { getAccessToken } from '@/lib/auth';
 import type { ChatMessage, WebSocketEvent } from '@/types';
+import { encryptMessage, decryptMessage } from '@/utils/crypto';
 
 interface UseChatWebSocketOptions {
   rideRequestId: number | null;
   enabled?: boolean;
   currentUsername?: string;
+  cryptoKey?: CryptoKey | null;
   onNewMessage?: (msg: ChatMessage) => void;
 }
 
@@ -13,6 +15,7 @@ export function useChatWebSocket({
   rideRequestId,
   enabled = true,
   currentUsername,
+  cryptoKey = null,
   onNewMessage,
 }: UseChatWebSocketOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -34,7 +37,6 @@ export function useChatWebSocket({
       return;
     }
 
-    // Determine WS protocol (ws:// or wss://)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = import.meta.env.VITE_WS_HOST || '127.0.0.1:8000';
     const wsUrl = `${protocol}//${host}/ws/chat/${rideRequestId}/?token=${encodeURIComponent(token)}`;
@@ -48,26 +50,32 @@ export function useChatWebSocket({
       reconnectAttemptsRef.current = 0;
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = async (event) => {
       try {
         const data: WebSocketEvent = JSON.parse(event.data);
 
         if (data.type === 'chat_message_broadcast') {
+          let decryptedText = data.message;
+          if (data.message_type === 'TEXT' && data.iv && cryptoKey) {
+            decryptedText = await decryptMessage(data.message, data.iv, cryptoKey);
+          }
+
           const newMsg: ChatMessage = {
             id: data.message_id,
             chat_room: data.chat_room_id,
             sender: data.sender_id,
             sender_user: data.sender ? { id: data.sender_id || 0, username: data.sender } : null,
-            message: data.message,
+            message: decryptedText,
+            iv: data.iv,
             message_type: data.message_type,
             is_read: data.is_read,
+            is_deleted_everyone: data.is_deleted_everyone,
             created_at: data.created_at,
           };
 
           setMessages((prev) => {
-            // Avoid duplicate message appending
             if (prev.some((m) => m.id === newMsg.id)) {
-              return prev;
+              return prev.map((m) => (m.id === newMsg.id ? newMsg : m));
             }
             return [...prev, newMsg];
           });
@@ -91,6 +99,18 @@ export function useChatWebSocket({
               msg.sender_user?.username !== data.reader ? { ...msg, is_read: true } : msg
             )
           );
+        } else if (data.type === 'delete_message_broadcast') {
+          if (data.mode === 'everyone') {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === data.message_id
+                  ? { ...m, is_deleted_everyone: true, message: 'This message was deleted' }
+                  : m
+              )
+            );
+          } else {
+            setMessages((prev) => prev.filter((m) => m.id !== data.message_id));
+          }
         } else if (data.type === 'error') {
           setError(data.message);
         }
@@ -116,7 +136,6 @@ export function useChatWebSocket({
         return;
       }
 
-      // Exponential backoff auto-reconnect (up to 5 attempts)
       if (reconnectAttemptsRef.current < 5) {
         const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
         reconnectAttemptsRef.current += 1;
@@ -125,7 +144,7 @@ export function useChatWebSocket({
         }, delay);
       }
     };
-  }, [rideRequestId, enabled, currentUsername, onNewMessage]);
+  }, [rideRequestId, enabled, currentUsername, cryptoKey, onNewMessage]);
 
   useEffect(() => {
     connectWebSocket();
@@ -139,16 +158,33 @@ export function useChatWebSocket({
     };
   }, [connectWebSocket]);
 
-  const sendMessage = useCallback((text: string) => {
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      socketRef.current.send(
-        JSON.stringify({
-          type: 'chat_message',
-          message: text,
-        })
-      );
-    }
-  }, []);
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+        let payloadMessage = text;
+        let payloadIv: string | null = null;
+
+        if (cryptoKey) {
+          try {
+            const encrypted = await encryptMessage(text, cryptoKey);
+            payloadMessage = encrypted.cipherText;
+            payloadIv = encrypted.iv;
+          } catch (e) {
+            console.error('Encryption failed, sending unencrypted text:', e);
+          }
+        }
+
+        socketRef.current.send(
+          JSON.stringify({
+            type: 'chat_message',
+            message: payloadMessage,
+            iv: payloadIv,
+          })
+        );
+      }
+    },
+    [cryptoKey]
+  );
 
   const sendTyping = useCallback((isTyping: boolean) => {
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {

@@ -14,6 +14,7 @@ import {
   Bell,
   Phone,
   History,
+  MessageSquare,
   ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -68,6 +69,7 @@ export const Navbar: React.FC = () => {
   const authNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Travel Requests', path: '/travel-requests', icon: Compass },
+    { name: 'Messages', path: '/chats', icon: MessageSquare, badge: chatUnreadCount },
     { name: 'Ride History', path: '/rides/history', icon: History },
     { name: 'Create Request', path: '/travel-requests/new', icon: PlusCircle },
     { name: 'Auto Drivers', path: '/auto-drivers', icon: Phone },
@@ -118,6 +120,11 @@ export const Navbar: React.FC = () => {
                       {isNotif && unreadCount > 0 && (
                         <span className="absolute -top-2 -right-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-black text-white shadow-xs">
                           {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                      {item.path === '/chats' && chatUnreadCount > 0 && (
+                        <span className="absolute -top-2 -right-2 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-black text-white shadow-xs">
+                          {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
                         </span>
                       )}
                     </div>

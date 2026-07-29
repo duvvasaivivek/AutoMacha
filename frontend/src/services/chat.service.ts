@@ -5,6 +5,14 @@ import type {
   PaginatedChatMessageResponse,
 } from '@/types';
 
+export async function getChatRooms(): Promise<ChatRoom[]> {
+  const response = await api.get<ChatRoom[] | { results: ChatRoom[] }>('/chat/rooms/');
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data.results || [];
+}
+
 export async function getChatRoom(rideRequestId: number): Promise<ChatRoom> {
   const response = await api.get<ChatRoom>(`/chat/room/${rideRequestId}/`);
   return response.data;
@@ -38,4 +46,15 @@ export async function getChatUnreadCount(): Promise<{ unread_count: number }> {
 
 export async function markChatRoomRead(rideRequestId: number): Promise<void> {
   await api.post(`/chat/room/${rideRequestId}/mark-read/`);
+}
+
+export async function deleteChatMessage(
+  messageId: number,
+  mode: 'me' | 'everyone' = 'me'
+): Promise<void> {
+  await api.delete(`/chat/messages/${messageId}/`, { params: { mode } });
+}
+
+export async function clearChatHistory(rideRequestId: number): Promise<void> {
+  await api.post(`/chat/room/${rideRequestId}/clear/`);
 }

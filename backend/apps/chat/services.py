@@ -93,8 +93,10 @@ def broadcast_message_event(chat_message):
         'sender': chat_message.sender.username if chat_message.sender else None,
         'sender_id': chat_message.sender_id,
         'message': chat_message.message,
+        'iv': chat_message.iv,
         'message_type': chat_message.message_type,
         'is_read': chat_message.is_read,
+        'is_deleted_everyone': chat_message.is_deleted_everyone,
         'created_at': chat_message.created_at.isoformat(),
     }
 
@@ -102,3 +104,25 @@ def broadcast_message_event(chat_message):
         async_to_sync(channel_layer.group_send)(room_group_name, payload)
     except Exception as exc:
         logger.warning("Failed to broadcast chat WebSocket event: %s", exc)
+
+
+def broadcast_deletion_event(chat_message, mode='everyone'):
+    """
+    Broadcasts a message deletion event to channel group participants.
+    """
+    channel_layer = get_channel_layer()
+    if not channel_layer:
+        return
+
+    room_group_name = f"chat_{chat_message.chat_room.ride_request_id}"
+    payload = {
+        'type': 'delete_message_broadcast',
+        'message_id': chat_message.id,
+        'chat_room_id': chat_message.chat_room_id,
+        'mode': mode,
+    }
+
+    try:
+        async_to_sync(channel_layer.group_send)(room_group_name, payload)
+    except Exception as exc:
+        logger.warning("Failed to broadcast chat deletion event: %s", exc)
