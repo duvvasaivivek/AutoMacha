@@ -145,6 +145,8 @@ class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise ValidationError("Only open travel requests can be cancelled.")
         instance.status = 'CANCELLED'
         instance.save(update_fields=['status'])
+        from apps.ride_history.services import record_cancelled_ride
+        record_cancelled_ride(instance)
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -160,6 +162,8 @@ class TravelRequestCancelView(generics.GenericAPIView):
             raise ValidationError("Only open travel requests can be cancelled.")
         instance.status = 'CANCELLED'
         instance.save(update_fields=['status'])
+        from apps.ride_history.services import record_cancelled_ride
+        record_cancelled_ride(instance)
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -208,7 +212,7 @@ class TravelRequestRespondShareView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk=None):
-        travel_request = get_object_or_404(TravelRequest, pk=pk)
+        travel_request = get_object_or_404(TravelRequest.objects.select_related('destination', 'user'), pk=pk)
         if travel_request.user != request.user:
             raise ValidationError("Only the owner of the travel request can respond to ride share requests.")
 
@@ -220,11 +224,19 @@ class TravelRequestRespondShareView(APIView):
         sender_user = get_object_or_404(User, username=sender_username)
 
         from apps.notifications.services import notify_ride_share_request_accepted, notify_ride_share_request_declined
+        from apps.ride_history.services import record_completed_ride
+
         if action == 'ACCEPT':
             notify_ride_share_request_accepted(
                 sender=sender_user,
                 acceptor=request.user,
                 related_object_id=travel_request.id
+            )
+            # Record completed ride history entries for both driver/owner and acceptor
+            record_completed_ride(
+                travel_request=travel_request,
+                partner_user=sender_user,
+                ride_request_id=travel_request.id
             )
             msg = f"Accepted ride share request from @{sender_username}."
         else:

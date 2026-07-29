@@ -107,6 +107,7 @@ INSTALLED_APPS = [
     'apps.notifications.apps.NotificationsConfig',
     'apps.auto_drivers.apps.AutoDriversConfig',
     'apps.admin_portal.apps.AdminPortalConfig',
+    'apps.ride_history.apps.RideHistoryConfig',
 ]
 
 MIDDLEWARE = [

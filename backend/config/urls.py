@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/notifications/', include('apps.notifications.urls')),
     path('api/auto-drivers/', include('apps.auto_drivers.urls')),
     path('api/admin-portal/', include('apps.admin_portal.urls')),
+    path('api/ride-history/', include('apps.ride_history.urls')),
 ]
 
 if settings.DEBUG:

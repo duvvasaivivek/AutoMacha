@@ -15,6 +15,7 @@ const EditTravelRequestPage = lazy(() => import('@/pages/EditTravelRequestPage')
 const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
 const NotificationsPage = lazy(() => import('@/pages/NotificationsPage'));
 const AutoDriversPage = lazy(() => import('@/pages/AutoDriversPage'));
+const RideHistoryPage = lazy(() => import('@/pages/RideHistoryPage'));
 
 // Admin Pages
 const AdminDashboardPage = lazy(() => import('@/pages/admin/AdminDashboardPage'));
@@ -46,6 +47,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/travel-requests/new" element={<CreateTravelRequest />} />
           <Route path="/travel-requests/:id/edit" element={<EditTravelRequestPage />} />
           <Route path="/travel-requests/:id/matches" element={<MatchesPage />} />
+          <Route path="/rides/history" element={<RideHistoryPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

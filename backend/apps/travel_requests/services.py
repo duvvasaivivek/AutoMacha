@@ -59,11 +59,12 @@ def expire_outdated_requests():
     Efficiently processes records to prevent duplicate SQL evaluations.
     """
     from ..notifications.services import notify_travel_request_expired
+    from apps.ride_history.services import record_expired_ride
 
     outdated_list = list(TravelRequest.objects.filter(
         status='OPEN',
         travel_datetime__lt=timezone.now(),
-    ).select_related('user'))
+    ).select_related('user', 'destination'))
 
     if not outdated_list:
         return 0
@@ -71,6 +72,7 @@ def expire_outdated_requests():
     expired_ids = [req.id for req in outdated_list]
     for req in outdated_list:
         notify_travel_request_expired(req.user, req.id)
+        record_expired_ride(req)
 
     updated_count = TravelRequest.objects.filter(id__in=expired_ids).update(status='EXPIRED')
     logger.info("Expired %d outdated travel request(s).", updated_count)

@@ -13,6 +13,7 @@ import {
   UserCog,
   Bell,
   Phone,
+  History,
   ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ export const Navbar: React.FC = () => {
   const authNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Travel Requests', path: '/travel-requests', icon: Compass },
+    { name: 'Ride History', path: '/rides/history', icon: History },
     { name: 'Create Request', path: '/travel-requests/new', icon: PlusCircle },
     { name: 'Auto Drivers', path: '/auto-drivers', icon: Phone },
     { name: 'Notifications', path: '/notifications', icon: Bell },

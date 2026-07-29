@@ -73,11 +73,17 @@ export const Dashboard: React.FC = () => {
             size="sm"
             onClick={fetchStats}
             disabled={isLoading}
-            className="gap-2 font-semibold border-neutral-300 hover:bg-neutral-100"
+            className="gap-2 font-semibold border-neutral-300 hover:bg-neutral-100 text-black"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </Button>
+          <Link to="/rides/history" className="w-full sm:w-auto">
+            <Button size="sm" variant="outline" className="w-full sm:w-auto gap-2 border-neutral-300 hover:bg-neutral-100 font-bold px-4 text-black">
+              <History className="h-4 w-4 text-neutral-700" />
+              <span>Ride History</span>
+            </Button>
+          </Link>
           <Link to="/travel-requests/new" className="w-full sm:w-auto">
             <Button size="sm" className="w-full sm:w-auto gap-2 bg-black text-white hover:bg-neutral-800 font-bold px-5 shadow-md">
               <PlusCircle className="h-4 w-4" />
