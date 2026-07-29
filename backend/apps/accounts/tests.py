@@ -203,7 +203,11 @@ class CurrentUserAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
         # Verify returned fields
-        expected_fields = {'id', 'username', 'institute_email', 'roll_number', 'branch', 'hostel', 'gender', 'phone_number', 'is_staff', 'is_superuser'}
+        expected_fields = {
+            'id', 'username', 'full_name', 'institute_email', 'roll_number', 'branch',
+            'academic_year', 'hostel', 'gender', 'phone_number', 'bio', 'profile_picture',
+            'verification_status', 'role', 'is_email_verified', 'is_staff', 'is_superuser'
+        }
         self.assertEqual(set(response.data.keys()), expected_fields)
         self.assertEqual(response.data['username'], self.username)
         self.assertEqual(response.data['institute_email'], 'me@institute.edu')
@@ -224,3 +228,76 @@ class CurrentUserAPITests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer invalid_jwt_token_string')
         response = self.client.get(self.me_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class UserProfileAPITests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='profileuser',
+            password='Password123!',
+            institute_email='profileuser@iiitk.ac.in',
+            roll_number='CS2026999',
+            full_name='Test User',
+            branch='Computer Science',
+            academic_year='3rd Year',
+            hostel='Hostel A',
+            phone_number='9876543210',
+            bio='CS student interested in ride sharing.'
+        )
+        token_url = reverse('accounts:token_obtain_pair')
+        response = self.client.post(token_url, {'username': 'profileuser', 'password': 'Password123!'}, format='json')
+        self.token = response.data['access']
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token}')
+
+    def test_get_profile_success(self):
+        url = reverse('direct-profile')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'profileuser')
+        self.assertEqual(response.data['institute_email'], 'profileuser@iiitk.ac.in')
+        self.assertEqual(response.data['phone_number'], '9876543210')
+        self.assertEqual(response.data['verification_status'], 'verified')
+        self.assertEqual(response.data['role'], 'Student')
+
+    def test_patch_profile_success(self):
+        url = reverse('direct-profile')
+        payload = {
+            'bio': 'Updated bio for testing',
+            'phone_number': '9123456789',
+            'hostel': 'Hostel B',
+            'gender': 'M',
+            'academic_year': '4th Year',
+        }
+        response = self.client.patch(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['bio'], 'Updated bio for testing')
+        self.assertEqual(response.data['phone_number'], '9123456789')
+        self.assertEqual(response.data['hostel'], 'Hostel B')
+
+    def test_read_only_fields_cannot_be_modified(self):
+        url = reverse('direct-profile')
+        payload = {
+            'institute_email': 'hacked@malicious.com',
+            'verification_status': 'unverified',
+            'average_rating': 5.0,
+        }
+        response = self.client.patch(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.institute_email, 'profileuser@iiitk.ac.in')
+        self.assertEqual(self.user.verification_status, 'verified')
+
+    def test_invalid_phone_number_validation(self):
+        url = reverse('direct-profile')
+        payload = {'phone_number': '12345'}
+        response = self.client.patch(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('phone_number', response.data)
+
+    def test_invalid_bio_length_validation(self):
+        url = reverse('direct-profile')
+        payload = {'bio': 'a' * 301}
+        response = self.client.patch(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('bio', response.data)
+

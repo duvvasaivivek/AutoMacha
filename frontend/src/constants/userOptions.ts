@@ -12,3 +12,13 @@ export const HOSTEL_OPTIONS = [
   'MVHR',
   'SRKH',
 ] as const;
+
+export const ACADEMIC_YEAR_OPTIONS = [
+  '1st Year',
+  '2nd Year',
+  '3rd Year',
+  '4th Year',
+  'Postgraduate',
+  'Doctoral Scholar',
+] as const;
+
