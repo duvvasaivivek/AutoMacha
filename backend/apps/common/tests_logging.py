@@ -1,13 +1,11 @@
 import logging
-import os
 from unittest.mock import patch
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.common.logging import RequestContextFilter, StructuredFormatter
+from apps.common.logging import StructuredFormatter
 from apps.travel_requests.tasks import expire_travel_requests_task
 
 User = get_user_model()

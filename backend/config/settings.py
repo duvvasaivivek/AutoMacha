@@ -192,6 +192,25 @@ else:
         }
     }
 
+# Channels & WebSocket Configuration (Redis Channel Layer in production, InMemoryChannelLayer in local/testing)
+if env.bool('USE_REDIS_CACHE', default=False):
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [env('REDIS_URL', default='redis://127.0.0.1:6379/0')],
+                "capacity": 1500,
+                "expiry": 30,
+            },
+        },
+    }
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
+    }
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

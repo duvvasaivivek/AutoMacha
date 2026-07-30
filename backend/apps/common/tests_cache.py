@@ -6,7 +6,6 @@ from rest_framework.test import APITestCase
 from apps.common.cache_services import (
     safe_cache_get,
     safe_cache_set,
-    safe_cache_delete,
     get_cache_metrics,
     DestinationCacheService,
     DashboardCacheService,

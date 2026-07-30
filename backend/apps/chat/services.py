@@ -4,7 +4,6 @@ Business logic services for ChatRoom management, system messages, and real-time 
 import logging
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.utils import timezone
 from .models import ChatRoom, ChatMessage
 
 logger = logging.getLogger(__name__)

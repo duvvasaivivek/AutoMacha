@@ -26,7 +26,7 @@ from .serializers import (
     TravelRequestMatchSerializer,
     MyTravelRequestSerializer,
 )
-from .services import find_matching_candidates, notify_matches_for_request, expire_outdated_requests
+from .services import find_matching_candidates, notify_matches_for_request
 from .tasks import dispatch_match_notifications_task
 
 logger = logging.getLogger(__name__)

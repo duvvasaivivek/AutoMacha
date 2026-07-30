@@ -2,8 +2,6 @@
 Application Metrics Registry for Prometheus Exposition & Observability.
 """
 import math
-import os
-import time
 import threading
 from collections import defaultdict
 

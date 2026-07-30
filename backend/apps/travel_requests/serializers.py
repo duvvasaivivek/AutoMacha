@@ -3,7 +3,6 @@ from django.utils import timezone
 from rest_framework import serializers
 from .models import TravelRequest
 from ..destinations.models import Destination
-from ..destinations.serializers import DestinationSerializer
 
 User = get_user_model()
 

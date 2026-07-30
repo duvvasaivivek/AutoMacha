@@ -3,8 +3,7 @@ import logging
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
-from apps.common.logging import JSONFormatter, get_request_context, set_request_context, clear_request_context
-from apps.common.metrics import metrics_registry
+from apps.common.logging import JSONFormatter, set_request_context, clear_request_context
 
 
 class ObservabilityTestCase(TestCase):

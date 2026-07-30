@@ -7,11 +7,10 @@ from rest_framework import status
 
 from apps.destinations.models import Destination
 from apps.travel_requests.models import TravelRequest
-from .models import ChatRoom, ChatMessage
+from .models import ChatMessage
 from .services import (
     get_or_create_chat_room,
     close_chat_room,
-    create_system_chat_message,
 )
 
 User = get_user_model()
