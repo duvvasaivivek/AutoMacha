@@ -40,6 +40,10 @@ class TravelRequest(models.Model):
         default=StatusChoices.OPEN,
         help_text="Current status of the travel request."
     )
+    is_deleted = models.BooleanField(
+        default=False,
+        help_text="Soft delete flag to hide the request from the user's view."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

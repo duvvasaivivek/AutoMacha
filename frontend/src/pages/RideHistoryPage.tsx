@@ -19,6 +19,7 @@ import {
   Eye,
   X,
   Layers,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import {
   getRideHistory,
   getRideHistorySummary,
+  deleteRideHistory,
 } from '@/services/rideHistory.service';
 import type {
   RideHistory,
@@ -46,6 +48,7 @@ export const RideHistoryPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRide, setSelectedRide] = useState<RideHistory | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Filters State
   const [searchInput, setSearchInput] = useState<string>('');
@@ -98,6 +101,21 @@ export const RideHistoryPage: React.FC = () => {
       setIsLoading(false);
     }
   }, [statusInput, searchInput, dateRangeInput, fromDateInput, toDateInput, orderingInput]);
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to permanently delete this ride history record?')) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await deleteRideHistory(id);
+      await fetchHistoryData(currentPage);
+    } catch {
+      alert('Failed to delete ride history.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchHistoryData(currentPage);
@@ -531,14 +549,30 @@ export const RideHistoryPage: React.FC = () => {
                   <span>
                     Recorded {ride.completed_at ? formatDate(ride.completed_at) : formatDate(ride.created_at)}
                   </span>
-                  <Button
-                    size="sm"
-                    onClick={() => setSelectedRide(ride)}
-                    className="bg-black text-white hover:bg-neutral-800 font-bold text-xs gap-1.5 h-7 px-3 shadow-2xs"
-                  >
-                    <Eye className="h-3 w-3" />
-                    <span>View Details</span>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDelete(ride.id)}
+                      disabled={deletingId === ride.id}
+                      className="border-neutral-200 text-neutral-500 hover:text-red-600 hover:bg-red-50 hover:border-red-200 h-7 px-2.5 shadow-xs transition-colors"
+                      title="Delete Record"
+                    >
+                      {deletingId === ride.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setSelectedRide(ride)}
+                      className="bg-black text-white hover:bg-neutral-800 font-bold text-xs gap-1.5 h-7 px-3 shadow-2xs"
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>View Details</span>
+                    </Button>
+                  </div>
                 </div>
               </Card>
             ))}

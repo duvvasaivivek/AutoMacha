@@ -22,11 +22,16 @@ class IsOwnerPermission(permissions.BasePermission):
         return obj.user == request.user
 
 
-class RideHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+from rest_framework import viewsets, permissions, status, mixins
+
+class RideHistoryViewSet(mixins.RetrieveModelMixin,
+                         mixins.ListModelMixin,
+                         mixins.DestroyModelMixin,
+                         viewsets.GenericViewSet):
     """
-    Read-only API ViewSet for Ride History.
-    Users can only retrieve and filter their own ride activity.
-    Manual creation, modification, or deletion by users is disallowed.
+    API ViewSet for Ride History.
+    Users can only retrieve, filter, and delete their own ride activity.
+    Manual creation or modification by users is disallowed.
     """
     serializer_class = RideHistorySerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerPermission]

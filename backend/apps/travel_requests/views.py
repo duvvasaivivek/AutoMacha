@@ -44,7 +44,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         now = timezone.now()
-        queryset = TravelRequest.objects.select_related('destination', 'user').order_by('travel_datetime')
+        queryset = TravelRequest.objects.filter(is_deleted=False).select_related('destination', 'user').order_by('travel_datetime')
 
         # Status filter (default to OPEN if not specified, unless ALL is specified)
         status_param = self.request.query_params.get('status')
@@ -130,7 +130,7 @@ class MyTravelRequestsView(generics.ListAPIView):
     def get_queryset(self):
         now = timezone.now()
         # Sort by nearest upcoming first (future trips come first sorted ascending, then past trips)
-        return TravelRequest.objects.filter(user=self.request.user).select_related('destination').annotate(
+        return TravelRequest.objects.filter(user=self.request.user, is_deleted=False).select_related('destination').annotate(
             is_past=Case(
                 When(travel_datetime__lt=now, then=Value(1)),
                 default=Value(0),
@@ -142,9 +142,7 @@ class MyTravelRequestsView(generics.ListAPIView):
 class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = TravelRequestSerializer
-
-    def get_queryset(self):
-        return TravelRequest.objects.select_related('destination', 'user')
+    queryset = TravelRequest.objects.filter(is_deleted=False)
 
     def perform_update(self, serializer):
         if serializer.instance.status != 'OPEN':
@@ -154,8 +152,6 @@ class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.status != 'OPEN':
-            raise ValidationError("Only open travel requests can be cancelled.")
         instance.status = 'CANCELLED'
         instance.save(update_fields=['status'])
         record_cancelled_ride(instance)

@@ -76,6 +76,10 @@ export async function respondRideShare(requestId: number | string, sender_userna
   return response.data;
 }
 
+export async function deleteTravelRequest(id: number | string): Promise<void> {
+  await api.delete(`/travel-requests/${id}/`);
+}
+
 export const travelRequestService = {
   createTravelRequest,
   getTravelRequests,
@@ -86,6 +90,7 @@ export const travelRequestService = {
   getMatches,
   requestRideShare,
   respondRideShare,
+  deleteTravelRequest,
 };
 
 export default travelRequestService;

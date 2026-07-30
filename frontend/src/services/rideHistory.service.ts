@@ -61,6 +61,10 @@ export async function getRideHistorySummary(): Promise<RideHistorySummary> {
   return response.data;
 }
 
+export async function deleteRideHistory(id: number): Promise<void> {
+  await api.delete(`/ride-history/${id}/`);
+}
+
 export async function getRideHistoryById(id: number): Promise<RideHistory> {
   const response = await api.get<RideHistory>(`/ride-history/${id}/`);
   return response.data;

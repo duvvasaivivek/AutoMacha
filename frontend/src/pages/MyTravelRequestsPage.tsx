@@ -12,10 +12,11 @@ import {
   XCircle,
   Users,
   ArrowRight,
+  Trash2,
 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { getMyTravelRequests, cancelTravelRequest } from '@/services/travelRequest.service';
+import { getMyTravelRequests, cancelTravelRequest, deleteTravelRequest } from '@/services/travelRequest.service';
 import type { MyTravelRequest } from '@/types';
 import { formatDate, formatTime } from '@/utils/date';
 
@@ -24,6 +25,7 @@ export const MyTravelRequestsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchMyRequests = async () => {
     setIsLoading(true);
@@ -54,6 +56,21 @@ export const MyTravelRequestsPage: React.FC = () => {
       alert('Failed to cancel travel request. It may no longer be open.');
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this travel request from your history?')) {
+      return;
+    }
+    setDeletingId(id);
+    try {
+      await deleteTravelRequest(id);
+      await fetchMyRequests();
+    } catch {
+      alert('Failed to delete travel request.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -222,10 +239,16 @@ export const MyTravelRequestsPage: React.FC = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled
-                      className="w-full font-semibold text-xs text-neutral-400 bg-neutral-100 border-neutral-200 cursor-not-allowed"
+                      onClick={() => handleDelete(req.id)}
+                      disabled={deletingId === req.id}
+                      className="w-full font-bold text-xs gap-1 border-neutral-300 text-neutral-600 hover:bg-neutral-100"
                     >
-                      <span>{isExpired ? 'Expired — No Actions Available' : 'Inactive Request'}</span>
+                      {deletingId === req.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3 w-3" />
+                      )}
+                      <span>Delete Request</span>
                     </Button>
                   )}
                 </CardFooter>

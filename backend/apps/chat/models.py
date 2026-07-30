@@ -38,6 +38,12 @@ class ChatRoom(models.Model):
         blank=True,
         help_text="Users who have cleared chat history for themselves."
     )
+    deleted_for = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='deleted_chat_rooms',
+        blank=True,
+        help_text="Users who have completely hidden this chat room from their inbox."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

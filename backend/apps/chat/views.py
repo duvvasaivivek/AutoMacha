@@ -44,6 +44,8 @@ class ChatRoomListView(generics.ListAPIView):
 
         return ChatRoom.objects.filter(
             Q(created_by=user) | Q(partner=user)
+        ).exclude(
+            deleted_for=user
         ).select_related(
             'created_by', 'partner', 'ride_request', 'ride_request__destination'
         ).annotate(
@@ -183,3 +185,23 @@ class ChatClearHistoryView(views.APIView):
 
         room.cleared_by.add(request.user)
         return Response({"status": "cleared", "ride_request_id": ride_request_id}, status=status.HTTP_200_OK)
+
+
+class ChatRoomDeleteView(views.APIView):
+    """
+    Hides the chat room from the requesting user's inbox entirely.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, ride_request_id=None, *args, **kwargs):
+        room = get_object_or_404(ChatRoom, ride_request_id=ride_request_id)
+        if not room.is_participant(request.user):
+            raise PermissionDenied("You do not have permission to delete this chat room.")
+
+        room.deleted_for.add(request.user)
+        # Also clear history so it doesn't leave orphaned messages taking up space in their count query
+        messages = ChatMessage.objects.filter(chat_room=room)
+        for m in messages:
+            m.deleted_for.add(request.user)
+        
+        return Response({"status": "deleted", "ride_request_id": ride_request_id}, status=status.HTTP_200_OK)

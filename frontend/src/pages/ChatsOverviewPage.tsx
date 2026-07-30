@@ -7,11 +7,12 @@ import {
   Loader2,
   ShieldCheck,
   Compass,
+  Trash2,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
-import { getChatRooms } from '@/services/chat.service';
+import { getChatRooms, deleteChatRoom } from '@/services/chat.service';
 import type { ChatRoom } from '@/types';
 import { ChatPage } from './ChatPage';
 import { formatTime } from '@/utils/date';
@@ -42,6 +43,22 @@ export const ChatsOverviewPage: React.FC = () => {
   useEffect(() => {
     fetchRooms();
   }, []);
+
+  const handleDeleteRoom = async (e: React.MouseEvent, rideRequestId: number) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to permanently delete this chat from your inbox?')) {
+      return;
+    }
+    try {
+      await deleteChatRoom(rideRequestId);
+      setRooms((prev) => prev.filter((r) => r.ride_request !== rideRequestId));
+      if (activeRideRequestId === rideRequestId) {
+        navigate('/chats');
+      }
+    } catch {
+      alert('Failed to delete chat room.');
+    }
+  };
 
   const filteredRooms = searchKeyword.trim()
     ? rooms.filter((r) => {
@@ -184,6 +201,18 @@ export const ChatsOverviewPage: React.FC = () => {
                         <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-emerald-600 text-white font-black text-[10px] flex items-center justify-center shadow-2xs">
                           {room.unread_count}
                         </span>
+                      )}
+                      
+                      {!room.is_active && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDeleteRoom(e, room.ride_request)}
+                          className="h-6 w-6 p-0 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Delete Chat"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       )}
                     </div>
                   </div>
