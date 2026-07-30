@@ -31,18 +31,29 @@ class TravelRequestListSerializer(serializers.ModelSerializer):
         fields = ('id', 'destination', 'user', 'direction', 'travel_datetime', 'status', 'created_at', 'is_match', 'match_info')
 
     def _get_matching_my_request(self, obj):
+        if hasattr(obj, '_cached_match_req'):
+            return obj._cached_match_req
+
         request = self.context.get('request')
         if not request or not request.user or not request.user.is_authenticated:
+            obj._cached_match_req = None
             return None
+
         if not hasattr(request, '_cached_my_open_requests'):
-            request._cached_my_open_requests = list(request.user.travel_requests.filter(status='OPEN').select_related('destination'))
-        
+            request._cached_my_open_requests = list(
+                request.user.travel_requests.filter(status='OPEN').select_related('destination')
+            )
+
+        match_found = None
         for my_req in request._cached_my_open_requests:
             if obj.destination_id == my_req.destination_id and obj.direction == my_req.direction:
                 diff_seconds = abs((obj.travel_datetime - my_req.travel_datetime).total_seconds())
                 if diff_seconds <= 7200:
-                    return my_req
-        return None
+                    match_found = my_req
+                    break
+
+        obj._cached_match_req = match_found
+        return match_found
 
     def get_is_match(self, obj):
         return self._get_matching_my_request(obj) is not None

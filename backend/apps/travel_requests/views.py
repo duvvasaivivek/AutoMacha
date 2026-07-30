@@ -15,8 +15,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.chat.services import close_chat_room
 from apps.common.cache_services import DashboardCacheService
 from apps.common.permissions import IsOwner
+from apps.ride_history.services import record_cancelled_ride
 from .models import TravelRequest
 from .serializers import (
     TravelRequestSerializer,
@@ -156,8 +158,6 @@ class TravelRequestDetailView(generics.RetrieveUpdateDestroyAPIView):
             raise ValidationError("Only open travel requests can be cancelled.")
         instance.status = 'CANCELLED'
         instance.save(update_fields=['status'])
-        from apps.ride_history.services import record_cancelled_ride
-        from apps.chat.services import close_chat_room
         record_cancelled_ride(instance)
         close_chat_room(instance, reason='CANCELLED')
         serializer = self.get_serializer(instance)
@@ -177,8 +177,6 @@ class TravelRequestCancelView(generics.GenericAPIView):
                     raise ValidationError("Only open travel requests can be cancelled.")
                 instance.status = 'CANCELLED'
                 instance.save(update_fields=['status', 'updated_at'])
-                from apps.ride_history.services import record_cancelled_ride
-                from apps.chat.services import close_chat_room
                 record_cancelled_ride(instance)
                 close_chat_room(instance, reason='CANCELLED')
                 serializer = self.get_serializer(instance)
