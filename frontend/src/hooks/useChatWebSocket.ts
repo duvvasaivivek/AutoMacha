@@ -27,6 +27,39 @@ export function useChatWebSocket({
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isIntentionalCloseRef = useRef<boolean>(false);
+
+  // Keep refs for cryptoKey and onNewMessage to avoid tearing down WebSocket on key updates
+  const cryptoKeyRef = useRef<CryptoKey | null>(cryptoKey);
+  const onNewMessageRef = useRef<((msg: ChatMessage) => void) | undefined>(onNewMessage);
+
+  useEffect(() => {
+    cryptoKeyRef.current = cryptoKey;
+  }, [cryptoKey]);
+
+  useEffect(() => {
+    onNewMessageRef.current = onNewMessage;
+  }, [onNewMessage]);
+
+  // Re-decrypt messages if cryptoKey becomes available after messages were received
+  useEffect(() => {
+    if (!cryptoKey) return;
+    setMessages((prev) =>
+      Promise.all(
+        prev.map(async (msg) => {
+          if (msg.message_type === 'TEXT' && msg.iv && !msg.is_deleted_everyone) {
+            try {
+              const decrypted = await decryptMessage(msg.message, msg.iv, cryptoKey);
+              return { ...msg, message: decrypted };
+            } catch {
+              return msg;
+            }
+          }
+          return msg;
+        })
+      ) as unknown as ChatMessage[]
+    );
+  }, [cryptoKey]);
 
   const connectWebSocket = useCallback(() => {
     if (!rideRequestId || !enabled) return;
@@ -36,6 +69,15 @@ export function useChatWebSocket({
       setError('Authentication token missing. Please log in.');
       return;
     }
+
+    // Clean up any existing connection before opening a new one
+    if (socketRef.current) {
+      isIntentionalCloseRef.current = true;
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+
+    isIntentionalCloseRef.current = false;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const host = import.meta.env.VITE_WS_HOST || '127.0.0.1:8000';
@@ -56,8 +98,9 @@ export function useChatWebSocket({
 
         if (data.type === 'chat_message_broadcast') {
           let decryptedText = data.message;
-          if (data.message_type === 'TEXT' && data.iv && cryptoKey) {
-            decryptedText = await decryptMessage(data.message, data.iv, cryptoKey);
+          const activeKey = cryptoKeyRef.current;
+          if (data.message_type === 'TEXT' && data.iv && activeKey) {
+            decryptedText = await decryptMessage(data.message, data.iv, activeKey);
           }
 
           const newMsg: ChatMessage = {
@@ -80,8 +123,8 @@ export function useChatWebSocket({
             return [...prev, newMsg];
           });
 
-          if (onNewMessage) {
-            onNewMessage(newMsg);
+          if (onNewMessageRef.current) {
+            onNewMessageRef.current(newMsg);
           }
         } else if (data.type === 'typing_broadcast') {
           if (data.sender !== currentUsername) {
@@ -127,6 +170,11 @@ export function useChatWebSocket({
       setIsConnected(false);
       socketRef.current = null;
 
+      // Ignore intentional close during unmount or parameter changes
+      if (isIntentionalCloseRef.current) {
+        return;
+      }
+
       if (evt.code === 4003) {
         setError('Unauthorized: You are not a participant in this ride chat.');
         return;
@@ -144,12 +192,13 @@ export function useChatWebSocket({
         }, delay);
       }
     };
-  }, [rideRequestId, enabled, currentUsername, cryptoKey, onNewMessage]);
+  }, [rideRequestId, enabled, currentUsername]);
 
   useEffect(() => {
     connectWebSocket();
 
     return () => {
+      isIntentionalCloseRef.current = true;
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       if (socketRef.current) {
@@ -163,10 +212,11 @@ export function useChatWebSocket({
       if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
         let payloadMessage = text;
         let payloadIv: string | null = null;
+        const activeKey = cryptoKeyRef.current;
 
-        if (cryptoKey) {
+        if (activeKey) {
           try {
-            const encrypted = await encryptMessage(text, cryptoKey);
+            const encrypted = await encryptMessage(text, activeKey);
             payloadMessage = encrypted.cipherText;
             payloadIv = encrypted.iv;
           } catch (e) {
@@ -183,7 +233,7 @@ export function useChatWebSocket({
         );
       }
     },
-    [cryptoKey]
+    []
   );
 
   const sendTyping = useCallback((isTyping: boolean) => {

@@ -94,12 +94,14 @@ export const AdminDestinationsPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden shadow-xs">
         {isLoading ? (
           <div className="p-8 text-center text-xs text-gray-400">Loading destinations...</div>
+        ) : (!Array.isArray(destinations) || destinations.length === 0) ? (
+          <div className="p-8 text-center text-xs text-gray-400">No destinations found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 font-semibold border-b border-gray-100 dark:border-gray-800">
                 <tr>
-                  <th className="p-4">Destination Name</th>
+                  <th className="p-4">Name</th>
                   <th className="p-4">Category</th>
                   <th className="p-4">Distance (km)</th>
                   <th className="p-4">Status</th>
@@ -107,7 +109,7 @@ export const AdminDestinationsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {destinations.map((dest) => (
+                {(destinations || []).map((dest) => (
                   <tr key={dest.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
                     <td className="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-emerald-500 flex-shrink-0" />

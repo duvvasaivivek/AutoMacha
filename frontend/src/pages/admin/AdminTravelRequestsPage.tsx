@@ -13,9 +13,10 @@ export const AdminTravelRequestsPage: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await getAdminTravelRequests({ search, status: statusFilter });
-      setRequests(data);
+      setRequests(Array.isArray(data) ? data : (data as any)?.results || []);
     } catch (err) {
       console.error('Failed to load travel requests:', err);
+      setRequests([]);
     } finally {
       setIsLoading(false);
     }
@@ -84,6 +85,8 @@ export const AdminTravelRequestsPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden shadow-xs">
         {isLoading ? (
           <div className="p-8 text-center text-xs text-gray-400">Loading travel requests...</div>
+        ) : (!Array.isArray(requests) || requests.length === 0) ? (
+          <div className="p-8 text-center text-xs text-gray-400">No travel requests found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -99,7 +102,7 @@ export const AdminTravelRequestsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {requests.map((r) => (
+                {(requests || []).map((r) => (
                   <tr key={r.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
                     <td className="p-4 font-mono font-bold text-gray-900 dark:text-white">#{r.id}</td>
                     <td className="p-4 font-semibold text-gray-800 dark:text-gray-200">{r.user_username || `User #${r.user}`}</td>

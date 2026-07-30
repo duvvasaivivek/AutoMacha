@@ -55,8 +55,13 @@ export const ChatPage: React.FC = () => {
     }
   }, [parsedRideRequestId]);
 
-  const isUserParticipant = Boolean(
-    currentUser && room && (currentUser.id === room.created_by || currentUser.id === room.partner)
+  const isUserParticipant = !room || Boolean(
+    currentUser &&
+      room &&
+      (Number(currentUser.id) === Number(room.created_by) ||
+        Number(currentUser.id) === Number(room.partner) ||
+        currentUser.id === room.created_by_user?.id ||
+        currentUser.id === room.partner_user?.id)
   );
 
   const {
@@ -69,7 +74,7 @@ export const ChatPage: React.FC = () => {
     error: wsError,
   } = useChatWebSocket({
     rideRequestId: parsedRideRequestId,
-    enabled: Boolean(parsedRideRequestId && isUserParticipant),
+    enabled: Boolean(parsedRideRequestId && currentUser && isUserParticipant),
     currentUsername: currentUser?.username,
     cryptoKey,
     onNewMessage: handleNewMessage,
@@ -368,7 +373,10 @@ export const ChatPage: React.FC = () => {
           !roomError &&
           filteredMessages.map((msg) => {
             const isSystem = msg.message_type === 'SYSTEM' || msg.sender === null;
-            const isMe = msg.sender_user?.username === currentUser?.username;
+            const isMe =
+              Boolean(currentUser) &&
+              ((Boolean(msg.sender_user?.username) && msg.sender_user?.username === currentUser?.username) ||
+                (msg.sender !== null && msg.sender !== undefined && Number(msg.sender) === Number(currentUser?.id)));
             const isMenuOpen = activeMenuMsgId === msg.id;
 
             if (isSystem) {

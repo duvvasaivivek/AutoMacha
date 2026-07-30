@@ -3,6 +3,7 @@ from .views import (
     AdminDashboardStatsView,
     AdminUserListView,
     AdminUserToggleActiveView,
+    AdminUserDeleteView,
     AdminDestinationManagementView,
     AdminAutoDriverManagementView,
     AdminTravelRequestManagementView,
@@ -20,6 +21,7 @@ app_name = 'admin_portal'
 urlpatterns = [
     path('dashboard/', AdminDashboardStatsView.as_view(), name='dashboard-stats'),
     path('users/', AdminUserListView.as_view(), name='users-list'),
+    path('users/<int:pk>/', AdminUserDeleteView.as_view(), name='users-delete'),
     path('users/<int:pk>/toggle-active/', AdminUserToggleActiveView.as_view(), name='users-toggle-active'),
     path('destinations/', AdminDestinationManagementView.as_view(), name='destinations-list'),
     path('destinations/<int:pk>/', AdminDestinationManagementView.as_view(), name='destinations-detail'),

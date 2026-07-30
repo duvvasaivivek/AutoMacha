@@ -111,6 +111,47 @@ class AdminUserToggleActiveView(views.APIView):
         }, status=status.HTTP_200_OK)
 
 
+class AdminUserDeleteView(views.APIView):
+    """
+    Permanently delete a user account from the system.
+    """
+    permission_classes = [IsStaffOrSuperUser]
+
+    def delete(self, request, pk, *args, **kwargs):
+        target_user = generics.get_object_or_404(User, pk=pk)
+
+        # Prevent self-deletion
+        if target_user.id == request.user.id:
+            return Response(
+                {"detail": "You cannot delete your own account while logged in as admin."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Prevent non-superusers from deleting superusers
+        if target_user.is_superuser and not request.user.is_superuser:
+            return Response(
+                {"detail": "Only superusers can delete superuser accounts."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        username = target_user.username
+        user_id = target_user.id
+        target_user.delete()
+
+        DashboardCacheService.invalidate_admin_stats()
+
+        log_audit_event(
+            request,
+            action="USER_DELETED",
+            affected_object=f"User #{user_id} ({username})",
+            details={"username": username, "deleted_by": request.user.username}
+        )
+
+        return Response({
+            "message": f"User '{username}' was permanently deleted."
+        }, status=status.HTTP_200_OK)
+
+
 class AdminDestinationManagementView(views.APIView):
     """
     Manage destinations: view all, create, approve/reject, edit, delete.

@@ -63,6 +63,8 @@ export const AdminAutoDriversPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden shadow-xs">
         {isLoading ? (
           <div className="p-8 text-center text-xs text-gray-400">Loading auto drivers...</div>
+        ) : (!Array.isArray(drivers) || drivers.length === 0) ? (
+          <div className="p-8 text-center text-xs text-gray-400">No auto drivers found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -73,11 +75,12 @@ export const AdminAutoDriversPage: React.FC = () => {
                   <th className="p-4">Vehicle Number</th>
                   <th className="p-4">Suggested By</th>
                   <th className="p-4">Verification</th>
+                  <th className="p-4">Status</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {drivers.map((drv) => (
+                {(drivers || []).map((drv) => (
                   <tr key={drv.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
                     <td className="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                       <Car className="w-4 h-4 text-emerald-500 flex-shrink-0" />

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Search, UserCheck, UserX, UserSearch } from 'lucide-react';
-import { getAdminUsers, toggleAdminUserActive, impersonateUser } from '@/services/admin.service';
+import { Search, UserCheck, UserX, UserSearch, Trash2 } from 'lucide-react';
+import { getAdminUsers, toggleAdminUserActive, impersonateUser, deleteAdminUser } from '@/services/admin.service';
 import type { AdminUser } from '@/types/admin';
 import { useAuth } from '@/hooks';
 
@@ -16,9 +16,10 @@ export const AdminUsersPage: React.FC = () => {
     setIsLoading(true);
     try {
       const data = await getAdminUsers({ search, role: roleFilter, is_active: statusFilter });
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : (data as any)?.results || []);
     } catch (err) {
       console.error('Failed to load admin users:', err);
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -48,7 +49,6 @@ export const AdminUsersPage: React.FC = () => {
 
     try {
       const res = await impersonateUser(targetUser.id);
-      // Save original tokens for exit impersonation
       sessionStorage.setItem('original_admin_token', localStorage.getItem('access_token') || '');
       sessionStorage.setItem('original_admin_refresh', localStorage.getItem('refresh_token') || '');
       sessionStorage.setItem('impersonating_user', String(targetUser.id));
@@ -63,13 +63,31 @@ export const AdminUsersPage: React.FC = () => {
     }
   };
 
+  const handleDeleteUser = async (targetUser: AdminUser) => {
+    if (targetUser.id === currentUser?.id) {
+      alert('You cannot delete your own account while logged in.');
+      return;
+    }
+
+    if (!confirm(`ARE YOU SURE you want to PERMANENTLY delete user "${targetUser.username}"?\n\nThis action cannot be undone and will delete all associated data.`)) {
+      return;
+    }
+
+    try {
+      await deleteAdminUser(targetUser.id);
+      setUsers((prev) => prev.filter((u) => u.id !== targetUser.id));
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Failed to delete user account.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">User Management</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Search, manage active status, and inspect system accounts.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Search, manage active status, impersonate, or permanently delete system accounts.</p>
         </div>
       </div>
 
@@ -113,7 +131,7 @@ export const AdminUsersPage: React.FC = () => {
       <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden shadow-xs">
         {isLoading ? (
           <div className="p-8 text-center text-xs text-gray-400">Loading user accounts...</div>
-        ) : users.length === 0 ? (
+        ) : (!Array.isArray(users) || users.length === 0) ? (
           <div className="p-8 text-center text-xs text-gray-400">No users found matching your criteria.</div>
         ) : (
           <div className="overflow-x-auto">
@@ -129,7 +147,7 @@ export const AdminUsersPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                {users.map((u) => (
+                {(users || []).map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
                     <td className="p-4 font-semibold text-gray-900 dark:text-white">{u.username}</td>
                     <td className="p-4 text-gray-600 dark:text-gray-300">{u.institute_email}</td>
@@ -165,7 +183,7 @@ export const AdminUsersPage: React.FC = () => {
                         onClick={() => handleToggleActive(u)}
                         className={`px-3 py-1 rounded-lg font-semibold text-xs transition ${
                           u.is_active
-                            ? 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100'
+                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100'
                             : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100'
                         }`}
                       >
@@ -176,9 +194,19 @@ export const AdminUsersPage: React.FC = () => {
                         <button
                           onClick={() => handleImpersonate(u)}
                           title="Impersonate User"
-                          className="px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 rounded-lg font-semibold text-xs transition inline-flex items-center gap-1"
+                          className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 rounded-lg font-semibold text-xs transition inline-flex items-center gap-1"
                         >
                           <UserSearch className="w-3.5 h-3.5" /> Impersonate
+                        </button>
+                      )}
+
+                      {u.id !== currentUser?.id && (!u.is_superuser || currentUser?.is_superuser) && (
+                        <button
+                          onClick={() => handleDeleteUser(u)}
+                          title="Delete User Permanently"
+                          className="px-2.5 py-1 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 hover:bg-red-100 rounded-lg font-semibold text-xs transition inline-flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
                         </button>
                       )}
                     </td>
