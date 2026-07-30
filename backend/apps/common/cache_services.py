@@ -39,13 +39,16 @@ def safe_cache_get(key, default=None):
     If Redis or Cache backend fails, logs warning and returns default without throwing.
     """
     try:
+        from .metrics import metrics_registry
         val = cache.get(key)
         if val is not None:
             _CACHE_METRICS['hits'] += 1
+            metrics_registry.record_redis_hit()
             logger.debug("Cache HIT: %s", key)
             return val
         else:
             _CACHE_METRICS['misses'] += 1
+            metrics_registry.record_redis_miss()
             logger.debug("Cache MISS: %s", key)
             return default
     except Exception as exc:

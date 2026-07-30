@@ -5,12 +5,16 @@ import logging
 import time
 import uuid
 from django.conf import settings
+from django.db import connection
 from .logging import set_request_context, clear_request_context
+from .metrics import metrics_registry
 
 logger = logging.getLogger('api.request')
 sec_logger = logging.getLogger('security')
+db_logger = logging.getLogger('db.query')
 
 SLOW_REQUEST_THRESHOLD_MS = getattr(settings, 'SLOW_REQUEST_THRESHOLD_MS', 1000)
+SLOW_QUERY_THRESHOLD_MS = getattr(settings, 'SLOW_QUERY_THRESHOLD_MS', 200)
 
 
 class RequestLoggingMiddleware:
@@ -106,7 +110,10 @@ class RequestLoggingMiddleware:
                 SLOW_REQUEST_THRESHOLD_MS,
             )
 
-        # 7. Inject X-Request-ID into response header
+        # 7. Record Metrics
+        metrics_registry.record_http_request(request.method, request.path, response.status_code, duration_ms)
+
+        # 8. Inject X-Request-ID into response header
         response['X-Request-ID'] = request_id
         clear_request_context()
         return response
@@ -132,5 +139,39 @@ class SecurityHeadersMiddleware:
             'Content-Security-Policy',
             "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws: wss:;"
         )
+
+        return response
+
+
+class DatabaseQueryLoggerMiddleware:
+    """
+    Middleware that monitors database queries per request, records latency metrics,
+    and logs queries exceeding SLOW_QUERY_THRESHOLD_MS (200ms).
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        initial_queries = len(connection.queries)
+        response = self.get_response(request)
+
+        queries = connection.queries[initial_queries:]
+        for q in queries:
+            try:
+                q_time = float(q.get('time', 0)) * 1000
+            except (ValueError, TypeError):
+                q_time = 0.0
+
+            is_slow = q_time > SLOW_QUERY_THRESHOLD_MS
+            metrics_registry.record_db_query(q_time, is_slow=is_slow)
+
+            if is_slow:
+                sql_snippet = q.get('sql', '').replace('\n', ' ')[:200]
+                db_logger.warning(
+                    "Slow Database Query Detected: %.2fms | SQL: %s",
+                    q_time,
+                    sql_snippet,
+                )
 
         return response

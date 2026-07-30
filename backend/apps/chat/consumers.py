@@ -18,12 +18,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # 1. Authenticated User Check
         if not self.user or not self.user.is_authenticated:
+            from apps.common.metrics import metrics_registry
+            metrics_registry.record_websocket_auth_failure()
             await self.close(code=4001)  # Unauthorized
             return
 
         # 2. Participant Security Check
         self.room = await self.get_room_and_verify_access(self.ride_request_id, self.user)
         if not self.room:
+            from apps.common.metrics import metrics_registry
+            metrics_registry.record_websocket_auth_failure()
             await self.close(code=4003)  # Forbidden / Not a participant
             return
 
@@ -33,6 +37,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
         await self.accept()
+        from apps.common.metrics import metrics_registry
+        metrics_registry.websocket_connect()
 
     async def disconnect(self, close_code):
         if hasattr(self, 'room_group_name'):
@@ -40,8 +46,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 self.channel_name
             )
+        from apps.common.metrics import metrics_registry
+        metrics_registry.websocket_disconnect()
 
     async def receive(self, text_data):
+        from apps.common.metrics import metrics_registry
+        metrics_registry.record_websocket_message_received()
         try:
             data = json.loads(text_data)
         except json.JSONDecodeError:

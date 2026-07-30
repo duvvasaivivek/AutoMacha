@@ -72,3 +72,37 @@ class StructuredFormatter(logging.Formatter):
                 formatted_message += f"\n{record.exc_text}"
 
         return formatted_message
+
+
+class JSONFormatter(logging.Formatter):
+    """
+    JSON structured log entry formatter for production log ingestion (Elasticsearch, CloudWatch, Datadog).
+    """
+
+    def format(self, record):
+        import json
+        now = datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat()
+        ctx = get_request_context()
+
+        log_data = {
+            "timestamp": now,
+            "level": record.levelname,
+            "logger": record.name,
+            "module": record.module,
+            "func_name": record.funcName,
+            "request_id": getattr(record, 'request_id', ctx.get('request_id', '-')),
+            "user_id": getattr(record, 'user_id', ctx.get('user_id', '-')),
+            "username": getattr(record, 'username', ctx.get('username', 'anonymous')),
+            "client_ip": getattr(record, 'client_ip', ctx.get('client_ip', '-')),
+            "user_agent": getattr(record, 'user_agent', ctx.get('user_agent', '-')),
+            "http_method": getattr(record, 'http_method', ctx.get('http_method', '-')),
+            "path": getattr(record, 'path', ctx.get('path', '-')),
+            "message": record.getMessage(),
+        }
+
+        if record.exc_info:
+            if not record.exc_text:
+                record.exc_text = self.formatException(record.exc_info)
+            log_data["exception"] = record.exc_text
+
+        return json.dumps(log_data)
