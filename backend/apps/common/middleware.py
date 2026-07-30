@@ -110,3 +110,27 @@ class RequestLoggingMiddleware:
         response['X-Request-ID'] = request_id
         clear_request_context()
         return response
+
+
+class SecurityHeadersMiddleware:
+    """
+    Middleware that enforces security hardening response headers across all requests.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        # Enforce OWASP Security Headers
+        response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        response.headers.setdefault('X-Frame-Options', 'DENY')
+        response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+        response.headers.setdefault('Permissions-Policy', 'geolocation=(), camera=(), microphone=()')
+        response.headers.setdefault(
+            'Content-Security-Policy',
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ws: wss:;"
+        )
+
+        return response

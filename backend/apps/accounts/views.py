@@ -1,9 +1,10 @@
 import logging
-from rest_framework import status
+from rest_framework import status, views
 from rest_framework.generics import CreateAPIView, RetrieveAPIView, RetrieveUpdateAPIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import CurrentUserSerializer, UserRegistrationSerializer, UserProfileSerializer
 
 
@@ -81,4 +82,25 @@ class UserProfileView(RetrieveUpdateAPIView):
     def perform_update(self, serializer):
         user = serializer.save()
         auth_logger.info("User Profile Updated | User ID: %d | Username: %s", user.id, user.username)
+
+
+class UserLogoutView(views.APIView):
+    """
+    Authenticated logout endpoint that blacklists the user's refresh token.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.data.get('refresh_token') or request.data.get('refresh')
+        if not refresh_token:
+            return Response({"detail": "Refresh token is required for logout."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            auth_logger.info("User Logout Success | User ID: %d | Username: %s", request.user.id, request.user.username)
+            return Response({"message": "Successfully logged out."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            auth_logger.warning("User Logout Failed | User ID: %d | Error: %s", request.user.id, str(e))
+            return Response({"detail": "Invalid or expired refresh token."}, status=status.HTTP_400_BAD_REQUEST)
 

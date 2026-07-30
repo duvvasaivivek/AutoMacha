@@ -55,6 +55,13 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if not message_text:
                 return
 
+            if len(message_text) > 5000:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Message exceeds maximum allowable length of 5000 characters.'
+                }))
+                return
+
             # Check if chat room is active
             is_active = await self.is_room_active()
             if not is_active:

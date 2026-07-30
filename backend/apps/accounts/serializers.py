@@ -153,9 +153,30 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if value:
             if value.size > 5 * 1024 * 1024:
                 raise serializers.ValidationError("Profile picture size must not exceed 5 MB.")
+
             ext = os.path.splitext(value.name)[1].lower()
             valid_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
             if ext not in valid_extensions:
                 raise serializers.ValidationError("Only image files (.jpg, .jpeg, .png, .webp) are allowed.")
+
+            # Validate MIME Content-Type
+            valid_content_types = ['image/jpeg', 'image/pjpeg', 'image/png', 'image/webp', 'image/gif']
+            if hasattr(value, 'content_type') and value.content_type and value.content_type.lower() not in valid_content_types:
+                raise serializers.ValidationError("Invalid image content type.")
+
+            # Verify image file integrity using PIL
+            try:
+                from PIL import Image
+                img = Image.open(value)
+                img.verify()
+                if hasattr(value, 'seek'):
+                    value.seek(0)
+            except Exception:
+                raise serializers.ValidationError("Uploaded file is corrupted or not a valid image.")
+
+            # Sanitize filename to UUID to prevent path traversal or malicious naming
+            import uuid
+            value.name = f"{uuid.uuid4().hex}{ext}"
+
         return value
 
