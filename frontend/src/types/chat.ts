@@ -14,6 +14,7 @@ export interface ChatMessageSender {
 export interface ChatMessage {
   id: number;
   chat_room: number;
+  ride_request_id: number;
   sender: number | null;
   sender_user?: ChatMessageSender | null;
   message: string;

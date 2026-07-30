@@ -91,23 +91,40 @@ export const ChatPage: React.FC = () => {
         const roomData = await getChatRoom(parsedRideRequestId);
         setRoom(roomData);
 
-        // Derive E2EE AES-256 key for room
-        const key = await deriveRoomKey(
+        // Derive E2EE AES-256 key for the current active room
+        const currentRoomKey = await deriveRoomKey(
           roomData.ride_request,
           roomData.created_by_user.username,
           roomData.partner_user.username
         );
-        setCryptoKey(key);
+        setCryptoKey(currentRoomKey);
 
         const historyData = await getChatMessages(parsedRideRequestId);
         const rawResults = historyData.results || [];
+
+        // Cache for dynamically deriving decryption keys of historical messages from past rides
+        const keyCache = new Map<number, CryptoKey>();
+        keyCache.set(roomData.ride_request, currentRoomKey);
 
         // Decrypt historical messages
         const decryptedResults = await Promise.all(
           rawResults.map(async (msg) => {
             if (msg.message_type === 'TEXT' && msg.iv && !msg.is_deleted_everyone) {
-              const decrypted = await decryptMessage(msg.message, msg.iv, key);
-              return { ...msg, message: decrypted };
+              try {
+                let msgKey = keyCache.get(msg.ride_request_id);
+                if (!msgKey) {
+                  msgKey = await deriveRoomKey(
+                    msg.ride_request_id,
+                    roomData.created_by_user.username,
+                    roomData.partner_user.username
+                  );
+                  keyCache.set(msg.ride_request_id, msgKey);
+                }
+                const decrypted = await decryptMessage(msg.message, msg.iv, msgKey);
+                return { ...msg, message: decrypted };
+              } catch (e) {
+                return msg;
+              }
             }
             return msg;
           })

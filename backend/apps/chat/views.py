@@ -88,8 +88,10 @@ class ChatMessageListView(generics.ListAPIView):
         if not room.is_participant(self.request.user):
             raise PermissionDenied("You do not have permission to view messages for this chat room.")
 
+        # Fetch messages across all past and present chat rooms shared between these two exact users
         return ChatMessage.objects.filter(
-            chat_room=room
+            Q(chat_room__created_by=room.created_by, chat_room__partner=room.partner) |
+            Q(chat_room__created_by=room.partner, chat_room__partner=room.created_by)
         ).exclude(
             deleted_for=self.request.user
         ).select_related('sender').order_by('created_at')

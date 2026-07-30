@@ -192,8 +192,8 @@ else:
         }
     }
 
-# Channels & WebSocket Configuration (Redis Channel Layer in production, InMemoryChannelLayer in local/testing)
-if env.bool('USE_REDIS_CACHE', default=False):
+# Channels & WebSocket Configuration
+if env('REDIS_URL', default=None) or env.bool('USE_REDIS_CACHE', default=False):
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',

@@ -24,12 +24,14 @@ class ChatMessageSenderSerializer(serializers.ModelSerializer):
 class ChatMessageSerializer(serializers.ModelSerializer):
     sender_user = ChatMessageSenderSerializer(source='sender', read_only=True)
     message = serializers.SerializerMethodField()
+    ride_request_id = serializers.IntegerField(source='chat_room.ride_request_id', read_only=True)
 
     class Meta:
         model = ChatMessage
         fields = (
             'id',
             'chat_room',
+            'ride_request_id',
             'sender',
             'sender_user',
             'message',
@@ -39,7 +41,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
             'is_deleted_everyone',
             'created_at',
         )
-        read_only_fields = ('id', 'chat_room', 'sender', 'sender_user', 'message_type', 'is_read', 'is_deleted_everyone', 'created_at')
+        read_only_fields = ('id', 'chat_room', 'ride_request_id', 'sender', 'sender_user', 'message_type', 'is_read', 'is_deleted_everyone', 'created_at')
 
     def get_message(self, obj):
         if obj.is_deleted_everyone:

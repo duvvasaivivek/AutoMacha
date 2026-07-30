@@ -106,6 +106,7 @@ export function useChatWebSocket({
           const newMsg: ChatMessage = {
             id: data.message_id,
             chat_room: data.chat_room_id,
+            ride_request_id: data.ride_request_id,
             sender: data.sender_id,
             sender_user: data.sender ? { id: data.sender_id || 0, username: data.sender } : null,
             message: decryptedText,
