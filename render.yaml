@@ -44,14 +44,8 @@ services:
         fromDatabase:
           name: automacha-db
           property: port
-      - key: REDIS_URL
-        sync: false
       - key: USE_REDIS_CACHE
-        value: "True"
-      - key: CELERY_BROKER_URL
-        sync: false
-      - key: CELERY_RESULT_BACKEND
-        sync: false
+        value: "False"
       - key: CELERY_TASK_ALWAYS_EAGER
         value: "True"
 
