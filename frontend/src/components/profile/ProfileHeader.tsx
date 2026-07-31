@@ -6,7 +6,6 @@ import {
   GraduationCap,
   Calendar,
   CheckCircle2,
-  Star,
   Edit3,
   ShieldCheck,
 } from 'lucide-react';
@@ -40,7 +39,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick 
 
   const displayName = user.full_name || `@${user.username}`;
   const initials = getInitials(user.full_name, user.username);
-  const ratingValue = user.average_rating ? Number(user.average_rating).toFixed(1) : 'New';
 
   return (
     <div className="w-full bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden p-6 sm:p-8 transition-all">

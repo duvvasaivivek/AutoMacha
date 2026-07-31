@@ -3,8 +3,6 @@ import {
   Car,
   Send,
   Users,
-  Star,
-  MessageSquare,
   Clock,
 } from 'lucide-react';
 import type { User } from '@/types';

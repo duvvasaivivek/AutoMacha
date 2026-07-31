@@ -49,18 +49,6 @@ const travelRequestSchema = z
 
 type TravelRequestFormData = z.infer<typeof travelRequestSchema>;
 
-const QUICK_TIME_SLOTS = [
-  { label: '06:00 AM', value: '06:00' },
-  { label: '08:00 AM', value: '08:00' },
-  { label: '10:00 AM', value: '10:00' },
-  { label: '12:00 PM', value: '12:00' },
-  { label: '02:00 PM', value: '14:00' },
-  { label: '04:00 PM', value: '16:00' },
-  { label: '06:00 PM', value: '18:00' },
-  { label: '08:00 PM', value: '20:00' },
-  { label: '10:00 PM', value: '22:00' },
-];
-
 export const CreateTravelRequest: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -102,7 +90,6 @@ export const CreateTravelRequest: React.FC = () => {
   });
 
   const selectedDate = watch('date');
-  const selectedTime = watch('time');
 
   useEffect(() => {
     const fetchDestinationsList = async () => {
