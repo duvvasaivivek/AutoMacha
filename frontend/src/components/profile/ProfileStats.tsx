@@ -18,8 +18,6 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => {
     ? `${user.account_age_days} ${user.account_age_days === 1 ? 'day' : 'days'}`
     : 'New member';
 
-  const ratingText = user.average_rating ? Number(user.average_rating).toFixed(1) : '5.0';
-
   const stats = [
     {
       label: 'Completed Rides',
@@ -41,20 +39,6 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => {
       icon: Users,
       color: 'bg-purple-50 text-purple-700 border-purple-200',
       iconColor: 'text-purple-600',
-    },
-    {
-      label: 'Average Rating',
-      value: ratingText,
-      icon: Star,
-      color: 'bg-amber-50 text-amber-700 border-amber-200',
-      iconColor: 'text-amber-500 fill-amber-400',
-    },
-    {
-      label: 'Reviews Received',
-      value: user.total_ratings || 0,
-      icon: MessageSquare,
-      color: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      iconColor: 'text-indigo-600',
     },
     {
       label: 'Account Age',

@@ -135,19 +135,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick 
           </div>
         </div>
 
-        {/* Right Section: Rating Highlights & Edit Button */}
+        {/* Right Section: Edit Button */}
         <div className="flex flex-col sm:flex-row md:flex-col items-center md:items-end gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 border-neutral-100 pt-4 md:pt-0">
-          <div className="flex items-center gap-3 bg-neutral-50 px-4 py-2.5 rounded-2xl border border-neutral-200/80">
-            <div className="flex items-center gap-1 text-amber-500 font-black text-lg">
-              <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-              <span>{ratingValue}</span>
-            </div>
-            <div className="h-4 w-px bg-neutral-300" />
-            <div className="text-xs font-bold text-neutral-600">
-              <span>{user.total_completed_rides || 0}</span> Rides Completed
-            </div>
-          </div>
-
           <Button
             onClick={onEditClick}
             className="w-full sm:w-auto bg-black text-white hover:bg-neutral-800 font-bold px-5 py-2.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all"

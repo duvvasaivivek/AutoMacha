@@ -403,66 +403,19 @@ export const CreateTravelRequest: React.FC = () => {
 
               {/* Time Selection Section */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="time" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <ClockIcon className="h-4 w-4 text-neutral-600" />
-                    <span>Travel Time</span>
-                  </Label>
-                  <span className="text-[11px] font-semibold text-neutral-400">Popular departure slots</span>
-                </div>
-
-                {/* Quick Time Slots Chips */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {QUICK_TIME_SLOTS.map((slot) => {
-                    const isSelected = selectedTime === slot.value;
-                    return (
-                      <button
-                        key={slot.value}
-                        type="button"
-                        onClick={() => setValue('time', slot.value, { shouldValidate: true })}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                          isSelected
-                            ? 'bg-black text-white shadow-sm'
-                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                        }`}
-                      >
-                        {slot.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Custom Time Selection Dropdown & Native Picker */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-semibold text-neutral-500">Standard Slot Dropdown</span>
-                    <select
-                      value={selectedTime || ''}
-                      onChange={(e) => setValue('time', e.target.value, { shouldValidate: true })}
-                      className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2 text-sm font-semibold text-neutral-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
-                    >
-                      <option value="">-- Select Time Slot --</option>
-                      {QUICK_TIME_SLOTS.map((slot) => (
-                        <option key={slot.value} value={slot.value}>
-                          {slot.label} ({slot.value})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[11px] font-semibold text-neutral-500">Exact Custom Time</span>
-                    <Input
-                      id="time"
-                      type="time"
-                      {...register('time')}
-                      disabled={isSubmitting}
-                      className={`h-11 rounded-xl shadow-sm text-sm font-semibold bg-white ${
-                        errors.time ? 'border-red-500 focus-visible:ring-red-500' : 'border-neutral-300'
-                      }`}
-                    />
-                  </div>
-                </div>
+                <Label htmlFor="time" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <ClockIcon className="h-4 w-4 text-neutral-600" />
+                  <span>Travel Time</span>
+                </Label>
+                <Input
+                  id="time"
+                  type="time"
+                  {...register('time')}
+                  disabled={isSubmitting}
+                  className={`h-11 rounded-xl shadow-sm text-sm font-semibold bg-white ${
+                    errors.time ? 'border-red-500 focus-visible:ring-red-500' : 'border-neutral-300'
+                  }`}
+                />
                 {errors.time && <p className="text-xs text-red-600 font-bold mt-1">{errors.time.message}</p>}
               </div>
 

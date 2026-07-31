@@ -226,43 +226,28 @@ export const NotificationsPage: React.FC = () => {
             return (
               <Card
                 key={notif.id}
-                className={`w-full transition-all duration-200 overflow-hidden rounded-2xl border ${
-                  notif.is_read
-                    ? 'bg-neutral-50/40 border-neutral-200/60 opacity-80 hover:opacity-100'
-                    : 'bg-white border-neutral-300 shadow-md border-l-4 border-l-black'
+                className={`w-full transition-all duration-200 border-b border-x-0 border-t-0 rounded-none shadow-none ${
+                  notif.is_read ? 'bg-transparent opacity-70' : 'bg-neutral-50'
                 }`}
               >
-                <div className="p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                  <div className="space-y-2 flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border ${badge.className}`}
-                      >
-                        <BadgeIcon className="h-3.5 w-3.5 shrink-0" />
-                        <span>{badge.label}</span>
+                <div className="p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="space-y-1 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <BadgeIcon className={`h-4 w-4 ${notif.is_read ? 'text-neutral-400' : 'text-blue-600'}`} />
+                      <span className="text-[11px] font-semibold text-neutral-500">
+                        {formatDateTime(notif.created_at)}
                       </span>
-
-                      <span className="flex items-center gap-1 text-xs font-medium text-neutral-500">
-                        <Clock className="h-3.5 w-3.5 text-neutral-400" />
-                        <span>{formatDateTime(notif.created_at)}</span>
-                      </span>
-
                       {!notif.is_read && (
-                        <span className="inline-flex items-center gap-1 text-2xs font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
-                          <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-                          Unread
-                        </span>
+                        <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded">NEW</span>
                       )}
                     </div>
 
-                    <div className="space-y-1">
-                      <h3 className={`text-base font-bold tracking-tight ${notif.is_read ? 'text-neutral-700' : 'text-black'}`}>
-                        {notif.title}
-                      </h3>
-                      <p className={`text-sm leading-relaxed ${notif.is_read ? 'text-neutral-500' : 'text-neutral-700'}`}>
-                        {notif.message}
-                      </p>
-                    </div>
+                    <h3 className={`text-sm font-bold ${notif.is_read ? 'text-neutral-700' : 'text-black'}`}>
+                      {notif.title}
+                    </h3>
+                    <p className={`text-xs ${notif.is_read ? 'text-neutral-500' : 'text-neutral-700'}`}>
+                      {notif.message}
+                    </p>
 
                     {notif.notification_type === 'RIDE_SHARE_REQUEST_RECEIVED' && notif.related_object_id && (
                       <div className="pt-3 mt-3 border-t border-neutral-200/80 flex flex-wrap items-center gap-2.5">
