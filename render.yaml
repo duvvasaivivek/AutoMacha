@@ -52,54 +52,8 @@ services:
         sync: false
       - key: CELERY_RESULT_BACKEND
         sync: false
-
-  # ── Celery Worker (Background Tasks) ──
-  - type: worker
-    name: automacha-celery
-    runtime: python
-    region: singapore
-    plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: celery -A config worker --beat --loglevel=info --concurrency=2
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.10.12"
-      - key: SECRET_KEY
-        fromService:
-          name: automacha-backend
-          type: web
-          envVarKey: SECRET_KEY
-      - key: DEBUG
-        value: "False"
-      - key: DB_NAME
-        fromDatabase:
-          name: automacha-db
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: automacha-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: automacha-db
-          property: password
-      - key: DB_HOST
-        fromDatabase:
-          name: automacha-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: automacha-db
-          property: port
-      - key: REDIS_URL
-        sync: false
-      - key: USE_REDIS_CACHE
+      - key: CELERY_TASK_ALWAYS_EAGER
         value: "True"
-      - key: CELERY_BROKER_URL
-        sync: false
-      - key: CELERY_RESULT_BACKEND
-        sync: false
 
 databases:
   - name: automacha-db
