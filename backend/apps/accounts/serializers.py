@@ -31,14 +31,22 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         read_only_fields = ('id',)
 
     def validate_institute_email(self, value):
+        if value:
+            value = value.lower()
         feature_flags = getattr(settings, 'FEATURE_FLAGS', {})
         if feature_flags.get('ENABLE_EMAIL_VERIFICATION', False):
             domain = getattr(settings, 'SUPPORTED_EMAIL_DOMAIN', '@iiitk.ac.in')
-            if domain and not value.lower().endswith(domain.lower()):
+            if domain and not value.endswith(domain.lower()):
                 raise serializers.ValidationError(
                     f"Email must belong to the authorized domain '{domain}'."
                 )
         return value
+
+    def validate_username(self, value):
+        return value.lower() if value else value
+
+    def validate_roll_number(self, value):
+        return value.lower() if value else value
 
     def create(self, validated_data):
         if 'institute_email' in validated_data and 'email' not in validated_data:
