@@ -1,0 +1,131 @@
+# render.yaml — Render Blueprint for AutoMacha
+# Covers: Backend (Django/Daphne), Celery Worker, PostgreSQL, Redis
+
+services:
+  # ── Backend API (Django + Daphne ASGI for HTTP + WebSockets) ──
+  - type: web
+    name: automacha-backend
+    runtime: python
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: daphne -b 0.0.0.0 -p $PORT config.asgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.12"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: DB_NAME
+        fromDatabase:
+          name: automacha-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: automacha-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: automacha-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: automacha-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: automacha-db
+          property: port
+      - key: REDIS_URL
+        fromService:
+          name: automacha-redis
+          type: redis
+          property: connectionString
+      - key: USE_REDIS_CACHE
+        value: "True"
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: automacha-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: automacha-redis
+          type: redis
+          property: connectionString
+
+  # ── Celery Worker (Background Tasks) ──
+  - type: worker
+    name: automacha-celery
+    runtime: python
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: celery -A config worker --beat --loglevel=info --concurrency=2
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10.12"
+      - key: SECRET_KEY
+        fromService:
+          name: automacha-backend
+          type: web
+          envVarKey: SECRET_KEY
+      - key: DEBUG
+        value: "False"
+      - key: DB_NAME
+        fromDatabase:
+          name: automacha-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: automacha-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: automacha-db
+          property: password
+      - key: DB_HOST
+        fromDatabase:
+          name: automacha-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: automacha-db
+          property: port
+      - key: REDIS_URL
+        fromService:
+          name: automacha-redis
+          type: redis
+          property: connectionString
+      - key: USE_REDIS_CACHE
+        value: "True"
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: automacha-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: automacha-redis
+          type: redis
+          property: connectionString
+
+databases:
+  - name: automacha-db
+    plan: free
+    region: singapore
+    databaseName: automacha
+    user: automacha
+
+redis:
+  - name: automacha-redis
+    plan: free
+    region: singapore
+    maxmemoryPolicy: allkeys-lru

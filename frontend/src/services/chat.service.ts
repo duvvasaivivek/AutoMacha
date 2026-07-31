@@ -58,3 +58,7 @@ export async function deleteChatMessage(
 export async function clearChatHistory(rideRequestId: number): Promise<void> {
   await api.post(`/chat/room/${rideRequestId}/clear/`);
 }
+
+export async function deleteChatRoom(rideRequestId: number): Promise<void> {
+  await api.post(`/chat/room/${rideRequestId}/delete/`);
+}

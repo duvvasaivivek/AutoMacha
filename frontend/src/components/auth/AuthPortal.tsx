@@ -11,10 +11,7 @@ import {
   Lock,
   User,
   AlertCircle,
-  Phone,
   Car,
-  ShieldCheck,
-  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -219,38 +216,7 @@ export const AuthPortal: React.FC<AuthPortalProps> = ({ initialMode = 'login' })
             </p>
           </div>
 
-          {/* Feature Bullets */}
-          <div className="space-y-3.5 pt-2 text-left">
-            <div className="flex items-start gap-3 bg-white p-3.5 rounded-2xl border border-neutral-200 shadow-2xs">
-              <div className="h-8 w-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-bold">
-                <Zap className="h-4 w-4" />
-              </div>
-              <div>
-                <h4 className="font-extrabold text-neutral-900 text-xs">Instant Peer Ride Matching</h4>
-                <p className="text-[11px] text-neutral-500 font-medium">Find batchmates heading to Railway Station, Bus Stand, or City.</p>
-              </div>
-            </div>
 
-            <div className="flex items-start gap-3 bg-white p-3.5 rounded-2xl border border-neutral-200 shadow-2xs">
-              <div className="h-8 w-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 font-bold">
-                <ShieldCheck className="h-4 w-4" />
-              </div>
-              <div>
-                <h4 className="font-extrabold text-neutral-900 text-xs">Zero-Knowledge E2E Live Chat</h4>
-                <p className="text-[11px] text-neutral-500 font-medium">AES-256 encrypted chat room for accepted rides only.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 bg-white p-3.5 rounded-2xl border border-neutral-200 shadow-2xs">
-              <div className="h-8 w-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold">
-                <Phone className="h-4 w-4" />
-              </div>
-              <div>
-                <h4 className="font-extrabold text-neutral-900 text-xs">Verified Driver Directory</h4>
-                <p className="text-[11px] text-neutral-500 font-medium">Direct phone contact numbers for trusted campus auto drivers.</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* RIGHT COLUMN — Unified Interactive Auth Card */}
