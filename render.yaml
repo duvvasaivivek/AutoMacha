@@ -1,5 +1,7 @@
 # render.yaml — Render Blueprint for AutoMacha
-# Covers: Backend (Django/Daphne), Celery Worker, PostgreSQL, Redis
+# Covers: Backend (Django/Daphne), Celery Worker, PostgreSQL
+# NOTE: Create Redis manually on Render Dashboard, then paste the connection string
+#       into REDIS_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND env vars.
 
 services:
   # ── Backend API (Django + Daphne ASGI for HTTP + WebSockets) ──
@@ -43,22 +45,13 @@ services:
           name: automacha-db
           property: port
       - key: REDIS_URL
-        fromService:
-          name: automacha-redis
-          type: redis
-          property: connectionString
+        sync: false
       - key: USE_REDIS_CACHE
         value: "True"
       - key: CELERY_BROKER_URL
-        fromService:
-          name: automacha-redis
-          type: redis
-          property: connectionString
+        sync: false
       - key: CELERY_RESULT_BACKEND
-        fromService:
-          name: automacha-redis
-          type: redis
-          property: connectionString
+        sync: false
 
   # ── Celery Worker (Background Tasks) ──
   - type: worker
@@ -100,22 +93,13 @@ services:
           name: automacha-db
           property: port
       - key: REDIS_URL
-        fromService:
-          name: automacha-redis
-          type: redis
-          property: connectionString
+        sync: false
       - key: USE_REDIS_CACHE
         value: "True"
       - key: CELERY_BROKER_URL
-        fromService:
-          name: automacha-redis
-          type: redis
-          property: connectionString
+        sync: false
       - key: CELERY_RESULT_BACKEND
-        fromService:
-          name: automacha-redis
-          type: redis
-          property: connectionString
+        sync: false
 
 databases:
   - name: automacha-db
@@ -123,9 +107,3 @@ databases:
     region: singapore
     databaseName: automacha
     user: automacha
-
-redis:
-  - name: automacha-redis
-    plan: free
-    region: singapore
-    maxmemoryPolicy: allkeys-lru
