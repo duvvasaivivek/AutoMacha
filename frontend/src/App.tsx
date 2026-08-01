@@ -3,6 +3,8 @@ import { Navbar } from '@/components/layout/Navbar';
 import { AppRoutes } from '@/routes';
 import { AuthProvider } from '@/context/AuthContext';
 import { ErrorBoundary } from '@/components/common';
+import { PWABadge } from '@/components/pwa/PWABadge';
+import { OfflineBanner } from '@/components/common/OfflineBanner';
 
 export function App() {
   return (
@@ -14,6 +16,8 @@ export function App() {
             <main className="flex-1 flex flex-col">
               <AppRoutes />
             </main>
+            <PWABadge />
+            <OfflineBanner />
           </div>
         </AuthProvider>
       </BrowserRouter>
