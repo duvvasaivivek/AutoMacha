@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api'; // Assuming you have an axios instance in services/api
+import { api } from '../services';
 
 const urlB64ToUint8Array = (base64String: string) => {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
