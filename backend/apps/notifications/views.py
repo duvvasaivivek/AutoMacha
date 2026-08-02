@@ -5,8 +5,8 @@ from rest_framework.response import Response
 
 from apps.common.cache_services import NotificationCacheService
 from apps.common.permissions import IsOwner
-from .models import Notification
-from .serializers import NotificationSerializer
+from .models import Notification, WebPushSubscription
+from .serializers import NotificationSerializer, WebPushSubscriptionSerializer
 
 
 class NotificationListView(generics.ListAPIView):
@@ -52,3 +52,38 @@ class NotificationMarkAllReadView(views.APIView):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         NotificationCacheService.invalidate_unread_count(request.user.id)
         return Response({"status": "success"}, status=status.HTTP_200_OK)
+
+
+class WebPushSubscribeView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        serializer = WebPushSubscriptionSerializer(data=request.data)
+        if serializer.is_valid():
+            endpoint = serializer.validated_data['endpoint']
+            
+            # Update or create the subscription for the user
+            sub, created = WebPushSubscription.objects.update_or_create(
+                endpoint=endpoint,
+                defaults={
+                    'user': request.user,
+                    'p256dh': serializer.validated_data['p256dh'],
+                    'auth': serializer.validated_data['auth']
+                }
+            )
+            return Response({"status": "subscribed"}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class WebPushUnsubscribeView(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        endpoint = request.data.get('endpoint')
+        if not endpoint:
+            return Response({"error": "endpoint is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        deleted, _ = WebPushSubscription.objects.filter(user=request.user, endpoint=endpoint).delete()
+        if deleted:
+            return Response({"status": "unsubscribed"}, status=status.HTTP_200_OK)
+        return Response({"error": "subscription not found"}, status=status.HTTP_404_NOT_FOUND)

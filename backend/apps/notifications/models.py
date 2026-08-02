@@ -43,6 +43,8 @@ class Notification(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = models.Manager()
+
     class Meta:
         ordering = ['-created_at']
         verbose_name = "Notification"
@@ -52,4 +54,25 @@ class Notification(models.Model):
         ]
 
     def __str__(self):
-        return f"[{self.get_notification_type_display()}] {self.user.username}: {self.title}"
+        return f"[{self.get_notification_type_display()}] {self.user}: {self.title}"
+
+
+class WebPushSubscription(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='webpush_subscriptions'
+    )
+    endpoint = models.URLField(max_length=500, unique=True)
+    p256dh = models.CharField(max_length=255)
+    auth = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = models.Manager()
+
+    class Meta:
+        verbose_name = "Web Push Subscription"
+        verbose_name_plural = "Web Push Subscriptions"
+
+    def __str__(self):
+        return f"Push Subscription for {self.user}"

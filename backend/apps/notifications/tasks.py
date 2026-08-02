@@ -39,6 +39,11 @@ def send_notification_async_task(self, user_id, title, message, notification_typ
             related_object_id=related_object_id,
             sender=sender
         )
+        
+        if created:
+            from .services import send_web_push
+            send_web_push(user=user, title=title, message=message)
+            
         duration = time.time() - start_time
         logger.info("Task [send_notification_async_task] Completed in %.2fs (Created: %s)", duration, created)
         return {"notification_id": notification.id, "created": created}

@@ -3,7 +3,10 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from .models import Notification
+import json
+from pywebpush import webpush, WebPushException
+
+from .models import Notification, WebPushSubscription
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -124,3 +127,40 @@ def delete_old_read_notifications(retention_days=None):
 
     logger.info("Deleted %d old read notification(s) created before %s.", deleted_count, cutoff)
     return deleted_count
+
+
+def send_web_push(user, title, message):
+    subscriptions = WebPushSubscription.objects.filter(user=user)
+    if not subscriptions.exists():
+        return
+        
+    private_key_path = getattr(settings, 'VAPID_PRIVATE_KEY_PATH', 'private_key.pem')
+    vapid_subject = getattr(settings, 'VAPID_SUBJECT', 'mailto:admin@automacha.com')
+    
+    payload = json.dumps({
+        "title": title,
+        "body": message,
+        "url": "/"
+    })
+    
+    for sub in subscriptions:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub.endpoint,
+                    "keys": {
+                        "p256dh": sub.p256dh,
+                        "auth": sub.auth
+                    }
+                },
+                data=payload,
+                vapid_private_key=private_key_path,
+                vapid_claims={"sub": vapid_subject}
+            )
+        except WebPushException as ex:
+            logger.error(f"WebPush failed: {repr(ex)}")
+            # If subscription is no longer valid, delete it
+            if ex.response and ex.response.status_code in [404, 410]:
+                sub.delete()
+        except Exception as e:
+            logger.error(f"Unexpected WebPush error: {repr(e)}")

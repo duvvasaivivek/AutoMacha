@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { User } from '@/types';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 interface ProfileHeaderProps {
   user: User;
@@ -18,6 +19,8 @@ interface ProfileHeaderProps {
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick }) => {
+  const { isSupported, isSubscribed, subscribe, unsubscribe, error } = usePushNotifications();
+  
   const getInitials = (name?: string, username?: string) => {
     const text = name && name.trim().length > 0 ? name : username || 'U';
     const parts = text.trim().split(' ');
@@ -133,7 +136,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick 
           </div>
         </div>
 
-        {/* Right Section: Edit Button */}
+        {/* Right Section: Edit Button & Notifications */}
         <div className="flex flex-col sm:flex-row md:flex-col items-center md:items-end gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 border-neutral-100 pt-4 md:pt-0">
           <Button
             onClick={onEditClick}
@@ -142,6 +145,30 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick 
             <Edit3 className="w-4 h-4" />
             <span>Edit Profile</span>
           </Button>
+
+          {isSupported && (
+            <Button
+              onClick={isSubscribed ? unsubscribe : subscribe}
+              variant={isSubscribed ? "outline" : "default"}
+              className={`w-full sm:w-auto font-bold px-5 py-2.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all ${
+                isSubscribed 
+                  ? 'border-neutral-200 text-neutral-700 hover:bg-neutral-100'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
+              }`}
+            >
+              {isSubscribed ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Notifications On</span>
+                </>
+              ) : (
+                <>
+                  <span>Enable Notifications</span>
+                </>
+              )}
+            </Button>
+          )}
+          {error && <p className="text-xs text-red-500 max-w-[150px] text-right">{error}</p>}
         </div>
 
       </div>
