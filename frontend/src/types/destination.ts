@@ -6,3 +6,11 @@ export interface Destination {
   description?: string;
   is_active?: boolean;
 }
+
+export interface SavedDestination {
+  id: number;
+  destination: number;
+  destination_details: Destination;
+  label?: string;
+  created_at: string;
+}

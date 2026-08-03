@@ -18,9 +18,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getDestinations } from '@/services/destination.service';
+import { getDestinations, getSavedDestinations } from '@/services/destination.service';
 import { createTravelRequest } from '@/services/travelRequest.service';
-import type { Destination, Direction } from '@/types';
+import type { Destination, Direction, SavedDestination } from '@/types';
 
 const travelRequestSchema = z
   .object({
@@ -55,6 +55,7 @@ export const CreateTravelRequest: React.FC = () => {
   const preSelectedDestinationId = location.state?.selectedDestinationId || '';
 
   const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [savedDestinations, setSavedDestinations] = useState<SavedDestination[]>([]);
   const [destinationsLoading, setDestinationsLoading] = useState<boolean>(true);
   const [destinationsError, setDestinationsError] = useState<string | null>(null);
 
@@ -96,8 +97,12 @@ export const CreateTravelRequest: React.FC = () => {
       setDestinationsLoading(true);
       setDestinationsError(null);
       try {
-        const data = await getDestinations();
+        const [data, savedData] = await Promise.all([
+          getDestinations(),
+          getSavedDestinations()
+        ]);
         setDestinations(data);
+        setSavedDestinations(savedData);
         if (preSelectedDestinationId) {
           setToLocation(preSelectedDestinationId);
           setFromLocation('CAMPUS');
@@ -251,6 +256,30 @@ export const CreateTravelRequest: React.FC = () => {
                 </div>
               )}
 
+              {/* Saved Locations Quick Select */}
+              {savedDestinations.length > 0 && (
+                <div className="space-y-3">
+                  <Label className="text-xs font-bold text-neutral-800 uppercase tracking-wider">
+                    Saved Locations
+                  </Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {savedDestinations.map(sd => (
+                      <button
+                        key={sd.id}
+                        type="button"
+                        onClick={() => {
+                          setFromLocation('CAMPUS');
+                          setToLocation(sd.destination.toString());
+                        }}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold bg-neutral-100 text-neutral-700 hover:bg-neutral-200 transition-all shadow-sm border border-neutral-200"
+                      >
+                        {sd.label || sd.destination_details.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Location Selectors */}
               <div className="space-y-4 bg-neutral-50/80 p-5 rounded-2xl border border-neutral-200/80">
                 <div className="space-y-1.5">
@@ -297,10 +326,46 @@ export const CreateTravelRequest: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="toLocation" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-red-200" />
-                    <span>Dropoff Location (To)</span>
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="toLocation" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-2">
+                      <div className="h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-red-200" />
+                      <span>Dropoff Location (To)</span>
+                    </Label>
+                    {toLocation && toLocation !== 'CAMPUS' && !savedDestinations.find(sd => sd.destination.toString() === toLocation) && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const { saveDestination } = await import('@/services/destination.service');
+                            const newSaved = await saveDestination(parseInt(toLocation, 10));
+                            setSavedDestinations([...savedDestinations, newSaved]);
+                          } catch (err) {
+                            console.error('Failed to save destination', err);
+                          }
+                        }}
+                        className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                      >
+                        ⭐ Save Location
+                      </button>
+                    )}
+                    {fromLocation && fromLocation !== 'CAMPUS' && !savedDestinations.find(sd => sd.destination.toString() === fromLocation) && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const { saveDestination } = await import('@/services/destination.service');
+                            const newSaved = await saveDestination(parseInt(fromLocation, 10));
+                            setSavedDestinations([...savedDestinations, newSaved]);
+                          } catch (err) {
+                            console.error('Failed to save destination', err);
+                          }
+                        }}
+                        className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                      >
+                        ⭐ Save Location
+                      </button>
+                    )}
+                  </div>
                   
                   {destinationsLoading ? (
                     <div className="flex items-center gap-2 p-3.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-neutral-500">

@@ -27,3 +27,29 @@ class DestinationListView(generics.ListAPIView):
 
         cached_data = DestinationCacheService.get_active_destinations(_fetch)
         return Response(cached_data)
+
+
+class SavedDestinationListCreateView(generics.ListCreateAPIView):
+    from rest_framework.permissions import IsAuthenticated
+    from .serializers import SavedDestinationSerializer
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class = SavedDestinationSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        from .models import SavedDestination
+        return SavedDestination.objects.filter(user=self.request.user).select_related('destination').order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SavedDestinationDeleteView(generics.DestroyAPIView):
+    from rest_framework.permissions import IsAuthenticated
+    
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        from .models import SavedDestination
+        return SavedDestination.objects.filter(user=self.request.user)
