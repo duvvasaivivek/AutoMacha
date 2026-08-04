@@ -96,7 +96,34 @@ class TravelRequestMatchSerializer(serializers.ModelSerializer):
     user = UserMinimalSerializer(read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
     time_difference = serializers.IntegerField(read_only=True)
+    has_requested = serializers.SerializerMethodField()
+    chat_room_id = serializers.SerializerMethodField()
 
     class Meta:
         model = TravelRequest
-        fields = ('id', 'destination', 'user', 'username', 'direction', 'travel_datetime', 'time_difference')
+        fields = ('id', 'destination', 'user', 'username', 'direction', 'travel_datetime', 'time_difference', 'has_requested', 'chat_room_id')
+
+    def get_has_requested(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+        
+        from apps.notifications.models import Notification
+        return Notification.objects.filter(
+            user=obj.user,
+            notification_type='RIDE_SHARE_REQUEST_RECEIVED',
+            sender=request.user,
+            related_object_id=obj.id
+        ).exists()
+
+    def get_chat_room_id(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return None
+        
+        from apps.chat.models import ChatRoom
+        from django.db.models import Q
+        chat_room = ChatRoom.objects.filter(
+            Q(created_by=request.user, partner=obj.user) | Q(created_by=obj.user, partner=request.user)
+        ).first()
+        return chat_room.id if chat_room else None

@@ -1,6 +1,6 @@
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, override_settings
 from apps.destinations.models import Destination
 from apps.travel_requests.models import TravelRequest
 from apps.chat.models import ChatRoom
@@ -10,6 +10,11 @@ from apps.chat.presence import PresenceService
 User = get_user_model()
 
 
+@override_settings(CHANNEL_LAYERS={
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+})
 class WebSocketRealtimeTestCase(TransactionTestCase):
     reset_sequences = True
 

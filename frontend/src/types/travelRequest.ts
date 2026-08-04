@@ -81,4 +81,6 @@ export interface TravelRequestMatch {
   direction: Direction;
   travel_datetime: string;
   time_difference: number;
+  has_requested?: boolean;
+  chat_room_id?: number | null;
 }

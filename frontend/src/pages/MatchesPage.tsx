@@ -169,16 +169,36 @@ export const MatchesPage: React.FC = () => {
                   <div className="text-[11px] text-neutral-500 font-semibold truncate max-w-[150px]">
                     {partnerUser.branch || 'Student Partner'}
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setSelectedPartner({ partner: partnerUser, destName, match });
-                    }}
-                    className="bg-black text-white hover:bg-neutral-800 font-bold text-xs gap-1.5 h-8 px-3 shadow-xs"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
-                    <span>Connect & Chat</span>
-                  </Button>
+                  {match.chat_room_id ? (
+                    <Link to={`/chats`}>
+                      <Button
+                        size="sm"
+                        className="bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs gap-1.5 h-8 px-3 shadow-xs"
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 text-white" />
+                        <span>Open Chat</span>
+                      </Button>
+                    </Link>
+                  ) : match.has_requested ? (
+                    <Button
+                      size="sm"
+                      disabled
+                      className="bg-neutral-200 text-neutral-500 font-bold text-xs gap-1.5 h-8 px-3 opacity-100"
+                    >
+                      <span>Request Sent</span>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setSelectedPartner({ partner: partnerUser, destName, match });
+                      }}
+                      className="bg-black text-white hover:bg-neutral-800 font-bold text-xs gap-1.5 h-8 px-3 shadow-xs"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
+                      <span>Connect & Chat</span>
+                    </Button>
+                  )}
                 </div>
               </Card>
             );
@@ -194,6 +214,13 @@ export const MatchesPage: React.FC = () => {
           destinationName={selectedPartner.destName}
           travelDate={`${formatDate(selectedPartner.match.travel_datetime)} at ${formatTime(selectedPartner.match.travel_datetime)}`}
           requestId={selectedPartner.match.id}
+          onRequestSent={() => {
+            setMatches(prevMatches =>
+              prevMatches.map(m =>
+                m.id === selectedPartner.match.id ? { ...m, has_requested: true } : m
+              )
+            );
+          }}
         />
       )}
     </div>

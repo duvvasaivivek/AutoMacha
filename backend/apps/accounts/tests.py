@@ -30,13 +30,14 @@ class UserRegistrationAPITests(APITestCase):
         
         user_data = response.data['user']
         self.assertEqual(user_data['username'], self.valid_payload['username'])
-        self.assertEqual(user_data['roll_number'], self.valid_payload['roll_number'])
+        self.assertEqual(user_data['roll_number'], self.valid_payload['roll_number'].lower())
         self.assertEqual(user_data['institute_email'], self.valid_payload['institute_email'])
         self.assertIn('id', user_data)
 
         # Verify user is created in database
         user = User.objects.get(username=self.valid_payload['username'])
-        self.assertEqual(user.roll_number, self.valid_payload['roll_number'])
+        self.assertTrue(user.check_password(self.valid_payload['password']))
+        self.assertEqual(user.roll_number, self.valid_payload['roll_number'].lower())
         self.assertEqual(user.institute_email, self.valid_payload['institute_email'])
 
     def test_password_hashed_and_not_returned(self):

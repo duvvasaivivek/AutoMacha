@@ -27,6 +27,7 @@ interface RideConnectModalProps {
   destinationName: string;
   travelDate: string;
   requestId: number;
+  onRequestSent?: () => void;
 }
 
 export const RideConnectModal: React.FC<RideConnectModalProps> = ({
@@ -36,6 +37,7 @@ export const RideConnectModal: React.FC<RideConnectModalProps> = ({
   destinationName,
   travelDate,
   requestId,
+  onRequestSent,
 }) => {
   const [copied, setCopied] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -64,6 +66,9 @@ export const RideConnectModal: React.FC<RideConnectModalProps> = ({
     try {
       await requestRideShare(requestId);
       setRequestSent(true);
+      if (onRequestSent) {
+        onRequestSent();
+      }
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string; detail?: string } } })?.response?.data?.message ||
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
