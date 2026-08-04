@@ -14,7 +14,7 @@ class UserRegistrationAPITests(APITestCase):
         self.valid_payload = {
             'username': 'teststudent',
             'password': 'SecurePassword123!',
-            'institute_email': 'student@institute.edu',
+            'institute_email': 'student@iiitk.ac.in',
             'roll_number': 'CS2026001',
             'branch': 'Computer Science',
             'hostel': 'Hostel A',
@@ -62,7 +62,7 @@ class UserRegistrationAPITests(APITestCase):
         User.objects.create_user(
             username=self.valid_payload['username'],
             password='SomePassword123',
-            institute_email='existing@institute.edu',
+            institute_email='existing@iiitk.ac.in',
             roll_number='CS2026999',
         )
         response = self.client.post(self.register_url, self.valid_payload, format='json')
@@ -86,7 +86,7 @@ class UserRegistrationAPITests(APITestCase):
         User.objects.create_user(
             username='existinguser',
             password='SomePassword123',
-            institute_email='existing@institute.edu',
+            institute_email='existing@iiitk.ac.in',
             roll_number=self.valid_payload['roll_number'],
         )
         response = self.client.post(self.register_url, self.valid_payload, format='json')
@@ -121,7 +121,7 @@ class JWTAuthenticationAPITests(APITestCase):
         self.user = User.objects.create_user(
             username=self.username,
             password=self.password,
-            institute_email='jwt@institute.edu',
+            institute_email='jwt@iiitk.ac.in',
             roll_number='CS2026777',
         )
 
@@ -185,7 +185,7 @@ class CurrentUserAPITests(APITestCase):
         self.user = User.objects.create_user(
             username=self.username,
             password=self.password,
-            institute_email='me@institute.edu',
+            institute_email='me@iiitk.ac.in',
             roll_number='CS2026888',
             branch='Computer Science',
             hostel='Hostel C',
@@ -210,7 +210,7 @@ class CurrentUserAPITests(APITestCase):
         }
         self.assertEqual(set(response.data.keys()), expected_fields)
         self.assertEqual(response.data['username'], self.username)
-        self.assertEqual(response.data['institute_email'], 'me@institute.edu')
+        self.assertEqual(response.data['institute_email'], 'me@iiitk.ac.in')
         self.assertEqual(response.data['roll_number'], 'CS2026888')
 
         # Verify forbidden fields are never exposed
