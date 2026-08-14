@@ -52,16 +52,16 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => {
       <h2 className="text-xl font-black text-neutral-900 tracking-tight">
         Ride & Activity Statistics
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {stats.map((item, idx) => {
           const IconComp = item.icon;
           return (
             <div
               key={idx}
-              className="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-col justify-between space-y-3 hover:border-neutral-300 transition-all group"
+              className="bg-white p-4 rounded-2xl border border-neutral-200/80 shadow-sm flex flex-col justify-between space-y-3 hover:border-neutral-300 hover:-translate-y-1 hover:shadow-md transition-all duration-300 group"
             >
               <div className="flex items-center justify-between">
-                <div className={`p-2.5 rounded-xl border ${item.color}`}>
+                <div className={`p-2.5 rounded-xl border ${item.color} group-hover:scale-110 transition-transform duration-300`}>
                   <IconComp className={`w-4 h-4 ${item.iconColor}`} />
                 </div>
               </div>
