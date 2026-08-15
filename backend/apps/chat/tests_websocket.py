@@ -56,9 +56,9 @@ class WebSocketRealtimeTestCase(TransactionTestCase):
         self.chat_room = ChatRoom.objects.create(
             ride_request=self.travel_request,
             created_by=self.student1,
-            partner=self.student2,
-            is_active=True,
+            is_active=True
         )
+        self.chat_room.participants.add(self.student2)
 
     async def test_websocket_connect_authenticated_participant(self):
         """Verify participant can connect successfully and presence is marked online."""

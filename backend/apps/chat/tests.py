@@ -52,7 +52,6 @@ class ChatModelAndServiceTestCase(TestCase):
         room = get_or_create_chat_room(self.travel_request, partner_user=self.user2)
         self.assertIsNotNone(room)
         self.assertEqual(room.created_by, self.user1)
-        self.assertEqual(room.partner, self.user2)
         self.assertTrue(room.is_active)
         self.assertTrue(room.is_participant(self.user1))
         self.assertTrue(room.is_participant(self.user2))

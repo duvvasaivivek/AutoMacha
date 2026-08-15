@@ -59,9 +59,7 @@ export const ChatPage: React.FC = () => {
     currentUser &&
       room &&
       (Number(currentUser.id) === Number(room.created_by) ||
-        Number(currentUser.id) === Number(room.partner) ||
-        currentUser.id === room.created_by_user?.id ||
-        currentUser.id === room.partner_user?.id)
+        room.participants.some(p => Number(p) === Number(currentUser.id)))
   );
 
   const {
@@ -93,9 +91,7 @@ export const ChatPage: React.FC = () => {
 
         // Derive E2EE AES-256 key for the current active room
         const currentRoomKey = await deriveRoomKey(
-          roomData.ride_request,
-          roomData.created_by_user.username,
-          roomData.partner_user.username
+          roomData.ride_request
         );
         setCryptoKey(currentRoomKey);
 
@@ -114,15 +110,13 @@ export const ChatPage: React.FC = () => {
                 let msgKey = keyCache.get(msg.ride_request_id);
                 if (!msgKey) {
                   msgKey = await deriveRoomKey(
-                    msg.ride_request_id,
-                    roomData.created_by_user.username,
-                    roomData.partner_user.username
+                    msg.ride_request_id
                   );
                   keyCache.set(msg.ride_request_id, msgKey);
                 }
                 const decrypted = await decryptMessage(msg.message, msg.iv, msgKey);
                 return { ...msg, message: decrypted };
-              } catch (e) {
+              } catch {
                 return msg;
               }
             }
@@ -150,11 +144,11 @@ export const ChatPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, partnerIsTyping]);
 
-  const partnerUser = room
-    ? currentUser?.id === room.created_by
-      ? room.partner_user
-      : room.created_by_user
-    : null;
+  const otherParticipants = room
+    ? room.participant_users.filter((p) => p.id !== currentUser?.id)
+    : [];
+  const displayPartner = otherParticipants[0] || room?.created_by_user;
+  const hasMultiplePartners = otherParticipants.length > 1;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
@@ -232,15 +226,15 @@ export const ChatPage: React.FC = () => {
             <ArrowLeft className="h-5 w-5" />
           </Link>
 
-          {partnerUser ? (
+          {displayPartner ? (
             <div className="flex items-center gap-3 min-w-0">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-black font-black text-sm flex items-center justify-center uppercase shrink-0 shadow-xs">
-                {partnerUser.username.slice(0, 2)}
+                {hasMultiplePartners ? 'GRP' : displayPartner.username.slice(0, 2)}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h2 className="font-extrabold text-white text-base truncate">
-                    @{partnerUser.username}
+                    {hasMultiplePartners ? `Group Ride (${otherParticipants.length + 1})` : `@${displayPartner.username}`}
                   </h2>
                   {room && (
                     <span
@@ -295,9 +289,9 @@ export const ChatPage: React.FC = () => {
             <Trash2 className="h-4 w-4" />
           </button>
 
-          {partnerUser?.phone_number && (
+          {!hasMultiplePartners && displayPartner?.phone_number && (
             <a
-              href={`tel:${partnerUser.phone_number}`}
+              href={`tel:${displayPartner.phone_number}`}
               className="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all shadow-xs flex items-center gap-1.5 text-xs px-3"
               title="Call partner"
             >
@@ -431,6 +425,9 @@ export const ChatPage: React.FC = () => {
                         : 'bg-white text-neutral-900 border border-neutral-200 rounded-bl-none'
                     }`}
                   >
+                    {!isMe && msg.sender_user?.username && hasMultiplePartners && (
+                      <div className="text-[10px] font-bold text-emerald-600 mb-0.5">@{msg.sender_user.username}</div>
+                    )}
                     <p className="break-words whitespace-pre-wrap">{msg.message}</p>
                   </div>
 
@@ -489,10 +486,10 @@ export const ChatPage: React.FC = () => {
           })}
 
         {/* Typing Indicator */}
-        {partnerIsTyping && partnerUser && (
+        {partnerIsTyping && (
           <div className="flex items-center gap-2 text-xs font-semibold text-neutral-500 animate-pulse py-1">
             <div className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span>@{partnerUser.username} is typing...</span>
+            <span>Someone is typing...</span>
           </div>
         )}
 
@@ -515,7 +512,7 @@ export const ChatPage: React.FC = () => {
         >
           <Input
             type="text"
-            placeholder={`Message @${partnerUser?.username || 'partner'}...`}
+            placeholder={hasMultiplePartners ? 'Message group...' : `Message @${displayPartner?.username || 'partner'}...`}
             value={inputText}
             onChange={handleInputChange}
             disabled={!isConnected}

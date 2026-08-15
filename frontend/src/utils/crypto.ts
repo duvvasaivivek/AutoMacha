@@ -29,12 +29,9 @@ function base64ToUint8Array(base64: string): Uint8Array {
  * from room metadata (rideRequestId + participant usernames).
  */
 export async function deriveRoomKey(
-  rideRequestId: number,
-  requesterUsername: string,
-  partnerUsername: string
+  rideRequestId: number
 ): Promise<CryptoKey> {
-  const sortedUsernames = [requesterUsername, partnerUsername].sort().join(':');
-  const secretMaterialStr = `AutoMacha:E2EE:v1:Room#${rideRequestId}:${sortedUsernames}`;
+  const secretMaterialStr = `AutoMacha:E2EE:v1:Room#${rideRequestId}`;
 
   const encoder = new TextEncoder();
   const keyMaterial = await window.crypto.subtle.importKey(
@@ -117,7 +114,7 @@ export async function decryptMessage(
 
     const decoder = new TextDecoder();
     return decoder.decode(decryptedBuffer);
-  } catch (err) {
+  } catch {
     // If text was plaintext or decryption key failed, return original text safely
     return cipherText;
   }

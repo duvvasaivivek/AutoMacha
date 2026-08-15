@@ -33,9 +33,9 @@ class RideHistoryModelAndServiceTestCase(TestCase):
             password='Password123!',
             roll_number='124AD0002'
         )
-        self.destination = Destination.objects.create(
+        self.destination, _ = Destination.objects.get_or_create(
             name='Kurnool Railway Station',
-            description='Main railway station'
+            defaults={'description': 'Main railway station'}
         )
         self.travel_request = TravelRequest.objects.create(
             user=self.user1,

@@ -13,6 +13,7 @@ import {
   Send,
   Car,
   ArrowUpDown,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -26,6 +27,7 @@ const travelRequestSchema = z
   .object({
     date: z.string().min(1, 'Please select a travel date'),
     time: z.string().min(1, 'Please select a travel time'),
+    seats_available: z.number().min(1).max(3),
   })
   .superRefine((data, ctx) => {
     if (data.date && data.time) {
@@ -87,6 +89,7 @@ export const CreateTravelRequest: React.FC = () => {
     defaultValues: {
       date: todayStr,
       time: '09:00',
+      seats_available: 1,
     },
   });
 
@@ -174,6 +177,7 @@ export const CreateTravelRequest: React.FC = () => {
         destination: destId,
         direction: dir,
         travel_datetime,
+        seats_available: data.seats_available,
       });
       setIsSuccess(true);
       setTimeout(() => {
@@ -469,6 +473,25 @@ export const CreateTravelRequest: React.FC = () => {
                   }`}
                 />
                 {errors.time && <p className="text-xs text-red-600 font-bold mt-1">{errors.time.message}</p>}
+              </div>
+
+              {/* Seats Selection Section */}
+              <div className="space-y-3">
+                <Label htmlFor="seats_available" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-neutral-600" />
+                  <span>Available Seats</span>
+                </Label>
+                <select
+                  id="seats_available"
+                  {...register('seats_available', { valueAsNumber: true })}
+                  disabled={isSubmitting}
+                  className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm font-bold text-neutral-900 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option value={1}>1 Seat (1 Passenger)</option>
+                  <option value={2}>2 Seats (2 Passengers)</option>
+                  <option value={3}>3 Seats (3 Passengers)</option>
+                </select>
+                {errors.seats_available && <p className="text-xs text-red-600 font-bold mt-1">{errors.seats_available.message}</p>}
               </div>
 
               <div className="pt-4 border-t border-neutral-100">

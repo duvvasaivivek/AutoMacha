@@ -30,8 +30,8 @@ export interface ChatRoom {
   ride_request: number;
   created_by: number;
   created_by_user: ChatMessageSender;
-  partner: number;
-  partner_user: ChatMessageSender;
+  participants: number[];
+  participant_users: ChatMessageSender[];
   destination_name: string;
   travel_datetime: string;
   ride_status: string;

@@ -185,8 +185,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         cached_access = safe_cache_get(cache_key)
 
         try:
-            room = ChatRoom.objects.select_related('created_by', 'partner', 'ride_request').only(
-                'id', 'ride_request_id', 'is_active', 'created_by_id', 'partner_id'
+            room = ChatRoom.objects.select_related('created_by', 'ride_request').prefetch_related('participants').only(
+                'id', 'ride_request_id', 'is_active', 'created_by_id'
             ).get(ride_request_id=ride_request_id)
             
             if cached_access is True or room.is_participant(user):

@@ -51,7 +51,7 @@ class ChatMessageSerializer(serializers.ModelSerializer):
 
 class ChatRoomSerializer(serializers.ModelSerializer):
     created_by_user = ChatMessageSenderSerializer(source='created_by', read_only=True)
-    partner_user = ChatMessageSenderSerializer(source='partner', read_only=True)
+    participant_users = ChatMessageSenderSerializer(source='participants', many=True, read_only=True)
     unread_count = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
     destination_name = serializers.CharField(source='ride_request.destination.name', read_only=True)
@@ -65,8 +65,8 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             'ride_request',
             'created_by',
             'created_by_user',
-            'partner',
-            'partner_user',
+            'participants',
+            'participant_users',
             'destination_name',
             'travel_datetime',
             'ride_status',

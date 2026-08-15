@@ -62,9 +62,10 @@ export const ChatsOverviewPage: React.FC = () => {
 
   const filteredRooms = searchKeyword.trim()
     ? rooms.filter((r) => {
-        const partner = currentUser?.id === r.created_by ? r.partner_user : r.created_by_user;
+        const otherParticipants = r.participant_users.filter(p => p.id !== currentUser?.id);
+        const nameMatch = otherParticipants.some(p => p.username.toLowerCase().includes(searchKeyword.toLowerCase()));
         return (
-          partner.username.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+          nameMatch ||
           r.destination_name.toLowerCase().includes(searchKeyword.toLowerCase())
         );
       })
@@ -156,7 +157,10 @@ export const ChatsOverviewPage: React.FC = () => {
           {!isLoading &&
             !error &&
             filteredRooms.map((room) => {
-              const partner = currentUser?.id === room.created_by ? room.partner_user : room.created_by_user;
+              const otherParticipants = room.participant_users.filter(p => p.id !== currentUser?.id);
+              const fallbackPartner = room.created_by_user;
+              const displayPartner = otherParticipants[0] || fallbackPartner;
+              const hasMultiplePartners = otherParticipants.length > 1;
               const isSelected = activeRideRequestId === room.ride_request;
 
               return (
@@ -168,13 +172,13 @@ export const ChatsOverviewPage: React.FC = () => {
                   }`}
                 >
                   <div className="h-11 w-11 rounded-full bg-gradient-to-br from-neutral-800 to-black text-white font-extrabold text-sm flex items-center justify-center uppercase shrink-0 shadow-xs group-hover:scale-105 transition-transform">
-                    {partner.username.slice(0, 2)}
+                    {hasMultiplePartners ? 'GRP' : displayPartner.username.slice(0, 2)}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <h3 className="font-extrabold text-neutral-900 text-sm truncate group-hover:text-black">
-                        @{partner.username}
+                        {hasMultiplePartners ? `Group Ride (${otherParticipants.length + 1})` : `@${displayPartner.username}`}
                       </h3>
                       <span className="text-[10px] text-neutral-400 font-semibold shrink-0">
                         {formatTime(room.updated_at)}

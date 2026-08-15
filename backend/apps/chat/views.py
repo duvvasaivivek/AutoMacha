@@ -43,18 +43,20 @@ class ChatRoomListView(generics.ListAPIView):
         )
 
         return ChatRoom.objects.filter(
-            Q(created_by=user) | Q(partner=user)
+            Q(created_by=user) | Q(participants=user)
         ).exclude(
             deleted_for=user
         ).select_related(
-            'created_by', 'partner', 'ride_request', 'ride_request__destination'
+            'created_by', 'ride_request', 'ride_request__destination'
+        ).prefetch_related(
+            'participants'
         ).annotate(
             annotated_unread_count=Count(
                 'messages',
                 filter=Q(messages__is_read=False) & ~Q(messages__sender=user) & ~Q(messages__deleted_for=user),
                 distinct=True
             )
-        ).prefetch_related(last_msg_prefetch).order_by('-updated_at')
+        ).prefetch_related(last_msg_prefetch).order_by('-updated_at').distinct()
 
 
 class ChatRoomDetailView(generics.RetrieveAPIView):
@@ -68,7 +70,7 @@ class ChatRoomDetailView(generics.RetrieveAPIView):
     def get_object(self):
         ride_request_id = self.kwargs['ride_request_id']
         room = get_object_or_404(
-            ChatRoom.objects.select_related('created_by', 'partner', 'ride_request', 'ride_request__destination'),
+            ChatRoom.objects.select_related('created_by', 'ride_request', 'ride_request__destination').prefetch_related('participants'),
             ride_request_id=ride_request_id
         )
         if not room.is_participant(self.request.user):
@@ -90,10 +92,9 @@ class ChatMessageListView(generics.ListAPIView):
         if not room.is_participant(self.request.user):
             raise PermissionDenied("You do not have permission to view messages for this chat room.")
 
-        # Fetch messages across all past and present chat rooms shared between these two exact users
+        # Fetch messages for this specific chat room
         return ChatMessage.objects.filter(
-            Q(chat_room__created_by=room.created_by, chat_room__partner=room.partner) |
-            Q(chat_room__created_by=room.partner, chat_room__partner=room.created_by)
+            chat_room=room
         ).exclude(
             deleted_for=self.request.user
         ).select_related('sender').order_by('created_at')
@@ -110,7 +111,7 @@ class ChatUnreadCountView(views.APIView):
         user = request.user
         def _fetch():
             return ChatMessage.objects.filter(
-                Q(chat_room__created_by=user) | Q(chat_room__partner=user),
+                Q(chat_room__created_by=user) | Q(chat_room__participants=user),
                 is_read=False,
             ).exclude(sender=user).exclude(deleted_for=user).count()
 

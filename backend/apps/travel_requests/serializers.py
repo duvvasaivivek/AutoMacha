@@ -27,7 +27,7 @@ class TravelRequestListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TravelRequest
-        fields = ('id', 'destination', 'user', 'direction', 'travel_datetime', 'status', 'created_at', 'is_match', 'match_info')
+        fields = ('id', 'destination', 'user', 'direction', 'travel_datetime', 'status', 'seats_available', 'created_at', 'is_match', 'match_info')
 
     def _get_matching_my_request(self, obj):
         if hasattr(obj, '_cached_match_req'):
@@ -69,7 +69,7 @@ class MyTravelRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TravelRequest
-        fields = ('id', 'destination', 'direction', 'travel_datetime', 'status', 'created_at')
+        fields = ('id', 'destination', 'direction', 'travel_datetime', 'status', 'seats_available', 'created_at')
 
 
 class TravelRequestSerializer(serializers.ModelSerializer):
@@ -82,7 +82,7 @@ class TravelRequestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TravelRequest
-        fields = ('id', 'destination', 'destination_details', 'user', 'direction', 'travel_datetime', 'status', 'created_at')
+        fields = ('id', 'destination', 'destination_details', 'user', 'direction', 'travel_datetime', 'status', 'seats_available', 'created_at')
         read_only_fields = ('status', 'created_at')
 
     def validate_travel_datetime(self, value):
@@ -101,7 +101,7 @@ class TravelRequestMatchSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TravelRequest
-        fields = ('id', 'destination', 'user', 'username', 'direction', 'travel_datetime', 'time_difference', 'has_requested', 'chat_room_id')
+        fields = ('id', 'destination', 'user', 'username', 'direction', 'travel_datetime', 'time_difference', 'has_requested', 'chat_room_id', 'seats_available')
 
     def get_has_requested(self, obj):
         request = self.context.get('request')
@@ -121,9 +121,11 @@ class TravelRequestMatchSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return None
         
+        if hasattr(obj, 'chat_room') and obj.chat_room:
+            return obj.chat_room.id if obj.chat_room.is_participant(request.user) else None
+            
         from apps.chat.models import ChatRoom
-        from django.db.models import Q
-        chat_room = ChatRoom.objects.filter(
-            Q(created_by=request.user, partner=obj.user) | Q(created_by=obj.user, partner=request.user)
-        ).first()
-        return chat_room.id if chat_room else None
+        chat_room = ChatRoom.objects.filter(ride_request=obj).first()
+        if chat_room and chat_room.is_participant(request.user):
+            return chat_room.id
+        return None

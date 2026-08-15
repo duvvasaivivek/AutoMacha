@@ -46,32 +46,34 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
         now = timezone.now()
         queryset = TravelRequest.objects.filter(is_deleted=False).select_related('destination', 'user').order_by('travel_datetime')
 
+        query_params = getattr(self.request, 'query_params', getattr(self.request, 'GET', {}))
+
         # Status filter (default to OPEN if not specified, unless ALL is specified)
-        status_param = self.request.query_params.get('status')
+        status_param = query_params.get('status')
         if status_param and status_param in ['OPEN', 'CLOSED', 'CANCELLED', 'EXPIRED']:
             queryset = queryset.filter(status=status_param)
         elif status_param != 'ALL':
             queryset = queryset.filter(status='OPEN', travel_datetime__gte=now)
 
         # Destination filter
-        destination_param = self.request.query_params.get('destination')
+        destination_param = query_params.get('destination')
         if destination_param:
             queryset = queryset.filter(destination_id=destination_param)
 
         # Direction filter
-        direction_param = self.request.query_params.get('direction')
+        direction_param = query_params.get('direction')
         if direction_param in ['TO_CAMPUS', 'FROM_CAMPUS']:
             queryset = queryset.filter(direction=direction_param)
 
         # Date filter (YYYY-MM-DD)
-        date_param = self.request.query_params.get('date')
+        date_param = query_params.get('date')
         if date_param:
             parsed_date = parse_date(date_param)
             if parsed_date:
                 queryset = queryset.filter(travel_datetime__date=parsed_date)
 
         # From datetime filter
-        from_dt_param = self.request.query_params.get('from_datetime')
+        from_dt_param = query_params.get('from_datetime')
         if from_dt_param:
             parsed_from = parse_datetime(from_dt_param)
             if parsed_from:
@@ -80,7 +82,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
                 queryset = queryset.filter(travel_datetime__gte=parsed_from)
 
         # To datetime filter
-        to_dt_param = self.request.query_params.get('to_datetime')
+        to_dt_param = query_params.get('to_datetime')
         if to_dt_param:
             parsed_to = parse_datetime(to_dt_param)
             if parsed_to:
@@ -93,7 +95,7 @@ class TravelRequestListCreateView(generics.ListCreateAPIView):
             queryset = queryset.exclude(user=self.request.user)
 
             # Support matching_only=true query param to show only rides matching user's open trips
-            if self.request.query_params.get('matching_only') == 'true':
+            if query_params.get('matching_only') == 'true':
                 my_open_reqs = self.request.user.travel_requests.filter(status='OPEN', travel_datetime__gte=now)
                 if not my_open_reqs.exists():
                     return queryset.none()
@@ -257,9 +259,13 @@ class TravelRequestRespondShareView(APIView):
                             status=status.HTTP_409_CONFLICT
                         )
 
-                    # Update status to CLOSED inside the transaction to block concurrent acceptances
-                    travel_request.status = 'CLOSED'
-                    travel_request.save(update_fields=['status', 'updated_at'])
+                    # Decrement available seats and update status to CLOSED if no seats left
+                    travel_request.seats_available -= 1
+                    update_fields = ['seats_available', 'updated_at']
+                    if travel_request.seats_available <= 0:
+                        travel_request.status = 'CLOSED'
+                        update_fields.append('status')
+                    travel_request.save(update_fields=update_fields)
 
                     notify_ride_share_request_accepted(
                         sender=sender_user,

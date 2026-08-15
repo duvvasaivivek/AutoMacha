@@ -24,6 +24,7 @@ export interface TravelRequestListItem {
   direction: Direction;
   travel_datetime: string;
   status: Status;
+  seats_available?: number;
   created_at: string;
   is_match?: boolean;
   match_info?: string;
@@ -35,6 +36,7 @@ export interface MyTravelRequest {
   direction: Direction;
   travel_datetime: string;
   status: Status;
+  seats_available?: number;
   created_at: string;
 }
 
@@ -48,6 +50,7 @@ export interface TravelRequest {
   direction: Direction;
   travel_datetime: string;
   status: Status;
+  seats_available?: number;
   created_at: string;
 }
 
@@ -55,12 +58,14 @@ export interface CreateTravelRequestPayload {
   destination: number;
   direction: Direction;
   travel_datetime: string;
+  seats_available?: number;
 }
 
 export interface UpdateTravelRequestPayload {
   destination?: number;
   direction?: Direction;
   travel_datetime?: string;
+  seats_available?: number;
 }
 
 export interface TravelRequestFilters {
@@ -83,4 +88,5 @@ export interface TravelRequestMatch {
   time_difference: number;
   has_requested?: boolean;
   chat_room_id?: number | null;
+  seats_available?: number;
 }

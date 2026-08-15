@@ -21,20 +21,22 @@ def get_or_create_chat_room(travel_request, partner_user):
         ride_request=travel_request,
         defaults={
             'created_by': travel_request.user,
-            'partner': partner_user,
             'is_active': True,
         }
     )
 
-    if created:
+    is_new_participant = False
+    if not room.participants.filter(id=partner_user.id).exists():
+        room.participants.add(partner_user)
+        is_new_participant = True
+
+    if created or is_new_participant:
         logger.info(
-            "Created ChatRoom #%d for TravelRequest #%d (@%s & @%s)",
-            room.id, travel_request.id, travel_request.user.username, partner_user.username
+            "ChatRoom #%d updated for TravelRequest #%d (@%s joined)",
+            room.id, travel_request.id, partner_user.username
         )
-        # Emit initial SYSTEM message
         system_msg_text = (
-            f"Ride Share Request Accepted! @{travel_request.user.username} and @{partner_user.username} "
-            "can now chat here to coordinate pickup points and departure details."
+            f"@{partner_user.username} has joined the ride!"
         )
         create_system_chat_message(room, system_msg_text)
 

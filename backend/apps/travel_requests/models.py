@@ -44,6 +44,10 @@ class TravelRequest(models.Model):
         default=False,
         help_text="Soft delete flag to hide the request from the user's view."
     )
+    seats_available = models.IntegerField(
+        default=1,
+        help_text="Number of available seats for this ride."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

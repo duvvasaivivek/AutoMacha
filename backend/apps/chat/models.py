@@ -17,11 +17,11 @@ class ChatRoom(models.Model):
         related_name='created_chat_rooms',
         help_text="The travel request owner/requester."
     )
-    partner = models.ForeignKey(
+    participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
         related_name='joined_chat_rooms',
-        help_text="The accepted ride partner."
+        blank=True,
+        help_text="The accepted ride partners."
     )
     is_active = models.BooleanField(
         default=True,
@@ -54,25 +54,23 @@ class ChatRoom(models.Model):
         indexes = [
             models.Index(fields=['is_active'], name='idx_chatroom_active'),
             models.Index(fields=['created_by', 'is_active'], name='idx_chatroom_owner_active'),
-            models.Index(fields=['partner', 'is_active'], name='idx_chatroom_part_active'),
         ]
 
     def __str__(self):
-        return f"ChatRoom #{self.id} for RideRequest #{self.ride_request_id} (@{self.created_by.username} & @{self.partner.username})"
+        return f"ChatRoom #{self.id} for RideRequest #{self.ride_request_id} (@{self.created_by.username})"
 
     def is_participant(self, user):
         """Returns True if the given user is a participant of this chat room."""
         if not user or not user.is_authenticated:
             return False
-        return user.id in (self.created_by_id, self.partner_id)
+        return user.id == self.created_by_id or self.participants.filter(id=user.id).exists()
 
-    def get_other_participant(self, user):
-        """Returns the companion user for the given participant user."""
-        if user.id == self.created_by_id:
-            return self.partner
-        elif user.id == self.partner_id:
-            return self.created_by
-        return None
+    def get_other_participants(self, user):
+        """Returns all other users participating in this chat room."""
+        all_participants = list(self.participants.all())
+        if self.created_by not in all_participants:
+            all_participants.append(self.created_by)
+        return [p for p in all_participants if p.id != user.id]
 
     def close_room(self):
         """Closes the room so no new messages can be posted."""
