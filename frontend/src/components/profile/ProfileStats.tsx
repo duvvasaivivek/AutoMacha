@@ -16,7 +16,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => {
     ? `${user.account_age_days} ${user.account_age_days === 1 ? 'day' : 'days'}`
     : 'New member';
 
-  const stats = [
+  const stats = React.useMemo(() => [
     {
       label: 'Completed Rides',
       value: user.total_completed_rides || 0,
@@ -45,7 +45,12 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({ user }) => {
       color: 'bg-neutral-100 text-neutral-800 border-neutral-200',
       iconColor: 'text-neutral-600',
     },
-  ];
+  ], [
+    user.total_completed_rides,
+    user.total_travel_requests,
+    user.total_ride_shares,
+    accountAgeText
+  ]);
 
   return (
     <div className="w-full space-y-4">
