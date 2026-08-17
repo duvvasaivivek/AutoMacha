@@ -5,8 +5,10 @@ import type {
   PaginatedChatMessageResponse,
 } from '@/types';
 
-export async function getChatRooms(): Promise<ChatRoom[]> {
-  const response = await api.get<ChatRoom[] | { results: ChatRoom[] }>('/chat/rooms/');
+export async function getChatRooms(archived: boolean = false): Promise<ChatRoom[]> {
+  const response = await api.get<ChatRoom[] | { results: ChatRoom[] }>('/chat/rooms/', {
+    params: { archived }
+  });
   if (Array.isArray(response.data)) {
     return response.data;
   }
@@ -61,4 +63,8 @@ export async function clearChatHistory(rideRequestId: number): Promise<void> {
 
 export async function deleteChatRoom(rideRequestId: number): Promise<void> {
   await api.post(`/chat/room/${rideRequestId}/delete/`);
+}
+
+export async function archiveChatRoom(rideRequestId: number, action: 'archive' | 'unarchive' = 'archive'): Promise<void> {
+  await api.post(`/chat/room/${rideRequestId}/archive/`, { action });
 }

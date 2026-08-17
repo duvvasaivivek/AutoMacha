@@ -42,7 +42,7 @@ class ChatRoomListView(generics.ListAPIView):
             to_attr='prefetched_last_msg_list'
         )
 
-        return ChatRoom.objects.filter(
+        queryset = ChatRoom.objects.filter(
             Q(created_by=user) | Q(participants=user)
         ).exclude(
             deleted_for=user
@@ -57,6 +57,14 @@ class ChatRoomListView(generics.ListAPIView):
                 distinct=True
             )
         ).prefetch_related(last_msg_prefetch).order_by('-updated_at').distinct()
+
+        archived_param = self.request.query_params.get('archived', 'false').lower()
+        if archived_param == 'true':
+            queryset = queryset.filter(archived_for=user)
+        else:
+            queryset = queryset.exclude(archived_for=user)
+
+        return queryset
 
 
 class ChatRoomDetailView(generics.RetrieveAPIView):
@@ -206,3 +214,25 @@ class ChatRoomDeleteView(views.APIView):
             m.deleted_for.add(request.user)
         
         return Response({"status": "deleted", "ride_request_id": ride_request_id}, status=status.HTTP_200_OK)
+
+
+class ChatRoomArchiveView(views.APIView):
+    """
+    Archives or unarchives a chat room for the requesting user.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, ride_request_id=None, *args, **kwargs):
+        room = get_object_or_404(ChatRoom, ride_request_id=ride_request_id)
+        if not room.is_participant(request.user):
+            raise PermissionDenied("You do not have permission to archive this chat room.")
+
+        action = request.data.get('action', 'archive')
+        if action == 'archive':
+            room.archived_for.add(request.user)
+            status_text = "archived"
+        else:
+            room.archived_for.remove(request.user)
+            status_text = "unarchived"
+            
+        return Response({"status": status_text, "ride_request_id": ride_request_id}, status=status.HTTP_200_OK)

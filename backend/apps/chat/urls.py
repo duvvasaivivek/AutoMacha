@@ -8,6 +8,7 @@ from .views import (
     ChatMessageDeleteView,
     ChatClearHistoryView,
     ChatRoomDeleteView,
+    ChatRoomArchiveView,
 )
 
 app_name = 'chat'
@@ -19,6 +20,7 @@ urlpatterns = [
     path('room/<int:ride_request_id>/mark-read/', ChatMarkReadView.as_view(), name='room-mark-read'),
     path('room/<int:ride_request_id>/clear/', ChatClearHistoryView.as_view(), name='room-clear'),
     path('room/<int:ride_request_id>/delete/', ChatRoomDeleteView.as_view(), name='room-delete'),
+    path('room/<int:ride_request_id>/archive/', ChatRoomArchiveView.as_view(), name='room-archive'),
     path('messages/<int:pk>/', ChatMessageDeleteView.as_view(), name='message-delete'),
     path('unread-count/', ChatUnreadCountView.as_view(), name='unread-count'),
 ]

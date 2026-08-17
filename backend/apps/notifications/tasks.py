@@ -57,6 +57,27 @@ def send_notification_async_task(self, user_id, title, message, notification_typ
 
 @shared_task(
     bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3,
+    name='apps.notifications.tasks.dispatch_web_push_task'
+)
+def dispatch_web_push_task(self, user_id, title, message):
+    """
+    Asynchronously delivers a WebPush notification.
+    """
+    try:
+        from apps.accounts.models import User
+        from .services import send_web_push
+        user = User.objects.get(pk=user_id)
+        send_web_push(user, title, message)
+    except Exception as exc:
+        logger.error("Task [dispatch_web_push_task] Failed: %s", str(exc), exc_info=exc)
+        raise self.retry(exc=exc)
+
+
+@shared_task(
+    bind=True,
     max_retries=3,
     default_retry_delay=60,
     name='apps.notifications.tasks.cleanup_old_notifications_task'

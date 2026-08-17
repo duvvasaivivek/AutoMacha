@@ -67,6 +67,7 @@ export const ChatPage: React.FC = () => {
     setMessages,
     sendMessage,
     sendTyping,
+    markRead,
     isConnected,
     partnerIsTyping,
     error: wsError,
@@ -77,6 +78,21 @@ export const ChatPage: React.FC = () => {
     cryptoKey,
     onNewMessage: handleNewMessage,
   });
+
+  // Real-time Read Receipts trigger
+  useEffect(() => {
+    if (isConnected) {
+      markRead();
+    }
+  }, [messages.length, isConnected, markRead]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      if (isConnected) markRead();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isConnected, markRead]);
 
   // Fetch Chat Room details and initial message history
   useEffect(() => {

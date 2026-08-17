@@ -8,11 +8,13 @@ import {
   ShieldCheck,
   Compass,
   Trash2,
+  Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks';
-import { getChatRooms, deleteChatRoom } from '@/services/chat.service';
+import { getChatRooms, deleteChatRoom, archiveChatRoom } from '@/services/chat.service';
 import type { ChatRoom } from '@/types';
 import { ChatPage } from './ChatPage';
 import { formatTime } from '@/utils/date';
@@ -26,12 +28,13 @@ export const ChatsOverviewPage: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState<boolean>(false);
 
   const fetchRooms = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getChatRooms();
+      const data = await getChatRooms(showArchived);
       setRooms(data);
     } catch {
       setError('Unable to load your conversations.');
@@ -42,7 +45,7 @@ export const ChatsOverviewPage: React.FC = () => {
 
   useEffect(() => {
     fetchRooms();
-  }, []);
+  }, [showArchived]);
 
   const handleDeleteRoom = async (e: React.MouseEvent, rideRequestId: number) => {
     e.stopPropagation();
@@ -57,6 +60,21 @@ export const ChatsOverviewPage: React.FC = () => {
       }
     } catch {
       alert('Failed to delete chat room.');
+    }
+  };
+
+  const handleArchiveRoom = async (e: React.MouseEvent, rideRequestId: number) => {
+    e.stopPropagation();
+    try {
+      const action = showArchived ? 'unarchive' : 'archive';
+      await archiveChatRoom(rideRequestId, action);
+      // Remove from current view
+      setRooms((prev) => prev.filter((r) => r.ride_request !== rideRequestId));
+      if (activeRideRequestId === rideRequestId) {
+        navigate('/chats');
+      }
+    } catch {
+      alert('Failed to update archive status.');
     }
   };
 
@@ -114,6 +132,26 @@ export const ChatsOverviewPage: React.FC = () => {
               onChange={(e) => setSearchKeyword(e.target.value)}
               className="pl-9 h-9 text-xs font-medium bg-neutral-100 border-neutral-200 focus:bg-white"
             />
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex bg-neutral-100 p-1 rounded-lg">
+            <button
+              onClick={() => setShowArchived(false)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
+                !showArchived ? 'bg-white shadow-sm text-black' : 'text-neutral-500 hover:text-black'
+              }`}
+            >
+              Active
+            </button>
+            <button
+              onClick={() => setShowArchived(true)}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-colors ${
+                showArchived ? 'bg-white shadow-sm text-black' : 'text-neutral-500 hover:text-black'
+              }`}
+            >
+              Archived
+            </button>
           </div>
         </div>
 
@@ -207,17 +245,30 @@ export const ChatsOverviewPage: React.FC = () => {
                         </span>
                       )}
                       
-                      {!room.is_active && (
+                      <div className="flex gap-1 ml-auto">
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={(e) => handleDeleteRoom(e, room.ride_request)}
-                          className="h-6 w-6 p-0 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Delete Chat"
+                          onClick={(e) => handleArchiveRoom(e, room.ride_request)}
+                          className={`h-6 w-6 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity ${
+                            showArchived ? 'text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50' : 'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100'
+                          }`}
+                          title={showArchived ? "Unarchive Chat" : "Archive Chat"}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          {showArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
                         </Button>
-                      )}
+                        {!room.is_active && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleDeleteRoom(e, room.ride_request)}
+                            className="h-6 w-6 p-0 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Delete Chat"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -38,7 +38,9 @@ def create_notification(user, title, message, notification_type, related_object_
     )
     if created and hasattr(user, 'id'):
         from apps.common.cache_services import NotificationCacheService
+        from .tasks import dispatch_web_push_task
         NotificationCacheService.invalidate_unread_count(user.id)
+        dispatch_web_push_task.delay(user.id, title, message)
     return notification, created
 
 
