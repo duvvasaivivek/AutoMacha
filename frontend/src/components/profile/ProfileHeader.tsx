@@ -18,28 +18,27 @@ interface ProfileHeaderProps {
   onEditClick: () => void;
 }
 
+const getInitials = (name?: string, username?: string) => {
+  const text = name && name.trim().length > 0 ? name : username || 'U';
+  const parts = text.trim().split(' ');
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return text.substring(0, 2).toUpperCase();
+};
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return 'Recently';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  } catch {
+    return 'Recently';
+  }
+};
+
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick }) => {
-  const { isSupported, isSubscribed, subscribe, unsubscribe, error } = usePushNotifications();
-  
-  const getInitials = (name?: string, username?: string) => {
-    const text = name && name.trim().length > 0 ? name : username || 'U';
-    const parts = text.trim().split(' ');
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-    return text.substring(0, 2).toUpperCase();
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'Recently';
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    } catch {
-      return 'Recently';
-    }
-  };
-
+  const { isSupported, isSubscribed, subscribe, unsubscribe, error } = usePushNotifications();  
   const displayName = user.full_name || `@${user.username}`;
   const initials = getInitials(user.full_name, user.username);
 

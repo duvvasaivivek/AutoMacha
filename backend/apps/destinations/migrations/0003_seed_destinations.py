@@ -12,9 +12,11 @@ def seed_destinations(apps, schema_editor):
         "9R Mandi",
         "SVC Cinemas"
     ]
-    
-    for name in destinations_list:
-        Destination.objects.get_or_create(name=name, defaults={'is_active': True})
+    # Efficient bulk creation using ignore_conflicts
+    Destination.objects.bulk_create(
+        [Destination(name=name, is_active=True) for name in destinations_list],
+        ignore_conflicts=True
+    )
 
 def reverse_seed_destinations(apps, schema_editor):
     pass
