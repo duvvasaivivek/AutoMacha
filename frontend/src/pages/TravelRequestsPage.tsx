@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, AlertCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { PlusCircle, AlertCircle, Sparkles, ArrowRight, SearchX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth, useDestinations, useTravelRequests } from '@/hooks';
 import type { Direction, Status, TravelRequestFilters, TravelRequestUser } from '@/types';
@@ -9,6 +9,7 @@ import { TravelRequestCard } from '@/components/travel_requests/TravelRequestCar
 import { FilterBar } from '@/components/travel_requests/FilterBar';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { EmptyState } from '@/components/common/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export const TravelRequestsPage: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -180,7 +181,29 @@ export const TravelRequestsPage: React.FC = () => {
           )}
         </div>
 
-        {isLoading && <LoadingSpinner />}
+        {isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex flex-col space-y-4 rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+                <div className="flex items-center space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-[150px]" />
+                    <Skeleton className="h-3 w-[100px]" />
+                  </div>
+                </div>
+                <div className="space-y-3 pt-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                  <Skeleton className="h-8 w-24 rounded-full" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {!isLoading && error && (
           <div className="max-w-md mx-auto my-12 p-6 rounded-2xl border border-red-200 bg-red-50 text-center space-y-3 shadow-sm">
@@ -192,6 +215,7 @@ export const TravelRequestsPage: React.FC = () => {
 
         {!isLoading && !error && requests.length === 0 && (
           <EmptyState
+            icon={<SearchX className="h-8 w-8 text-neutral-400" />}
             title={filterMode === 'MATCHES' ? 'No matching rides found.' : 'No requests found.'}
             description={
               filterMode === 'MATCHES'

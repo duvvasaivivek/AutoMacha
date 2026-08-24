@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getDashboardStats } from '@/services/dashboard.service';
 import type { DashboardStats } from '@/types';
 import { useAuth } from '@/hooks';
@@ -94,9 +95,36 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {isLoading && (
-        <div className="w-full flex flex-col items-center justify-center py-24 space-y-3 bg-neutral-50/50 rounded-2xl border border-neutral-200/60">
-          <Loader2 className="h-8 w-8 animate-spin text-black" />
-          <p className="text-xs font-semibold text-neutral-500">Loading your statistics...</p>
+        <div className="w-full space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="h-6 w-6 rounded-md" />
+                </div>
+                <div className="space-y-2 pt-2">
+                  <Skeleton className="h-8 w-12" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2].map((i) => (
+              <div key={i} className="flex flex-col rounded-2xl border border-neutral-200 bg-white h-64 overflow-hidden">
+                <div className="h-14 bg-neutral-900 w-full" />
+                <div className="flex-1 p-6 flex flex-col justify-center space-y-4">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-8 w-48" />
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                    <Skeleton className="h-10 w-full rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

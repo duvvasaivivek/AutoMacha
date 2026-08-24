@@ -13,7 +13,9 @@ import {
   Sparkles,
   RefreshCw,
   MessageCircle,
+  BellOff,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { respondRideShare } from '@/services/travelRequest.service';
@@ -86,7 +88,7 @@ export const NotificationsPage: React.FC = () => {
       }
     } catch (err: unknown) {
       const msg = axios.isAxiosError(err) ? (err.response?.data?.message || err.response?.data?.detail) : null;
-      alert(msg || 'Failed to respond to ride share request.');
+      toast.error(msg || 'Failed to respond to ride share request.');
     } finally {
       setRespondingId((prev) => ({ ...prev, [notif.id]: false }));
     }
@@ -209,6 +211,7 @@ export const NotificationsPage: React.FC = () => {
       {/* Empty State */}
       {!isLoading && !error && notifications.length === 0 && (
         <EmptyState
+          icon={<BellOff className="h-8 w-8 text-neutral-400" />}
           title="No notifications yet."
           description="When you receive ride requests, matches, or trip updates, they will show up here."
         />

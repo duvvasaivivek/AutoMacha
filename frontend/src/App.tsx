@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ErrorBoundary } from '@/components/common';
 import { PWABadge } from '@/components/pwa/PWABadge';
 import { OfflineBanner } from '@/components/common/OfflineBanner';
+import { Toaster } from 'sonner';
 
 export function App() {
   return (
@@ -18,6 +19,7 @@ export function App() {
             </main>
             <PWABadge />
             <OfflineBanner />
+            <Toaster position="top-center" richColors />
           </div>
         </AuthProvider>
       </BrowserRouter>

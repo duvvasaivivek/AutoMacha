@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Camera,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { User } from '@/types';
 import { BRANCH_OPTIONS, HOSTEL_OPTIONS, ACADEMIC_YEAR_OPTIONS } from '@/constants/userOptions';
@@ -165,10 +166,12 @@ export const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       }
 
       await onSave(formData);
+      toast.success('Profile updated successfully!');
       onClose();
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       setApiError(msg || 'Failed to update profile. Please verify your details.');
+      toast.error(msg || 'Failed to update profile.');
     } finally {
       setIsSubmitting(false);
     }

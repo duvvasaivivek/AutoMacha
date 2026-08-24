@@ -1,7 +1,8 @@
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { ProtectedRoute, PublicRoute, AdminRoute, LoadingSpinner } from '@/components/common';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { ProtectedRoute, PublicRoute, AdminRoute, LoadingSpinner, PageTransition } from '@/components/common';
 import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AnimatePresence } from 'framer-motion';
 
 const Home = lazy(() => import('@/pages/Home').then((m) => ({ default: m.Home })));
 const Login = lazy(() => import('@/pages/Login').then((m) => ({ default: m.Login })));
@@ -35,52 +36,56 @@ const AdminSettingsPage = lazy(() => import('@/pages/admin/AdminSettingsPage'));
 const NotFound = lazy(() => import('@/pages/NotFound').then((m) => ({ default: m.NotFound })));
 
 export const AppRoutes: React.FC = () => {
+  const location = useLocation();
+  
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/auto-drivers" element={<AutoDriversPage />} />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<PageTransition title="Home"><Home /></PageTransition>} />
+          <Route path="/auto-drivers" element={<PageTransition title="Auto Drivers"><AutoDriversPage /></PageTransition>} />
 
-        {/* Student App Routes */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/travel-requests" element={<TravelRequestsPage />} />
-          <Route path="/my-travel-requests" element={<MyTravelRequestsPage />} />
-          <Route path="/travel-requests/new" element={<CreateTravelRequest />} />
-          <Route path="/travel-requests/:id/edit" element={<EditTravelRequestPage />} />
-          <Route path="/travel-requests/:id/matches" element={<MatchesPage />} />
-          <Route path="/rides/history" element={<RideHistoryPage />} />
-          <Route path="/chat/:rideRequestId" element={<ChatPage />} />
-          <Route path="/chats" element={<ChatsOverviewPage />} />
-          <Route path="/chats/:rideRequestId" element={<ChatsOverviewPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Route>
-
-        {/* Dedicated Admin Portal Routes */}
-        <Route element={<AdminRoute />}>
-          <Route element={<AdminLayout />}>
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/destinations" element={<AdminDestinationsPage />} />
-            <Route path="/admin/auto-drivers" element={<AdminAutoDriversPage />} />
-            <Route path="/admin/travel-requests" element={<AdminTravelRequestsPage />} />
-            <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
-            <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
-            <Route path="/admin/logs" element={<AdminSystemLogsPage />} />
-            <Route path="/admin/audit-logs" element={<AdminAuditLogsPage />} />
-            <Route path="/admin/health" element={<AdminHealthPage />} />
-            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          {/* Student App Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<PageTransition title="Dashboard"><Dashboard /></PageTransition>} />
+            <Route path="/travel-requests" element={<PageTransition title="Travel Requests"><TravelRequestsPage /></PageTransition>} />
+            <Route path="/my-travel-requests" element={<PageTransition title="My Requests"><MyTravelRequestsPage /></PageTransition>} />
+            <Route path="/travel-requests/new" element={<PageTransition title="Create Request"><CreateTravelRequest /></PageTransition>} />
+            <Route path="/travel-requests/:id/edit" element={<PageTransition title="Edit Request"><EditTravelRequestPage /></PageTransition>} />
+            <Route path="/travel-requests/:id/matches" element={<PageTransition title="Matches"><MatchesPage /></PageTransition>} />
+            <Route path="/rides/history" element={<PageTransition title="Ride History"><RideHistoryPage /></PageTransition>} />
+            <Route path="/chat/:rideRequestId" element={<PageTransition title="Chat"><ChatPage /></PageTransition>} />
+            <Route path="/chats" element={<PageTransition title="Chats"><ChatsOverviewPage /></PageTransition>} />
+            <Route path="/chats/:rideRequestId" element={<PageTransition title="Chats"><ChatsOverviewPage /></PageTransition>} />
+            <Route path="/notifications" element={<PageTransition title="Notifications"><NotificationsPage /></PageTransition>} />
+            <Route path="/profile" element={<PageTransition title="Profile"><ProfilePage /></PageTransition>} />
           </Route>
-        </Route>
 
-        <Route element={<PublicRoute />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Route>
+          {/* Dedicated Admin Portal Routes */}
+          <Route element={<AdminRoute />}>
+            <Route element={<AdminLayout />}>
+              <Route path="/admin" element={<PageTransition title="Admin Dashboard"><AdminDashboardPage /></PageTransition>} />
+              <Route path="/admin/users" element={<PageTransition title="Manage Users"><AdminUsersPage /></PageTransition>} />
+              <Route path="/admin/destinations" element={<PageTransition title="Manage Destinations"><AdminDestinationsPage /></PageTransition>} />
+              <Route path="/admin/auto-drivers" element={<PageTransition title="Manage Drivers"><AdminAutoDriversPage /></PageTransition>} />
+              <Route path="/admin/travel-requests" element={<PageTransition title="Manage Requests"><AdminTravelRequestsPage /></PageTransition>} />
+              <Route path="/admin/notifications" element={<PageTransition title="Manage Notifications"><AdminNotificationsPage /></PageTransition>} />
+              <Route path="/admin/analytics" element={<PageTransition title="Analytics"><AdminAnalyticsPage /></PageTransition>} />
+              <Route path="/admin/logs" element={<PageTransition title="System Logs"><AdminSystemLogsPage /></PageTransition>} />
+              <Route path="/admin/audit-logs" element={<PageTransition title="Audit Logs"><AdminAuditLogsPage /></PageTransition>} />
+              <Route path="/admin/health" element={<PageTransition title="Health"><AdminHealthPage /></PageTransition>} />
+              <Route path="/admin/settings" element={<PageTransition title="Settings"><AdminSettingsPage /></PageTransition>} />
+            </Route>
+          </Route>
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<PageTransition title="Login"><Login /></PageTransition>} />
+            <Route path="/register" element={<PageTransition title="Register"><Register /></PageTransition>} />
+          </Route>
+
+          <Route path="*" element={<PageTransition title="Not Found"><NotFound /></PageTransition>} />
+        </Routes>
+      </AnimatePresence>
     </Suspense>
   );
 };
