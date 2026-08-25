@@ -7,7 +7,6 @@ import type { Direction, Status, TravelRequestFilters, TravelRequestUser } from 
 import { RideConnectModal } from '@/components/RideConnectModal';
 import { TravelRequestCard } from '@/components/travel_requests/TravelRequestCard';
 import { FilterBar } from '@/components/travel_requests/FilterBar';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 

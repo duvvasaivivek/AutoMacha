@@ -13,7 +13,6 @@ import {
   Heart,
   PlusCircle,
   ArrowRight,
-  Loader2,
   AlertCircle,
   RefreshCw,
   Compass,
