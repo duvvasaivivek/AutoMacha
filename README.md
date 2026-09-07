@@ -97,19 +97,6 @@ Institute email verification (`@iiitk.ac.in`), JWT auth with token rotation, OTP
 | **Destinations** | Pre-seeded campus destinations + custom destination support |
 
 
-| Route | Module | Description |
-|---|---|---|
-| `/api/accounts/` | Auth & Profiles | Registration, login, OTP, password reset, profile |
-| `/api/travel-requests/` | Travel Requests | CRUD, matching, expiry |
-| `/api/destinations/` | Destinations | Browse & manage destinations |
-| `/api/dashboard/` | Dashboard | Campus-wide ride statistics |
-| `/api/notifications/` | Notifications | User notification feed |
-| `/api/auto-drivers/` | Auto-Drivers | Driver directory |
-| `/api/admin-portal/` | Admin Portal | Admin-only management APIs |
-| `/api/ride-history/` | Ride History | Past ride records |
-| `/api/chat/` | Chat | Chat room REST endpoints |
-| `/api/health/` | Health | Liveness & readiness probes |
-| `/api/metrics/` | Metrics | System metrics export |
 
 **WebSocket**: `ws://<host>/ws/chat/<room>/` — JWT-authenticated, E2EE-ready
 
