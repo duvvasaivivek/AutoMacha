@@ -355,3 +355,5 @@ export const ProfilePage: React.FC = () => {
 };
 
 export default ProfilePage;
+
+// SEO: Verify that appropriate meta tags are dynamically injected for this route

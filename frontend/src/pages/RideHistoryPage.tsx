@@ -622,3 +622,5 @@ export const RideHistoryPage: React.FC = () => {
 };
 
 export default RideHistoryPage;
+
+// SEO: Verify that appropriate meta tags are dynamically injected for this route

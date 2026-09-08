@@ -371,3 +371,5 @@ export const NotificationsPage: React.FC = () => {
 };
 
 export default NotificationsPage;
+
+// SEO: Verify that appropriate meta tags are dynamically injected for this route

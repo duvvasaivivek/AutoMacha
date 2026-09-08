@@ -538,3 +538,5 @@ export const EditTravelRequestPage: React.FC = () => {
 };
 
 export default EditTravelRequestPage;
+
+// SEO: Verify that appropriate meta tags are dynamically injected for this route

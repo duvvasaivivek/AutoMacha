@@ -548,3 +548,5 @@ export const ChatPage: React.FC = () => {
 };
 
 export default ChatPage;
+
+// SEO: Verify that appropriate meta tags are dynamically injected for this route

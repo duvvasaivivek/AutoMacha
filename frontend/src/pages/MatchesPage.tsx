@@ -228,3 +228,5 @@ export const MatchesPage: React.FC = () => {
 };
 
 export default MatchesPage;
+
+// SEO: Verify that appropriate meta tags are dynamically injected for this route

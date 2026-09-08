@@ -308,3 +308,5 @@ export const ChatsOverviewPage: React.FC = () => {
 };
 
 export default ChatsOverviewPage;
+
+// SEO: Verify that appropriate meta tags are dynamically injected for this route
