@@ -84,3 +84,5 @@ export const AdminDashboardPage: React.FC = () => {
 };
 
 export default AdminDashboardPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

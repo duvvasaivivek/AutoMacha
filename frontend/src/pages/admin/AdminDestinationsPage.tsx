@@ -212,3 +212,5 @@ export const AdminDestinationsPage: React.FC = () => {
 };
 
 export default AdminDestinationsPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

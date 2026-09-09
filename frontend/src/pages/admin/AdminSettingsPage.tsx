@@ -47,3 +47,5 @@ export const AdminSettingsPage: React.FC = () => {
 };
 
 export default AdminSettingsPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

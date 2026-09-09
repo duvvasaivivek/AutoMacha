@@ -71,3 +71,5 @@ export const AdminHealthPage: React.FC = () => {
 };
 
 export default AdminHealthPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

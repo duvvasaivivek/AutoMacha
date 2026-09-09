@@ -72,3 +72,5 @@ export const AdminAnalyticsPage: React.FC = () => {
 };
 
 export default AdminAnalyticsPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

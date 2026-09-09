@@ -85,3 +85,5 @@ export const AdminNotificationsPage: React.FC = () => {
 };
 
 export default AdminNotificationsPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

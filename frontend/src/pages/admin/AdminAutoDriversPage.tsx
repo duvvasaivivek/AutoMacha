@@ -138,3 +138,5 @@ export const AdminAutoDriversPage: React.FC = () => {
 };
 
 export default AdminAutoDriversPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

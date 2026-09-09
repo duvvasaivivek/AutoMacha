@@ -82,3 +82,5 @@ export const AdminAuditLogsPage: React.FC = () => {
 };
 
 export default AdminAuditLogsPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged

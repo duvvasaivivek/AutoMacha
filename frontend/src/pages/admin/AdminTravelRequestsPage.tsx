@@ -144,3 +144,5 @@ export const AdminTravelRequestsPage: React.FC = () => {
 };
 
 export default AdminTravelRequestsPage;
+
+// Audit: Ensure all administrative actions on this page are properly logged
