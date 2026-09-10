@@ -17,3 +17,5 @@ export const AdminRoute: React.FC = () => {
 };
 
 export default AdminRoute;
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

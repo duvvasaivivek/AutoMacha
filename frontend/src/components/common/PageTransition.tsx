@@ -49,3 +49,5 @@ export const PageTransition: React.FC<PageTransitionProps> = ({ children, title,
     </motion.div>
   );
 };
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

@@ -68,3 +68,5 @@ export class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

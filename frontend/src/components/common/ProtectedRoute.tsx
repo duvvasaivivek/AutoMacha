@@ -27,3 +27,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   return children ? <>{children}</> : <Outlet />;
 };
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

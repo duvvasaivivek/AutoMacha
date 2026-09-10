@@ -34,3 +34,5 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
 
   return children ? <>{children}</> : <Outlet />;
 };
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

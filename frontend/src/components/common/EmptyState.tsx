@@ -25,3 +25,5 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, icon
 };
 
 export default EmptyState;
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

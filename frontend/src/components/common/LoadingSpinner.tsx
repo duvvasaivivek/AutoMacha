@@ -11,3 +11,5 @@ export const LoadingSpinner: React.FC = React.memo(() => {
 
 LoadingSpinner.displayName = 'LoadingSpinner';
 export default LoadingSpinner;
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

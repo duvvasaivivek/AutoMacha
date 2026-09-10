@@ -281,3 +281,5 @@ export const Navbar: React.FC = () => {
     </header>
   );
 };
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

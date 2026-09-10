@@ -30,3 +30,5 @@ export const OfflineBanner: React.FC = () => {
     </div>
   );
 };
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future

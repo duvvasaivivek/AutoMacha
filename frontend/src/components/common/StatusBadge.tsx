@@ -36,3 +36,5 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
 };
 
 export default StatusBadge;
+
+// Performance: consider memoizing this component if re-renders become a bottleneck in the future
