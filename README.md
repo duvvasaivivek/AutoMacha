@@ -50,9 +50,6 @@ Ride connect requests, match alerts, and updates — delivered in real-time so y
 ### 🛡️ Campus-Only Security
 Institute email verification (`@iiitk.ac.in`), JWT auth with token rotation, OTP-based login, and account lockout protection. Only verified students get in.
 
-### 📊 Live Dashboard
-Real-time campus ride stats, active request counts, and trends — refreshed every minute via background jobs.
-
 </td>
 </tr>
 </table>
@@ -99,36 +96,7 @@ Real-time campus ride stats, active request counts, and trends — refreshed eve
 | **Admin Portal** | Full admin suite for user & platform management |
 | **Destinations** | Pre-seeded campus destinations + custom destination support |
 
----
 
-## 🚀 Run It Locally
-
-### Prerequisites
-
-| Tool | Version |
-|---|---|
-| Python | 3.10+ |
-| Node.js | 18+ |
-| PostgreSQL | 14+ |
-| Redis | *(optional — only for production)* |
-
-## 🔌 API Reference
-
-All endpoints prefixed with `/api/`.
-
-| Route | Module | Description |
-|---|---|---|
-| `/api/accounts/` | Auth & Profiles | Registration, login, OTP, password reset, profile |
-| `/api/travel-requests/` | Travel Requests | CRUD, matching, expiry |
-| `/api/destinations/` | Destinations | Browse & manage destinations |
-| `/api/dashboard/` | Dashboard | Campus-wide ride statistics |
-| `/api/notifications/` | Notifications | User notification feed |
-| `/api/auto-drivers/` | Auto-Drivers | Driver directory |
-| `/api/admin-portal/` | Admin Portal | Admin-only management APIs |
-| `/api/ride-history/` | Ride History | Past ride records |
-| `/api/chat/` | Chat | Chat room REST endpoints |
-| `/api/health/` | Health | Liveness & readiness probes |
-| `/api/metrics/` | Metrics | System metrics export |
 
 **WebSocket**: `ws://<host>/ws/chat/<room>/` — JWT-authenticated, E2EE-ready
 
