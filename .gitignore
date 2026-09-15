@@ -40,3 +40,6 @@ build/
 *.swo
 .DS_Store
 Thumbs.db
+
+# Security
+*.pem

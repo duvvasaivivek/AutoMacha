@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   MessageSquare,
@@ -30,7 +30,7 @@ export const ChatsOverviewPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState<boolean>(false);
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -41,11 +41,11 @@ export const ChatsOverviewPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showArchived]);
 
   useEffect(() => {
     fetchRooms();
-  }, [showArchived]);
+  }, [fetchRooms]);
 
   const handleDeleteRoom = async (e: React.MouseEvent, rideRequestId: number) => {
     e.stopPropagation();

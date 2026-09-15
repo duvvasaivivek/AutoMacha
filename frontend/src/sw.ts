@@ -81,7 +81,7 @@ try {
   });
   registerRoute(navigationRoute);
 } catch (e) {
-  console.log('Error creating navigation route', e);
+  console.error('Error creating navigation route', e);
 }
 
 // ---------------------------------------------------------

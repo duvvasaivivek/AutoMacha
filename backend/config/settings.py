@@ -135,8 +135,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Allow all origins for the college project to avoid deployment CORS headaches
-CORS_ALLOW_ALL_ORIGINS = True
+# Load CORS origins securely from environment
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
 
 ROOT_URLCONF = 'config.urls'
 

@@ -19,10 +19,10 @@ export const PWABadge: React.FC = () => {
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r: ServiceWorkerRegistration | undefined) {
-      console.log('SW Registered:', r);
+      console.debug('SW Registered:', r);
     },
     onRegisterError(error: any) {
-      console.log('SW registration error', error);
+      console.error('SW registration error', error);
     },
   });
 
@@ -53,13 +53,9 @@ export const PWABadge: React.FC = () => {
     await installPrompt.prompt();
     
     // Wait for the user to respond to the prompt
-    const { outcome } = await installPrompt.userChoice;
+    await installPrompt.userChoice;
     
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-    } else {
-      console.log('User dismissed the install prompt');
-    }
+    // User choice outcome is tracked internally if needed
     
     setInstallPrompt(null);
   };
