@@ -4,10 +4,6 @@
 
 ### The Campus Ride-Share Platform That Just Works.
 
-**Match rides. Split fares. Chat securely. All in one tap.**
-
-Built by students, for students — live and serving the IIITDM Kurnool campus.
-
 [![Live App](https://img.shields.io/badge/🌐_Live_App-automacha-863BFF?style=for-the-badge)](https://auto-macha.vercel.app/)
 [![Backend API](https://img.shields.io/badge/⚡_API-Render-46E3B7?style=for-the-badge)](https://automacha-backend.onrender.com/api/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
