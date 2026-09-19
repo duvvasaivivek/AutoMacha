@@ -48,30 +48,6 @@ Institute email verification (`@iiitk.ac.in`), JWT auth with token rotation, OTP
 
 ---
 
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        FRONTEND                             │
-│           React 19 · TypeScript · Vite 8 · PWA              │
-│         TailwindCSS · React Router 7 · Radix UI             │
-│                   Deployed on Vercel                        │
-└──────────────────────┬──────────────────────────────────────┘
-                       │  REST (Axios)  &  WebSocket
-┌──────────────────────▼──────────────────────────────────────┐
-│                        BACKEND                              │
-│          Django 5 · DRF · Daphne (ASGI)                     │
-│        Django Channels (WebSocket) · SimpleJWT              │
-│                   Deployed on Render                        │
-├─────────────────────────────────────────────────────────────┤
-│  PostgreSQL          Redis (optional)       Celery + Beat   │
-│  Primary DB          Cache · Channels       Background Jobs │
-│                      Broker                                 │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
 ## 📦 Feature Breakdown
 
 | Module | What It Does |
