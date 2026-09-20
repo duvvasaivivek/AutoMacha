@@ -65,11 +65,6 @@ Institute email verification (`@iiitk.ac.in`), JWT auth with token rotation, OTP
 | **Destinations** | Pre-seeded campus destinations + custom destination support |
 
 
-
-**WebSocket**: `ws://<host>/ws/chat/<room>/` — JWT-authenticated, E2EE-ready
-
----
-
 ## ⏱️ Background Jobs
 
 | Job | Frequency | Purpose |
