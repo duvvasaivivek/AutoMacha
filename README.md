@@ -65,16 +65,6 @@ Institute email verification (`@iiitk.ac.in`), JWT auth with token rotation, OTP
 | **Destinations** | Pre-seeded campus destinations + custom destination support |
 
 
-## ⏱️ Background Jobs
-
-| Job | Frequency | Purpose |
-|---|---|---|
-| Expire stale requests | Every 5 min | Auto-closes expired travel requests |
-| OTP cleanup | Hourly | Purges used & expired OTPs |
-| Notification cleanup | Daily @ midnight | Removes notifications past retention |
-| Dashboard cache refresh | Every 1 min | Keeps dashboard stats real-time |
-| System health check | Hourly | Monitors DB, cache, & service health |
-
 ---
 
 ## 🛡️ Security & Privacy
