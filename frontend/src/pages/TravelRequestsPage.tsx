@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusCircle, AlertCircle, Sparkles, ArrowRight, SearchX } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { useAuth, useDestinations, useTravelRequests } from '@/hooks';
 import type { Direction, Status, TravelRequestFilters, TravelRequestUser } from '@/types';
@@ -262,16 +263,38 @@ export const TravelRequestsPage: React.FC = () => {
         )}
 
         {!isLoading && !error && requests.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1
+                }
+              }
+            }}
+          >
             {requests.map((req) => (
-              <TravelRequestCard
+              <motion.div
                 key={req.id}
-                request={req}
-                currentUser={currentUser}
-                onSelectPartner={setSelectedPartner}
-              />
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <TravelRequestCard
+                  request={req}
+                  currentUser={currentUser}
+                  onSelectPartner={setSelectedPartner}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
 
