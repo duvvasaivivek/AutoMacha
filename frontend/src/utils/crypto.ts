@@ -114,7 +114,8 @@ export async function decryptMessage(
 
     const decoder = new TextDecoder();
     return decoder.decode(decryptedBuffer);
-  } catch {
+  } catch (error) {
+    console.error('[AutoMacha E2EE] Decryption failed, falling back to original text.', error);
     // If text was plaintext or decryption key failed, return original text safely
     return cipherText;
   }
