@@ -30,7 +30,7 @@ const pageTransition: Transition = {
   duration: 0.3,
 };
 
-export const PageTransition: React.FC<PageTransitionProps> = ({ children, title, className = '' }) => {
+export const PageTransition: React.FC<PageTransitionProps> = React.memo(({ children, title, className = '' }) => {
   return (
     <motion.div
       initial="initial"
@@ -48,6 +48,8 @@ export const PageTransition: React.FC<PageTransitionProps> = ({ children, title,
       {children}
     </motion.div>
   );
-};
+});
 
-// Performance: consider memoizing this component if re-renders become a bottleneck in the future
+PageTransition.displayName = 'PageTransition';
+
+export default PageTransition;
