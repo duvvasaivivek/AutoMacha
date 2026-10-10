@@ -1,34 +1,47 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNetworkState } from '@/hooks/useNetworkState';
 import { WifiOff, RefreshCw } from 'lucide-react';
 
-export const OfflineBanner: React.FC = () => {
+export const OfflineBanner: React.FC = React.memo(() => {
   const { isOnline } = useNetworkState();
 
-  if (isOnline) {
-    return null;
-  }
-
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-destructive text-destructive-foreground animate-in slide-in-from-bottom-2 fade-in duration-300">
-      <div className="container mx-auto flex items-center justify-between max-w-md">
-        <div className="flex items-center space-x-3">
-          <WifiOff className="h-5 w-5" />
-          <div className="flex flex-col">
-            <span className="font-semibold text-sm">You're offline</span>
-            <span className="text-xs opacity-90">Viewing cached data where available.</span>
-          </div>
-        </div>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="p-2 rounded-full hover:bg-white/20 transition-colors"
-          aria-label="Retry connection"
+    <AnimatePresence>
+      {!isOnline && (
+        <motion.div
+          initial={{ y: 60, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 60, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-neutral-900 text-white shadow-2xl border-t border-neutral-800"
         >
-          <RefreshCw className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
+          <div className="container mx-auto flex items-center justify-between max-w-md">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-xl bg-neutral-800 text-amber-400">
+                <WifiOff className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-sm">You're offline</span>
+                <span className="text-xs text-neutral-400">Viewing cached data where available.</span>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ rotate: 90, scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.location.reload()}
+              className="p-2.5 rounded-full hover:bg-neutral-800 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+              aria-label="Retry connection"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </motion.button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
-};
+});
 
-// Performance: consider memoizing this component if re-renders become a bottleneck in the future
+OfflineBanner.displayName = 'OfflineBanner';
+
+export default OfflineBanner;
