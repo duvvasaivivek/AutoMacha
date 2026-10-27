@@ -3,9 +3,9 @@
  * Provides client-side zero-knowledge encryption & decryption.
  */
 
-// Helper to convert ArrayBuffer to Base64
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
+// Helper to convert ArrayBuffer or Uint8Array to Base64
+function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
@@ -82,7 +82,7 @@ export async function encryptMessage(
 
   return {
     cipherText: arrayBufferToBase64(encryptedBuffer),
-    iv: arrayBufferToBase64(iv.buffer),
+    iv: arrayBufferToBase64(iv),
   };
 }
 

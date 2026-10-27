@@ -4,7 +4,7 @@ import { MapPin, Calendar, Clock, Navigation, Sparkles, MessageCircle, ArrowRigh
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { formatDate, formatTime } from '@/utils/date';
+import { formatDate, formatTime, formatRelativeTime } from '@/utils/date';
 import type { TravelRequestListItem, TravelRequestUser, User } from '@/types';
 
 interface TravelRequestCardProps {
@@ -88,7 +88,7 @@ export const TravelRequestCard: React.FC<TravelRequestCardProps> = ({
       </div>
 
       <div className="bg-neutral-50/40 px-5 py-2.5 border-t border-neutral-100 text-[11px] text-neutral-400 font-medium flex items-center justify-between gap-2">
-        <span>Posted {formatDate(request.created_at)}</span>
+        <span title={formatDate(request.created_at)}>Posted {formatRelativeTime(request.created_at)}</span>
         <div className="flex items-center gap-2">
           {request.is_match && !isOwner && (
             <span className="inline-flex items-center gap-1 font-extrabold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200 text-[11px] shadow-2xs">

@@ -24,7 +24,7 @@ import { Card } from '@/components/ui/card';
 import { respondRideShare } from '@/services/travelRequest.service';
 import type { Notification, NotificationType, TravelRequestUser } from '@/types';
 import { RideConnectModal } from '@/components/RideConnectModal';
-import { formatDateTime } from '@/utils/date';
+import { formatDateTime, formatRelativeTime } from '@/utils/date';
 import { useNotifications } from '@/hooks';
 import { EmptyState } from '@/components/common/EmptyState';
 import axios from 'axios';
@@ -411,8 +411,11 @@ export const NotificationsPage: React.FC = () => {
                             <span>{badge.label}</span>
                           </span>
 
-                          <span className="text-[11px] font-semibold text-neutral-500">
-                            {formatDateTime(notif.created_at)}
+                          <span
+                            className="text-[11px] font-semibold text-neutral-500"
+                            title={formatDateTime(notif.created_at)}
+                          >
+                            {formatRelativeTime(notif.created_at)}
                           </span>
 
                           {!notif.is_read && (

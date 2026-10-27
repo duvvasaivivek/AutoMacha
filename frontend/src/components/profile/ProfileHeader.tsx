@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import type { User } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { formatMonthYear } from '@/utils/date';
 
 interface ProfileHeaderProps {
   user: User;
@@ -25,16 +26,6 @@ const getInitials = (name?: string, username?: string) => {
     return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
   }
   return text.substring(0, 2).toUpperCase();
-};
-
-const formatDate = (dateStr?: string) => {
-  if (!dateStr) return 'Recently';
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  } catch {
-    return 'Recently';
-  }
 };
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick }) => {
@@ -129,7 +120,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick 
               )}
               <div className="flex items-center gap-1.5 text-neutral-400">
                 <Calendar className="w-3.5 h-3.5" />
-                <span>Joined {formatDate(user.date_joined)}</span>
+                <span>Joined {formatMonthYear(user.date_joined)}</span>
               </div>
             </div>
           </div>
