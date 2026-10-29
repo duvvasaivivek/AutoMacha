@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { requestRideShare } from '@/services/travelRequest.service';
 import type { TravelRequestUser } from '@/types';
+import { getUserInitials } from '@/utils';
 
 interface RideConnectModalProps {
   isOpen: boolean;
@@ -97,7 +98,7 @@ export const RideConnectModal: React.FC<RideConnectModalProps> = ({
 
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black font-black text-xl flex items-center justify-center shadow-lg uppercase border-2 border-white/20 shrink-0">
-              {partner.username.slice(0, 2)}
+              {getUserInitials(undefined, partner.username)}
             </div>
             <div className="space-y-1 overflow-hidden">
               <div className="flex items-center gap-2">

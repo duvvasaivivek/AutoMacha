@@ -2,9 +2,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { Navbar } from '@/components/layout/Navbar';
 import { AppRoutes } from '@/routes';
 import { AuthProvider } from '@/context/AuthContext';
-import { ErrorBoundary } from '@/components/common';
+import { ErrorBoundary, OfflineBanner } from '@/components/common';
 import { PWABadge } from '@/components/pwa/PWABadge';
-import { OfflineBanner } from '@/components/common/OfflineBanner';
 import { Toaster } from 'sonner';
 
 export function App() {

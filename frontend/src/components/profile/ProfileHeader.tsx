@@ -12,26 +12,17 @@ import {
 import { Button } from '@/components/ui/button';
 import type { User } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { formatMonthYear } from '@/utils/date';
+import { formatMonthYear, getUserInitials, formatUserDisplayName } from '@/utils';
 
 interface ProfileHeaderProps {
   user: User;
   onEditClick: () => void;
 }
 
-const getInitials = (name?: string, username?: string) => {
-  const text = name && name.trim().length > 0 ? name : username || 'U';
-  const parts = text.trim().split(' ');
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  }
-  return text.substring(0, 2).toUpperCase();
-};
-
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, onEditClick }) => {
   const { isSupported, isSubscribed, subscribe, unsubscribe, error } = usePushNotifications();  
-  const displayName = user.full_name || `@${user.username}`;
-  const initials = getInitials(user.full_name, user.username);
+  const displayName = formatUserDisplayName(user.full_name, user.username);
+  const initials = getUserInitials(user.full_name, user.username);
 
   return (
     <div className="w-full bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden p-6 sm:p-8 transition-all">

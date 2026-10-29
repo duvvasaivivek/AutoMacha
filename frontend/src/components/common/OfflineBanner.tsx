@@ -1,15 +1,16 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNetworkState } from '@/hooks/useNetworkState';
-import { WifiOff, RefreshCw } from 'lucide-react';
+import { WifiOff, Wifi, RefreshCw } from 'lucide-react';
 
 export const OfflineBanner: React.FC = React.memo(() => {
-  const { isOnline } = useNetworkState();
+  const { isOnline, justReconnected } = useNetworkState();
 
   return (
     <AnimatePresence>
       {!isOnline && (
         <motion.div
+          key="offline-banner"
           initial={{ y: 60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 60, opacity: 0 }}
@@ -35,6 +36,22 @@ export const OfflineBanner: React.FC = React.memo(() => {
             >
               <RefreshCw className="h-4 w-4" />
             </motion.button>
+          </div>
+        </motion.div>
+      )}
+
+      {isOnline && justReconnected && (
+        <motion.div
+          key="reconnected-banner"
+          initial={{ y: 60, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 60, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="fixed bottom-0 left-0 right-0 z-50 p-3 bg-emerald-950 text-white shadow-2xl border-t border-emerald-800"
+        >
+          <div className="container mx-auto flex items-center justify-center space-x-2 max-w-md text-emerald-200">
+            <Wifi className="h-4 w-4 text-emerald-400" />
+            <span className="font-semibold text-xs sm:text-sm">Connection restored — back online</span>
           </div>
         </motion.div>
       )}

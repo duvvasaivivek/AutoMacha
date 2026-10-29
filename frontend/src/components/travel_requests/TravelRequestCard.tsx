@@ -4,7 +4,7 @@ import { MapPin, Calendar, Clock, Navigation, Sparkles, MessageCircle, ArrowRigh
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { formatDate, formatTime, formatRelativeTime } from '@/utils/date';
+import { formatDate, formatTime, formatRelativeTime, getUserInitials } from '@/utils';
 import type { TravelRequestListItem, TravelRequestUser, User } from '@/types';
 
 interface TravelRequestCardProps {
@@ -77,7 +77,7 @@ export const TravelRequestCard: React.FC<TravelRequestCardProps> = ({
           <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-full bg-neutral-900 text-white font-bold text-xs flex items-center justify-center uppercase shadow-xs">
-                {request.user.username.slice(0, 2)}
+                {getUserInitials(undefined, request.user.username)}
               </div>
               <div className="text-xs">
                 <span className="font-bold text-black">@{request.user.username}</span>

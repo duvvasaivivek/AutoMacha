@@ -6,3 +6,4 @@ export * from './EmptyState';
 export * from './LoadingSpinner';
 export * from './AdminRoute';
 export * from './PageTransition';
+export * from './OfflineBanner';
