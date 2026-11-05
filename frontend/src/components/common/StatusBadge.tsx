@@ -28,10 +28,15 @@ export const StatusBadge: React.FC<StatusBadgeProps> = React.memo(({ status, cla
           <span>Pending</span>
         </span>
       );
-    case 'CLOSED':
     case 'COMPLETED':
       return (
         <span className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-300/80 ${className}`}>
+          <span>Completed</span>
+        </span>
+      );
+    case 'CLOSED':
+      return (
+        <span className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-300 ${className}`}>
           <span>Closed</span>
         </span>
       );

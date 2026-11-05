@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { RideHistory } from '@/types';
-import { formatDate, formatTime, formatDateTime } from '@/utils/date';
+import { formatDate, formatTime, formatDateTime, getUserInitials } from '@/utils';
 
 interface RideDetailsModalProps {
   isOpen: boolean;
@@ -128,7 +128,7 @@ export const RideDetailsModal: React.FC<RideDetailsModalProps> = ({
             {ride.ride_partner ? (
               <div className="bg-neutral-900 text-white p-4 rounded-2xl flex items-center gap-4 shadow-sm">
                 <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-black font-black text-lg flex items-center justify-center uppercase shadow-md shrink-0">
-                  {ride.ride_partner.username.slice(0, 2)}
+                  {getUserInitials(undefined, ride.ride_partner.username)}
                 </div>
                 <div className="space-y-1 overflow-hidden">
                   <h3 className="font-black text-white text-base truncate">

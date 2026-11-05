@@ -28,8 +28,7 @@ import {
   clearChatHistory,
 } from '@/services/chat.service';
 import type { ChatRoom } from '@/types';
-import { formatTime } from '@/utils/date';
-import { deriveRoomKey, decryptMessage } from '@/utils/crypto';
+import { formatTime, deriveRoomKey, decryptMessage, getUserInitials } from '@/utils';
 
 export const ChatPage: React.FC = () => {
   const { rideRequestId } = useParams<{ rideRequestId: string }>();
@@ -245,7 +244,7 @@ export const ChatPage: React.FC = () => {
           {displayPartner ? (
             <div className="flex items-center gap-3 min-w-0">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-black font-black text-sm flex items-center justify-center uppercase shrink-0 shadow-xs">
-                {hasMultiplePartners ? 'GRP' : displayPartner.username.slice(0, 2)}
+                {hasMultiplePartners ? 'GRP' : getUserInitials(undefined, displayPartner.username)}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">

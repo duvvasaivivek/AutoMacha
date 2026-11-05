@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, CheckCircle2, XCircle, MapPin, X } from 'lucide-react';
 import { getAdminDestinations, createAdminDestination, updateAdminDestination, deleteAdminDestination } from '@/services/admin.service';
 import type { Destination } from '@/types/destination';
+import { formatDistance } from '@/utils';
 
 export const AdminDestinationsPage: React.FC = () => {
   const [destinations, setDestinations] = useState<Destination[]>([]);
@@ -116,7 +117,7 @@ export const AdminDestinationsPage: React.FC = () => {
                       {dest.name}
                     </td>
                     <td className="p-4 text-gray-600 dark:text-gray-300">{dest.category || 'General'}</td>
-                    <td className="p-4 text-gray-600 dark:text-gray-300">{dest.distance_km ? `${dest.distance_km} km` : '-'}</td>
+                    <td className="p-4 text-gray-600 dark:text-gray-300">{formatDistance(dest.distance_km)}</td>
                     <td className="p-4">
                       {dest.is_active ? (
                         <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">

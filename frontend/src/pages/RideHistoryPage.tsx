@@ -35,7 +35,7 @@ import type {
   RideHistorySummary,
   RideStatus,
 } from '@/types';
-import { formatDate, formatTime } from '@/utils/date';
+import { formatDate, formatTime, getUserInitials } from '@/utils';
 import { RideDetailsModal } from '@/components/RideDetailsModal';
 
 export const RideHistoryPage: React.FC = () => {
@@ -529,7 +529,7 @@ export const RideHistoryPage: React.FC = () => {
                       {ride.ride_partner ? (
                         <div className="flex items-center gap-2">
                           <div className="h-7 w-7 rounded-full bg-neutral-900 text-white font-bold text-xs flex items-center justify-center uppercase shadow-xs">
-                            {ride.ride_partner.username.slice(0, 2)}
+                            {getUserInitials(undefined, ride.ride_partner.username)}
                           </div>
                           <div className="text-xs">
                             <span className="font-bold text-black">@{ride.ride_partner.username}</span>

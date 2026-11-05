@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks';
 import { getChatRooms, deleteChatRoom, archiveChatRoom } from '@/services/chat.service';
 import type { ChatRoom } from '@/types';
 import { ChatPage } from './ChatPage';
-import { formatTime } from '@/utils/date';
+import { formatRelativeTime, formatDateTime, getUserInitials } from '@/utils';
 
 export const ChatsOverviewPage: React.FC = () => {
   const { rideRequestId } = useParams<{ rideRequestId?: string }>();
@@ -210,7 +210,7 @@ export const ChatsOverviewPage: React.FC = () => {
                   }`}
                 >
                   <div className="h-11 w-11 rounded-full bg-gradient-to-br from-neutral-800 to-black text-white font-extrabold text-sm flex items-center justify-center uppercase shrink-0 shadow-xs group-hover:scale-105 transition-transform">
-                    {hasMultiplePartners ? 'GRP' : displayPartner.username.slice(0, 2)}
+                    {hasMultiplePartners ? 'GRP' : getUserInitials(undefined, displayPartner.username)}
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -218,8 +218,8 @@ export const ChatsOverviewPage: React.FC = () => {
                       <h3 className="font-extrabold text-neutral-900 text-sm truncate group-hover:text-black">
                         {hasMultiplePartners ? `Group Ride (${otherParticipants.length + 1})` : `@${displayPartner.username}`}
                       </h3>
-                      <span className="text-[10px] text-neutral-400 font-semibold shrink-0">
-                        {formatTime(room.updated_at)}
+                      <span className="text-[10px] text-neutral-400 font-semibold shrink-0" title={formatDateTime(room.updated_at)}>
+                        {formatRelativeTime(room.updated_at)}
                       </span>
                     </div>
 
