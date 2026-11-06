@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Calendar, Clock, Navigation, Sparkles, MessageCircle, ArrowRight } from 'lucide-react';
+import { MapPin, Calendar, Clock, Navigation, Sparkles, MessageCircle, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { formatDate, formatTime, formatRelativeTime, getUserInitials } from '@/utils';
+import { formatDate, formatTime, formatRelativeTime, getUserInitials, formatSeats } from '@/utils';
 import type { TravelRequestListItem, TravelRequestUser, User } from '@/types';
 
 interface TravelRequestCardProps {
@@ -83,6 +83,13 @@ export const TravelRequestCard: React.FC<TravelRequestCardProps> = ({
                 <span className="font-bold text-black">@{request.user.username}</span>
               </div>
             </div>
+
+            {request.seats_available !== undefined && request.seats_available > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-200">
+                <Users className="h-3 w-3 text-neutral-500" />
+                <span>{formatSeats(request.seats_available)}</span>
+              </span>
+            )}
           </div>
         </CardContent>
       </div>

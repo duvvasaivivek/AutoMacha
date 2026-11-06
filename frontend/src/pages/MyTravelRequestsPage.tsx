@@ -16,9 +16,10 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/common';
 import { getMyTravelRequests, cancelTravelRequest, deleteTravelRequest } from '@/services/travelRequest.service';
 import type { MyTravelRequest } from '@/types';
-import { formatDate, formatTime } from '@/utils/date';
+import { formatDate, formatTime, formatSeats } from '@/utils';
 
 export const MyTravelRequestsPage: React.FC = () => {
   const [requests, setRequests] = useState<MyTravelRequest[]>([]);
@@ -148,41 +149,21 @@ export const MyTravelRequestsPage: React.FC = () => {
                       <span>{isLeaving ? 'From Campus' : 'To Campus'}</span>
                     </div>
 
-                    {isOpen && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300/80">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                        <span>Open</span>
-                      </span>
-                    )}
-
-                    {isExpired && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-neutral-200 text-neutral-700 border border-neutral-300">
-                        <span className="h-1.5 w-1.5 rounded-full bg-neutral-500" />
-                        <span>Expired</span>
-                      </span>
-                    )}
-
-                    {isCancelled && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-red-100 text-red-800 border border-red-300/80">
-                        <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
-                        <span>Cancelled</span>
-                      </span>
-                    )}
-
-                    {isClosed && (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-300/80">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-600" />
-                        <span>Closed</span>
-                      </span>
-                    )}
+                    <StatusBadge status={req.status} />
                   </CardHeader>
 
                   <CardContent className="p-5 space-y-4">
-                    <div>
-                      <h3 className="text-xl font-black text-black tracking-tight mt-0.5 flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-xl font-black text-black tracking-tight mt-0.5 flex items-center gap-2 min-w-0">
                         <MapPin className="h-5 w-5 text-neutral-700 shrink-0" />
                         <span className="truncate">{req.destination.name}</span>
                       </h3>
+                      {req.seats_available !== undefined && req.seats_available > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-600 bg-neutral-100 px-2 py-0.5 rounded-md border border-neutral-200 shrink-0">
+                          <Users className="h-3 w-3 text-neutral-500" />
+                          <span>{formatSeats(req.seats_available)}</span>
+                        </span>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t border-neutral-100">

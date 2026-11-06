@@ -1,9 +1,9 @@
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from apps.common.cache_services import DestinationCacheService
-from .models import Destination
-from .serializers import DestinationSerializer
+from .models import Destination, SavedDestination
+from .serializers import DestinationSerializer, SavedDestinationSerializer
 
 
 class DestinationListView(generics.ListAPIView):
@@ -30,26 +30,29 @@ class DestinationListView(generics.ListAPIView):
 
 
 class SavedDestinationListCreateView(generics.ListCreateAPIView):
-    from rest_framework.permissions import IsAuthenticated
-    from .serializers import SavedDestinationSerializer
-    
+    """
+    User endpoint to view and bookmark frequently visited destinations.
+    """
     permission_classes = [IsAuthenticated]
     serializer_class = SavedDestinationSerializer
     pagination_class = None
 
     def get_queryset(self):
-        from .models import SavedDestination
-        return SavedDestination.objects.filter(user=self.request.user).select_related('destination').order_by('-created_at')
+        return (
+            SavedDestination.objects.filter(user=self.request.user)
+            .select_related('destination')
+            .order_by('-created_at')
+        )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
 
 class SavedDestinationDeleteView(generics.DestroyAPIView):
-    from rest_framework.permissions import IsAuthenticated
-    
+    """
+    Endpoint to remove a saved destination bookmark.
+    """
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        from .models import SavedDestination
         return SavedDestination.objects.filter(user=self.request.user)
