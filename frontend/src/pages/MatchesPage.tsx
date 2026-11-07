@@ -5,7 +5,6 @@ import {
   Calendar,
   Clock,
   AlertCircle,
-  Loader2,
   Navigation,
   ArrowLeft,
   Users,
@@ -14,10 +13,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { LoadingSpinner, EmptyState } from '@/components/common';
 import { getMatches } from '@/services/travelRequest.service';
 import type { TravelRequestMatch, TravelRequestUser } from '@/types';
 import { RideConnectModal } from '@/components/RideConnectModal';
-import { formatDate, formatTime } from '@/utils/date';
+import { formatDate, formatTime, getUserInitials } from '@/utils';
 
 export const MatchesPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -73,10 +73,7 @@ export const MatchesPage: React.FC = () => {
 
       {/* Loading State */}
       {isLoading && (
-        <div className="w-full flex flex-col items-center justify-center py-24 space-y-3 bg-neutral-50/50 rounded-2xl border border-neutral-200/60">
-          <Loader2 className="h-8 w-8 animate-spin text-black" />
-          <p className="text-xs font-semibold text-neutral-500">Searching for compatible ride partners...</p>
-        </div>
+        <LoadingSpinner message="Searching for compatible ride partners..." />
       )}
 
       {/* Error State */}
@@ -90,24 +87,18 @@ export const MatchesPage: React.FC = () => {
 
       {/* Empty State */}
       {!isLoading && !error && matches.length === 0 && (
-        <div className="max-w-md mx-auto my-12 p-12 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50/50 text-center space-y-4">
-          <div className="h-12 w-12 rounded-full bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
-            <Users className="h-6 w-6" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-bold text-black text-lg">No Matching Rides Yet</h3>
-            <p className="text-xs text-neutral-500">
-              No other students have posted requests for this destination around your scheduled departure time window.
-            </p>
-          </div>
-          <div className="pt-2">
+        <EmptyState
+          title="No Matching Rides Yet"
+          description="No other students have posted requests for this destination around your scheduled departure time window."
+          icon={<Users className="h-7 w-7 text-neutral-400" />}
+          action={
             <Link to="/travel-requests">
               <Button size="sm" variant="outline" className="font-semibold text-xs border-neutral-300">
                 Explore All Campus Rides
               </Button>
             </Link>
-          </div>
-        </div>
+          }
+        />
       )}
 
       {/* Matches Grid */}
@@ -166,8 +157,16 @@ export const MatchesPage: React.FC = () => {
                 </div>
 
                 <div className="bg-neutral-50/60 px-5 py-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-                  <div className="text-[11px] text-neutral-500 font-semibold truncate max-w-[150px]">
-                    {partnerUser.branch || 'Student Partner'}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-7 w-7 rounded-full bg-neutral-900 text-white font-bold text-xs flex items-center justify-center uppercase shadow-xs shrink-0">
+                      {getUserInitials(undefined, partnerUser.username)}
+                    </div>
+                    <div className="text-xs truncate">
+                      <span className="font-bold text-black block truncate">@{partnerUser.username}</span>
+                      {partnerUser.branch && (
+                        <span className="text-[10px] text-neutral-400 block font-medium truncate">{partnerUser.branch}</span>
+                      )}
+                    </div>
                   </div>
                   {match.chat_room_id ? (
                     <Link to={`/chats`}>

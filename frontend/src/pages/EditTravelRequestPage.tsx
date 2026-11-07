@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { LoadingSpinner } from '@/components/common';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getDestinations } from '@/services/destination.service';
@@ -233,7 +234,7 @@ export const EditTravelRequestPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-black" />
+        <LoadingSpinner message="Loading travel request details..." />
       </div>
     );
   }

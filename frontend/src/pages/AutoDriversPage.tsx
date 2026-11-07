@@ -3,6 +3,7 @@ import { Phone, Search, Plus, CheckCircle2, Clock, Car, ShieldCheck, UserCheck, 
 import { getVerifiedAutoDrivers, suggestAutoDriver, getMyAutoDriverSuggestions } from '@/services/autoDrivers.service';
 import type { AutoDriver } from '@/types/autoDriver';
 import { useAuth } from '@/hooks';
+import { EmptyState } from '@/components/common';
 
 export const AutoDriversPage: React.FC = () => {
   const { user } = useAuth();
@@ -204,26 +205,26 @@ export const AutoDriversPage: React.FC = () => {
           <p className="text-sm font-medium">{error}</p>
         </div>
       ) : currentDriversList.length === 0 ? (
-        <div className="text-center py-16 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
-          <Car className="w-12 h-12 text-gray-300 dark:text-gray-700 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-1">
-            {activeTab === 'verified' ? 'No Drivers Found' : 'No Driver Suggestions Yet'}
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto mb-6">
-            {activeTab === 'verified'
+        <EmptyState
+          title={activeTab === 'verified' ? 'No Drivers Found' : 'No Driver Suggestions Yet'}
+          description={
+            activeTab === 'verified'
               ? 'No verified auto drivers match your search query. Try searching by phone number or submit a new driver.'
-              : 'You have not submitted any driver suggestions yet.'}
-          </p>
-          {user && (
-            <button
-              onClick={handleOpenModal}
-              className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Suggest an Auto Driver
-            </button>
-          )}
-        </div>
+              : 'You have not submitted any driver suggestions yet.'
+          }
+          icon={<Car className="w-8 h-8 text-neutral-400" />}
+          action={
+            user ? (
+              <button
+                onClick={handleOpenModal}
+                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-xl shadow transition text-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Suggest an Auto Driver
+              </button>
+            ) : undefined
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {currentDriversList.map((driver) => (
