@@ -1,5 +1,7 @@
 import os
 import re
+import uuid
+from PIL import Image
 from django.conf import settings
 from django.utils import timezone
 from rest_framework import serializers
@@ -174,7 +176,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
             # Verify image file integrity using PIL
             try:
-                from PIL import Image
                 img = Image.open(value)
                 img.verify()
                 if hasattr(value, 'seek'):
@@ -183,7 +184,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Uploaded file is corrupted or not a valid image.")
 
             # Sanitize filename to UUID to prevent path traversal or malicious naming
-            import uuid
             value.name = f"{uuid.uuid4().hex}{ext}"
 
         return value

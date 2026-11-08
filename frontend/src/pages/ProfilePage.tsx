@@ -25,6 +25,7 @@ import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileStats } from '@/components/profile/ProfileStats';
 import { ProfilePlaceholders } from '@/components/profile/ProfilePlaceholders';
 import { EditProfileDialog } from '@/components/profile/EditProfileDialog';
+import { formatDateTime } from '@/utils';
 
 export const ProfilePage: React.FC = () => {
   const { updateUser } = useAuth();
@@ -65,22 +66,6 @@ export const ProfilePage: React.FC = () => {
       const errorText = msg || 'Failed to save profile changes. Please verify your inputs.';
       setError(errorText);
       throw err;
-    }
-  };
-
-  const formatDate = (dateStr?: string) => {
-    if (!dateStr) return 'N/A';
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return dateStr;
     }
   };
 
@@ -318,7 +303,7 @@ export const ProfilePage: React.FC = () => {
                       <span className="text-xs font-bold text-neutral-900">Account Created</span>
                     </div>
                     <span className="text-xs font-semibold text-neutral-600">
-                      {formatDate(profile.date_joined)}
+                      {profile.date_joined ? formatDateTime(profile.date_joined) : 'N/A'}
                     </span>
                   </div>
 
@@ -329,7 +314,7 @@ export const ProfilePage: React.FC = () => {
                       <span className="text-xs font-bold text-neutral-900">Last Profile Update</span>
                     </div>
                     <span className="text-xs font-semibold text-neutral-600">
-                      {formatDate(profile.last_updated)}
+                      {profile.last_updated ? formatDateTime(profile.last_updated) : 'N/A'}
                     </span>
                   </div>
                 </CardContent>

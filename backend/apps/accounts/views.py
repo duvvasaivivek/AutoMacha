@@ -69,6 +69,9 @@ class UserProfileView(RetrieveUpdateAPIView):
                 instance.save()
             if 'profile_picture' in data and not isinstance(data['profile_picture'], (bytes, bytearray)):
                 data.pop('profile_picture', None)
+        elif 'profile_picture' in request.FILES and instance.profile_picture:
+            # Clean up old profile picture when replacing with a newly uploaded file
+            instance.profile_picture.delete(save=False)
 
         serializer = self.get_serializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
