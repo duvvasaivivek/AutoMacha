@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { getAdminAuditLogs } from '@/services/admin.service';
 import type { AuditLog } from '@/types/admin';
+import { formatDateTime } from '@/utils';
 
 export const AdminAuditLogsPage: React.FC = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -60,7 +61,7 @@ export const AdminAuditLogsPage: React.FC = () => {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {auditLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
-                    <td className="p-4 font-mono text-gray-500">{new Date(log.timestamp).toLocaleString()}</td>
+                    <td className="p-4 font-mono text-gray-500">{formatDateTime(log.timestamp)}</td>
                     <td className="p-4 font-semibold text-gray-900 dark:text-white">{log.admin_username}</td>
                     <td className="p-4">
                       <span className="bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-0.5 rounded text-[11px] font-mono border border-emerald-200 dark:border-emerald-800">

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Compass, Search, Trash2 } from 'lucide-react';
 import { getAdminTravelRequests, updateAdminTravelRequestStatus, deleteAdminTravelRequest } from '@/services/admin.service';
 import type { TravelRequest } from '@/types/travelRequest';
+import { formatDateTime } from '@/utils';
 
 export const AdminTravelRequestsPage: React.FC = () => {
   const [requests, setRequests] = useState<TravelRequest[]>([]);
@@ -111,7 +112,7 @@ export const AdminTravelRequestsPage: React.FC = () => {
                       {r.destination_name || `Destination #${r.destination}`}
                     </td>
                     <td className="p-4 text-gray-600 dark:text-gray-300">{r.direction}</td>
-                    <td className="p-4 font-mono text-gray-500">{new Date(r.travel_datetime).toLocaleString()}</td>
+                    <td className="p-4 font-mono text-gray-500">{formatDateTime(r.travel_datetime)}</td>
                     <td className="p-4">
                       <select
                         value={r.status}

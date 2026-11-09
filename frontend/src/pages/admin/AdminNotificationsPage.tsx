@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { getAdminNotifications, deleteAdminNotification } from '@/services/admin.service';
 import type { Notification } from '@/types/notification';
+import { formatDateTime } from '@/utils';
 
 export const AdminNotificationsPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -64,7 +65,7 @@ export const AdminNotificationsPage: React.FC = () => {
                     <td className="p-4 text-gray-600 dark:text-gray-300 max-w-xs line-clamp-2">{n.message}</td>
                     <td className="p-4 font-mono text-xs text-gray-500">{n.notification_type}</td>
                     <td className="p-4">{n.is_read ? 'Yes' : 'No'}</td>
-                    <td className="p-4 font-mono text-gray-400">{new Date(n.created_at).toLocaleString()}</td>
+                    <td className="p-4 font-mono text-gray-400">{formatDateTime(n.created_at)}</td>
                     <td className="p-4 text-right">
                       <button
                         onClick={() => handleDelete(n.id)}

@@ -3,6 +3,7 @@ import { Search, UserCheck, UserX, UserSearch, Trash2 } from 'lucide-react';
 import { getAdminUsers, toggleAdminUserActive, impersonateUser, deleteAdminUser } from '@/services/admin.service';
 import type { AdminUser } from '@/types/admin';
 import { useAuth } from '@/hooks';
+import { getUserInitials } from '@/utils';
 
 export const AdminUsersPage: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -149,7 +150,21 @@ export const AdminUsersPage: React.FC = () => {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {(users || []).map((u) => (
                   <tr key={u.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition">
-                    <td className="p-4 font-semibold text-gray-900 dark:text-white">{u.username}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-full bg-neutral-900 text-white font-bold text-xs flex items-center justify-center uppercase shadow-2xs shrink-0">
+                          {getUserInitials(`${u.first_name || ''} ${u.last_name || ''}`.trim() || undefined, u.username)}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {`${u.first_name || ''} ${u.last_name || ''}`.trim() || `@${u.username}`}
+                          </div>
+                          {`${u.first_name || ''} ${u.last_name || ''}`.trim() && (
+                            <div className="text-[10px] text-gray-400">@{u.username}</div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
                     <td className="p-4 text-gray-600 dark:text-gray-300">{u.institute_email}</td>
                     <td className="p-4 font-mono text-gray-600 dark:text-gray-300">{u.roll_number}</td>
                     <td className="p-4">
