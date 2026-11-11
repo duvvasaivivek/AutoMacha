@@ -15,10 +15,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.chat.services import close_chat_room
+from apps.chat.services import close_chat_room, get_or_create_chat_room
 from apps.common.cache_services import DashboardCacheService
 from apps.common.permissions import IsOwner
-from apps.ride_history.services import record_cancelled_ride
+from apps.notifications.services import (
+    notify_ride_share_request_received,
+    notify_ride_share_request_accepted,
+    notify_ride_share_request_declined,
+)
+from apps.ride_history.services import record_cancelled_ride, record_completed_ride
 from .models import TravelRequest
 from .serializers import (
     TravelRequestSerializer,
@@ -218,7 +223,6 @@ class TravelRequestShareView(APIView):
         if travel_request.status != 'OPEN':
             raise ValidationError("You can only request a ride share on open travel requests.")
 
-        from apps.notifications.services import notify_ride_share_request_received
         notify_ride_share_request_received(
             receiver=travel_request.user,
             sender=request.user,
@@ -237,10 +241,6 @@ class TravelRequestRespondShareView(APIView):
             raise ValidationError("Valid sender_username and action ('ACCEPT' or 'DECLINE') are required.")
 
         sender_user = get_object_or_404(User, username=sender_username)
-
-        from apps.notifications.services import notify_ride_share_request_accepted, notify_ride_share_request_declined
-        from apps.ride_history.services import record_completed_ride
-        from apps.chat.services import get_or_create_chat_room
 
         try:
             with transaction.atomic():

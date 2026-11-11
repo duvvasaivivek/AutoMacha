@@ -25,7 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getDashboardStats } from '@/services/dashboard.service';
 import type { DashboardStats } from '@/types';
 import { useAuth } from '@/hooks';
-import { formatDate, formatTime } from '@/utils/date';
+import { formatDate, formatTime, formatRelativeTime } from '@/utils';
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -300,7 +300,7 @@ export const Dashboard: React.FC = () => {
                   {stats.next_trip && (
                     <span className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span>Scheduled</span>
+                      <span>{formatRelativeTime(stats.next_trip.travel_datetime)}</span>
                     </span>
                   )}
                 </CardHeader>
