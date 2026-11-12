@@ -151,3 +151,12 @@ class ChatAPITestCase(TestCase):
 
         unread_res2 = self.client.get('/api/chat/unread-count/')
         self.assertEqual(unread_res2.data['unread_count'], 0)
+
+    def test_chat_room_list_returns_rooms_with_latest_message(self):
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get('/api/chat/rooms/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        room_data = response.data[0]
+        self.assertEqual(room_data['ride_request'], self.req.id)
+        self.assertEqual(room_data['unread_count'], 1)

@@ -27,7 +27,7 @@ class ChatRoomListView(generics.ListAPIView):
         # Subquery to fetch the ID of the single latest non-deleted message per chat room
         last_msg_id_subquery = Subquery(
             ChatMessage.objects.filter(
-                chat_room=OuterRef('chat_room')
+                chat_room=OuterRef('pk')
             ).exclude(
                 deleted_for=user
             ).order_by('-created_at', '-id').values('id')[:1]
