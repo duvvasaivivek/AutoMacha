@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Navigation, Sparkles, MessageCircle, ArrowRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { StatusBadge } from '@/components/common';
 import { formatDate, formatTime, formatRelativeTime, getUserInitials, formatSeats } from '@/utils';
 import type { TravelRequestListItem, TravelRequestUser, User } from '@/types';
 

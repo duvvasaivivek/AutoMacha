@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth, useDestinations, useTravelRequests } from '@/hooks';
 import type { Direction, Status, TravelRequestFilters, TravelRequestUser } from '@/types';
 import { RideConnectModal } from '@/components/RideConnectModal';
-import { TravelRequestCard } from '@/components/travel_requests/TravelRequestCard';
-import { FilterBar } from '@/components/travel_requests/FilterBar';
-import { EmptyState } from '@/components/common/EmptyState';
+import { FilterBar, TravelRequestCard } from '@/components/travel_requests';
+import { EmptyState } from '@/components/common';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const TravelRequestsPage: React.FC = () => {
@@ -216,11 +215,13 @@ export const TravelRequestsPage: React.FC = () => {
         {!isLoading && !error && requests.length === 0 && (
           <EmptyState
             icon={<SearchX className="h-8 w-8 text-neutral-400" />}
-            title={filterMode === 'MATCHES' ? 'No matching rides found.' : 'No requests found.'}
+            title={filterMode === 'MATCHES' ? 'No matching rides found' : 'No requests found'}
             description={
               filterMode === 'MATCHES'
                 ? "We couldn't find any open rides from other students that match your active travel requests right now."
-                : "No open travel requests match your current filters."
+                : hasActiveFilters
+                ? "No open travel requests match your selected filters. Try broadening your criteria or resetting filters."
+                : "There are currently no open travel requests. Be the first to create one for your campus route!"
             }
             action={
               filterMode === 'MATCHES' ? (

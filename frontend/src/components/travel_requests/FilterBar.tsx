@@ -38,14 +38,19 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onApplyFilters,
   onResetFilters,
 }) => {
-  const hasActiveFilters = Boolean(
-    destInput ||
-      dirInput ||
-      statusInput !== 'OPEN' ||
-      dateInput ||
-      fromTimeInput ||
-      toTimeInput
-  );
+  const activeFilterCount = [
+    Boolean(destInput),
+    Boolean(dirInput),
+    Boolean(statusInput && statusInput !== 'OPEN'),
+    Boolean(dateInput),
+    Boolean(fromTimeInput),
+    Boolean(toTimeInput),
+  ].filter(Boolean).length;
+  const hasActiveFilters = activeFilterCount > 0;
+
+  const selectedDestinationName = destInput
+    ? destinations.find((d) => d.id.toString() === destInput)?.name || destInput
+    : '';
 
   return (
     <form onSubmit={onApplyFilters} className="w-full bg-white rounded-2xl border border-neutral-200/80 p-5 shadow-sm mb-8 space-y-4">
@@ -53,6 +58,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         <div className="flex items-center gap-2 text-sm font-bold text-black">
           <Filter className="h-4 w-4 text-neutral-600" />
           <span>Filter Requests</span>
+          {activeFilterCount > 0 && (
+            <span className="inline-flex items-center justify-center bg-black text-white text-[10px] font-bold h-5 px-2 rounded-full">
+              {activeFilterCount} active
+            </span>
+          )}
         </div>
         {hasActiveFilters && (
           <button
@@ -65,6 +75,80 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           </button>
         )}
       </div>
+
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-neutral-600">
+          <span className="font-semibold text-neutral-400">Active:</span>
+          {destInput && (
+            <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded-full font-medium border border-neutral-200">
+              Dest: {selectedDestinationName}
+              <button
+                type="button"
+                onClick={() => setDestInput('')}
+                className="hover:text-black transition-colors"
+                aria-label="Remove destination filter"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          {dirInput && (
+            <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded-full font-medium border border-neutral-200">
+              {dirInput === 'FROM_CAMPUS' ? 'From Campus' : 'To Campus'}
+              <button
+                type="button"
+                onClick={() => setDirInput('')}
+                className="hover:text-black transition-colors"
+                aria-label="Remove direction filter"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          {statusInput !== 'OPEN' && (
+            <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded-full font-medium border border-neutral-200">
+              Status: {statusInput}
+              <button
+                type="button"
+                onClick={() => setStatusInput('OPEN')}
+                className="hover:text-black transition-colors"
+                aria-label="Reset status filter"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          {dateInput && (
+            <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded-full font-medium border border-neutral-200">
+              Date: {dateInput}
+              <button
+                type="button"
+                onClick={() => setDateInput('')}
+                className="hover:text-black transition-colors"
+                aria-label="Remove date filter"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          {(fromTimeInput || toTimeInput) && (
+            <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 px-2.5 py-0.5 rounded-full font-medium border border-neutral-200">
+              Time: {fromTimeInput || '--:--'} - {toTimeInput || '--:--'}
+              <button
+                type="button"
+                onClick={() => {
+                  setFromTimeInput('');
+                  setToTimeInput('');
+                }}
+                className="hover:text-black transition-colors"
+                aria-label="Remove time filters"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="space-y-1.5">
@@ -166,7 +250,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           variant="outline"
           size="sm"
           onClick={onResetFilters}
-          className="font-semibold border-neutral-300 hover:bg-neutral-100 px-4"
+          disabled={!hasActiveFilters}
+          className="font-semibold border-neutral-300 hover:bg-neutral-100 px-4 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Reset Filters
         </Button>
