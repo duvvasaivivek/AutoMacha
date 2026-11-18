@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getDestinations, getSavedDestinations } from '@/services/destination.service';
 import { createTravelRequest } from '@/services/travelRequest.service';
+import { formatSeats } from '@/utils';
 import type { Destination, Direction, SavedDestination } from '@/types';
 
 const travelRequestSchema = z
@@ -50,6 +51,18 @@ const travelRequestSchema = z
   });
 
 type TravelRequestFormData = z.infer<typeof travelRequestSchema>;
+
+const QUICK_TIME_SLOTS = [
+  { label: '06:00 AM', value: '06:00' },
+  { label: '08:00 AM', value: '08:00' },
+  { label: '10:00 AM', value: '10:00' },
+  { label: '12:00 PM', value: '12:00' },
+  { label: '02:00 PM', value: '14:00' },
+  { label: '04:00 PM', value: '16:00' },
+  { label: '06:00 PM', value: '18:00' },
+  { label: '08:00 PM', value: '20:00' },
+  { label: '10:00 PM', value: '22:00' },
+];
 
 export const CreateTravelRequest: React.FC = () => {
   const navigate = useNavigate();
@@ -94,6 +107,7 @@ export const CreateTravelRequest: React.FC = () => {
   });
 
   const selectedDate = watch('date');
+  const selectedTime = watch('time');
 
   useEffect(() => {
     const fetchDestinationsList = async () => {
@@ -459,10 +473,35 @@ export const CreateTravelRequest: React.FC = () => {
 
               {/* Time Selection Section */}
               <div className="space-y-3">
-                <Label htmlFor="time" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <ClockIcon className="h-4 w-4 text-neutral-600" />
-                  <span>Travel Time</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="time" className="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <ClockIcon className="h-4 w-4 text-neutral-600" />
+                    <span>Travel Time</span>
+                  </Label>
+                  <span className="text-[11px] font-semibold text-neutral-400">Popular departure slots</span>
+                </div>
+
+                {/* Quick Time Slots Chips */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {QUICK_TIME_SLOTS.map((slot) => {
+                    const isSelected = selectedTime === slot.value;
+                    return (
+                      <button
+                        key={slot.value}
+                        type="button"
+                        onClick={() => setValue('time', slot.value, { shouldValidate: true })}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          isSelected
+                            ? 'bg-black text-white shadow-sm'
+                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        {slot.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <Input
                   id="time"
                   type="time"
@@ -487,9 +526,9 @@ export const CreateTravelRequest: React.FC = () => {
                   disabled={isSubmitting}
                   className="flex h-11 w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-2.5 text-sm font-bold text-neutral-900 shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-black"
                 >
-                  <option value={1}>1 Seat (1 Passenger)</option>
-                  <option value={2}>2 Seats (2 Passengers)</option>
-                  <option value={3}>3 Seats (3 Passengers)</option>
+                  <option value={1}>{formatSeats(1)} (1 Passenger)</option>
+                  <option value={2}>{formatSeats(2)} (2 Passengers)</option>
+                  <option value={3}>{formatSeats(3)} (3 Passengers)</option>
                 </select>
                 {errors.seats_available && <p className="text-xs text-red-600 font-bold mt-1">{errors.seats_available.message}</p>}
               </div>

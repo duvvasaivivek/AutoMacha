@@ -1,8 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
+
+from apps.chat.models import ChatRoom
+from apps.destinations.models import Destination
+from apps.notifications.models import Notification
 from .models import TravelRequest
-from ..destinations.models import Destination
 
 User = get_user_model()
 
@@ -108,7 +111,6 @@ class TravelRequestMatchSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return False
         
-        from apps.notifications.models import Notification
         return Notification.objects.filter(
             user=obj.user,
             notification_type='RIDE_SHARE_REQUEST_RECEIVED',
@@ -124,7 +126,6 @@ class TravelRequestMatchSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'chat_room') and obj.chat_room:
             return obj.chat_room.id if obj.chat_room.is_participant(request.user) else None
             
-        from apps.chat.models import ChatRoom
         chat_room = ChatRoom.objects.filter(ride_request=obj).first()
         if chat_room and chat_room.is_participant(request.user):
             return chat_room.id
